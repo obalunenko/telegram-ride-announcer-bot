@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/obalunenko/getenv"
+	log "github.com/obalunenko/logger"
 )
 
 const (
@@ -23,30 +23,43 @@ const (
 	cmdTrips    = "trips"
 )
 
+var chatIDs map[int64]struct{}
+
 func main() {
-	log.Println("Starting bot")
+	ctx := context.Background()
+
+	log.Init(ctx, log.Params{
+		Writer:       nil,
+		Level:        "DEBUG",
+		Format:       "text",
+		SentryParams: log.SentryParams{},
+	})
+
+	ctx = log.ContextWithLogger(ctx, log.FromContext(ctx))
+
+	log.Info(ctx, "Starting bot")
 
 	token, err := getenv.Env[string](envTGAPIToken)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(ctx, err).Fatal("failed to get telegram api token")
 	}
 
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(ctx, err).Fatal("failed to create telegram bot")
 	}
 
 	bot.Debug = true
 
-	log.Printf("Authorized on account %s", bot.Self.UserName)
+	log.WithField(ctx, "username", bot.Self.UserName).Info("Authorized on account")
 
 	commands, err := bot.GetMyCommands()
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(ctx, err).Fatal("failed to get bot commands")
 	}
 
 	for _, command := range commands {
-		log.Printf("Command %q: %s\n", command.Command, command.Description)
+		log.WithField(ctx, "command", command.Command).Info(command.Description)
 	}
 
 	// Create a new UpdateConfig struct with an offset of 0. Offsets are used
@@ -67,28 +80,49 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		log.Println("Start receiving updates")
+		log.Info(ctx, "Start receiving updates")
 
 		// Start polling Telegram for updates.
 		updates := bot.GetUpdatesChan(updateConfig)
 
 		// Stop polling for updates when the program is exiting.
 		defer func() {
-			log.Println("Stop receiving updates")
+			log.Info(ctx, "Stop receiving updates")
 			bot.StopReceivingUpdates()
 		}()
 
 		for {
 			select {
 			case <-ctx.Done():
-				log.Println("Received stop signal")
+				log.Info(ctx, "Received stop signal")
+
+				for id := range chatIDs {
+					msg := tgbotapi.NewMessage(id, "I'm going to sleep. Bye!")
+
+					if _, err = bot.Send(msg); err != nil {
+						log.WithError(ctx, err).Error("failed to send message")
+					}
+				}
+
 				return
 			case update := <-updates:
+				log.WithField(ctx, "update_id", update.UpdateID).Debug("Received update")
+
 				// Telegram can send many types of updates depending on what your Bot
 				// is up to. We only want to look at messages for now, so we can
 				// discard any other updates.
 				if update.Message == nil {
 					continue
+				}
+
+				if chatIDs == nil {
+					chatIDs = make(map[int64]struct{})
+				}
+
+				if _, ok := chatIDs[update.Message.Chat.ID]; !ok {
+					chatIDs[update.Message.Chat.ID] = struct{}{}
+
+					log.WithField(ctx, "chat_id", update.Message.Chat.ID).Info("New chat")
 				}
 
 				if !update.Message.IsCommand() {
@@ -98,7 +132,7 @@ func main() {
 					)
 
 					if _, err = bot.Send(msg); err != nil {
-						log.Fatalf("failed to send message: %v", err)
+						log.WithError(ctx, err).Error("failed to send message")
 					}
 
 					continue
@@ -124,7 +158,13 @@ func main() {
 						cmdNewTrips,
 					)
 				case cmdStart:
-					msg.Text = "Hello, I'm ride announcer bot. I can help you to organize your trips. Please use /help to see what I can do"
+					msg.Text = fmt.Sprintf(
+						"Hello, %s!\n"+
+							"I'm ride announcer bot.\n"+
+							"I can help you to organize your trips. Please use /%s to see what I can do",
+						update.SentFrom().FirstName,
+						cmdHelp,
+					)
 				case cmdTrips:
 					msg.Text = "Unfortunately this feature is not implemented yet"
 				case cmdNewTrips:
@@ -139,7 +179,7 @@ func main() {
 					// Note that panics are a bad way to handle errors. Telegram can
 					// have service outages or network errors, you should retry sending
 					// messages or more gracefully handle failures.
-					log.Fatalf("failed to send message: %v", err)
+					log.WithError(ctx, err).Error("failed to send message")
 				}
 			}
 		}
@@ -149,5 +189,5 @@ func main() {
 
 	wg.Wait()
 
-	log.Println("Bot stopped")
+	log.Info(ctx, "Bot stopped")
 }
