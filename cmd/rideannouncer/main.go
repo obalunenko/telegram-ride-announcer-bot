@@ -72,7 +72,7 @@ func main() {
 	// frequent requests without having to send nearly as many.
 	updateConfig.Timeout = 30
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, os.Kill)
 	defer stop()
 
 	wg := &sync.WaitGroup{}
