@@ -1,3 +1,4 @@
+// ridesannouncer is a bot for scheduling and announcing planned bicycle trips in chat groups.
 package main
 
 import (
@@ -81,14 +82,14 @@ func main() {
 	if err != nil {
 		log.WithError(ctx, err).Fatal("failed to get bot info")
 	}
+
 	log.WithField(ctx, "username", self.Username).Info("Authorized on account")
 
-	wg := &sync.WaitGroup{}
+	var wg sync.WaitGroup
+
 	wg.Add(1)
 
-	stopHandler := handleUpdate(ctx, bot)
-
-	go gracefulShutdown(ctx, wg, bot, stopHandler)
+	go gracefulShutdown(ctx, &wg, bot, handleUpdate(ctx, bot))
 
 	wg.Wait()
 
@@ -116,8 +117,6 @@ func gracefulShutdown(ctx context.Context, wg *sync.WaitGroup, bot *tgbotapi.Bot
 
 	log.Info(ctx, "Stop receiving updates")
 	bot.StopLongPolling()
-
-	log.Info(ctx, "Stopping bot handlers")
 
 	for _, fn := range stopFns {
 		fn(ctx)
@@ -174,6 +173,7 @@ Remember, you can always type /%s to see this list of commands again.
 
 Enjoy planning and going on your bike trips with %s!
 `
+
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		chatID := tu.ID(update.Message.Chat.ID)
 
@@ -237,32 +237,23 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 }
 
 func notFoundHandler(ctx context.Context) th.Handler {
-	l := log.FromContext(ctx).WithField("command_handler", "not_found")
-
-	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-		chatID := tu.ID(update.Message.Chat.ID)
-
-		l.WithField("chat_id", chatID).Debug("Called not_found handler")
-
-		msg := tu.Message(chatID,
-			fmt.Sprintf("Unknown command. Use /%s command to see all available commands.", cmdHelp))
-
-		if _, err := bot.SendMessage(msg); err != nil {
-			l.WithError(err).Error("Failed to send message")
-		}
-	}
+	return unsupportedHandler(ctx, "Command not found.")
 }
 
 func notCommandHandler(ctx context.Context) th.Handler {
-	l := log.FromContext(ctx).WithField("command_handler", "not_command")
+	return unsupportedHandler(ctx, "This is not a command.")
+}
+
+func unsupportedHandler(ctx context.Context, text string) th.Handler {
+	l := log.FromContext(ctx).WithField("command_handler", "unsupported")
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		chatID := tu.ID(update.Message.Chat.ID)
 
-		l.WithField("chat_id", chatID).Debug("Called not_command handler")
+		l.WithField("chat_id", chatID).Debug("Called unsupported handler")
 
 		msg := tu.Message(chatID,
-			fmt.Sprintf("Please use commands. Use /%s command to see all available commands.", cmdHelp))
+			fmt.Sprintf("%s Use /%s command to see all available commands.", text, cmdHelp))
 
 		if _, err := bot.SendMessage(msg); err != nil {
 			l.WithError(err).Error("Failed to send message")
