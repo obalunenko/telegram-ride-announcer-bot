@@ -106,6 +106,20 @@ Enjoy planning and going on your bike trips with %s!
 }
 
 func newTripHandler(ctx context.Context) th.Handler {
+	// 1. Ask for date and time
+
+	// 2. Ask for description
+
+	// 3. Ask for a track link. If not provided, ask for track file
+
+	// 4. Ask for a photo (optional)
+
+	// 5. Subscribe the creator to the trip (maybe implement it later)
+
+	// 6. Announce the trip.
+
+	// 7. Pin the trip announcement to the chat.
+
 	return notImplementedHandler(ctx, cmdNewTrip)
 }
 
