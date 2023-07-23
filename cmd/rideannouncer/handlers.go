@@ -6,7 +6,6 @@ import (
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 	log "github.com/obalunenko/logger"
 )
 
@@ -19,24 +18,23 @@ func notCommandHandler(ctx context.Context) th.Handler {
 }
 
 func unsupportedHandler(ctx context.Context, text string) th.Handler {
-	l := log.FromContext(ctx).WithField("command_handler", "unsupported")
+	ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", "unsupported"))
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-		chatID := tu.ID(update.Message.Chat.ID)
+		chatID := update.Message.Chat.ID
 
-		l.WithField("chat_id", chatID).Debug("Called unsupported handler")
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "chat_id", chatID))
 
-		msg := tu.Message(chatID,
-			fmt.Sprintf("%s Use /%s command to see all available commands.", text, cmdHelp))
+		log.Debug(ctx, "Called unsupported handler")
 
-		if _, err := bot.SendMessage(msg); err != nil {
-			l.WithError(err).Error("Failed to send message")
-		}
+		msg := fmt.Sprintf("%s Use /%s command to see all available commands.", text, cmdHelp)
+
+		sendMessage(ctx, bot, chatID, msg)
 	}
 }
 
 func startHandler(ctx context.Context) th.Handler {
-	l := log.FromContext(ctx).WithField("command_handler", cmdStart)
+	ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdStart))
 
 	msgFormat := `Hello, %s! 👋 Welcome to %s. 
 
@@ -58,21 +56,20 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		sender := update.Message.From
-		chatID := tu.ID(update.Message.Chat.ID)
+		chatID := update.Message.Chat.ID
 
-		l.WithField("chat_id", chatID).Debug("Called start handler")
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "chat_id", chatID))
 
-		msg := tu.Message(chatID,
-			fmt.Sprintf(msgFormat, sender.FirstName, botName, cmdHelp, sender.FirstName))
+		log.Debug(ctx, "Called start handler")
 
-		if _, err := bot.SendMessage(msg); err != nil {
-			l.WithError(err).Error("Failed to send message")
-		}
+		msg := fmt.Sprintf(msgFormat, sender.FirstName, botName, cmdHelp, sender.FirstName)
+
+		sendMessage(ctx, bot, chatID, msg)
 	}
 }
 
 func helpHandler(ctx context.Context) th.Handler {
-	l := log.FromContext(ctx).WithField("command_handler", cmdHelp)
+	ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdHelp))
 
 	msgFormat := `Welcome to %s Help!
 
@@ -85,13 +82,15 @@ Enjoy planning and going on your bike trips with %s!
 `
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-		chatID := tu.ID(update.Message.Chat.ID)
+		chatID := update.Message.Chat.ID
 
-		l.WithField("chat_id", chatID).Debug("Called help handler")
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "chat_id", chatID))
+
+		log.Debug(ctx, "Called help handler")
 
 		cmds, err := bot.GetMyCommands(&tgbotapi.GetMyCommandsParams{})
 		if err != nil {
-			l.WithError(err).Error("Failed to get bot commands")
+			log.WithError(ctx, err).Error("Failed to get bot commands")
 		}
 
 		var cmdsStr string
@@ -100,13 +99,9 @@ Enjoy planning and going on your bike trips with %s!
 			cmdsStr += fmt.Sprintf("\t/%s - %s\n", cmd.Command, cmd.Description)
 		}
 
-		msg := tu.Message(chatID,
-			fmt.Sprintf(msgFormat, botName, cmdsStr, cmdHelp, botName),
-		)
+		msg := fmt.Sprintf(msgFormat, botName, cmdsStr, cmdHelp, botName)
 
-		if _, err = bot.SendMessage(msg); err != nil {
-			l.WithError(err).Error("Failed to send message")
-		}
+		sendMessage(ctx, bot, chatID, msg)
 	}
 }
 
@@ -135,18 +130,17 @@ func subscribedHandler(ctx context.Context) th.Handler {
 }
 
 func notImplementedHandler(ctx context.Context, cmd string) th.Handler {
-	l := log.FromContext(ctx).WithField("command_handler", cmd)
+	ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmd))
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		chatID := update.Message.Chat.ID
 
-		l.WithField("chat_id", chatID).Debug("Called not_implemented handler")
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "chat_id", chatID))
 
-		msg := tu.Message(tu.ID(chatID),
-			fmt.Sprintf("Not implemented yet. Use /%s command to see all available commands.", cmdHelp))
+		log.Debug(ctx, "Called not_implemented handler")
 
-		if _, err := bot.SendMessage(msg); err != nil {
-			l.WithError(err).Error("Failed to send message")
-		}
+		msg := fmt.Sprintf("Not implemented yet. Use /%s command to see all available commands.", cmdHelp)
+
+		sendMessage(ctx, bot, chatID, msg)
 	}
 }

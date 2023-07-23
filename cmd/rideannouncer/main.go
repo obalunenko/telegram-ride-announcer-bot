@@ -9,7 +9,6 @@ import (
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
 )
@@ -125,11 +124,9 @@ func gracefulShutdown(ctx context.Context, wg *sync.WaitGroup, bot *tgbotapi.Bot
 	mu.RLock()
 
 	for id := range chatIDs {
-		msg := tu.Message(tu.ID(id), "I'm going to sleep. Bye!")
+		msg := "I'm going to sleep. Bye!"
 
-		if _, err := bot.SendMessage(msg); err != nil {
-			log.WithError(ctx, err).Error("failed to send message")
-		}
+		sendMessage(ctx, bot, id, msg)
 	}
 
 	mu.RUnlock()
