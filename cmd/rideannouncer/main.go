@@ -29,42 +29,46 @@ const (
 	cmdSubscribed  = "subscribed"
 )
 
-var commands = []tgbotapi.BotCommand{
-	{
-		Command:     cmdHelp,
-		Description: "show this help message",
-	},
-	{
-		Command:     cmdStart,
-		Description: "start using the bot",
-	},
-	{
-		Command:     cmdTrips,
-		Description: "show all trips",
-	},
-	{
-		Command:     cmdNewTrip,
-		Description: "create new trip",
-	},
-	{
-		Command:     cmdSubscribe,
-		Description: "subscribe to a trip",
-	},
-	{
-		Command:     cmdUnsubscribe,
-		Description: "unsubscribe from a trip",
-	},
-	{
-		Command:     cmdMyTrips,
-		Description: "show trips you've created",
-	},
-	{
-		Command:     cmdSubscribed,
-		Description: "show trips you've subscribed to",
-	},
-}
-
 var (
+	// Disabled commands,
+	// because they are not implemented yet.
+	disabledCmds = []string{
+		cmdNewTrip, cmdTrips, cmdSubscribe, cmdUnsubscribe, cmdMyTrips, cmdSubscribed,
+	}
+	commands = []tgbotapi.BotCommand{
+		{
+			Command:     cmdHelp,
+			Description: "show this help message",
+		},
+		{
+			Command:     cmdStart,
+			Description: "start using the bot",
+		},
+		{
+			Command:     cmdTrips,
+			Description: "show all trips",
+		},
+		{
+			Command:     cmdNewTrip,
+			Description: "create new trip",
+		},
+		{
+			Command:     cmdSubscribe,
+			Description: "subscribe to a trip",
+		},
+		{
+			Command:     cmdUnsubscribe,
+			Description: "unsubscribe from a trip",
+		},
+		{
+			Command:     cmdMyTrips,
+			Description: "show trips you've created",
+		},
+		{
+			Command:     cmdSubscribed,
+			Description: "show trips you've subscribed to",
+		},
+	}
 	chatIDs map[int64]struct{}
 	mu      sync.RWMutex
 )
@@ -243,6 +247,26 @@ func maybeUpdateDescriptionBot(ctx context.Context, bot *tgbotapi.Bot) {
 	log.Info(ctx, "Bot description is up to date")
 }
 
+func filterCommands(cmds []tgbotapi.BotCommand) []tgbotapi.BotCommand {
+	filtered := make([]tgbotapi.BotCommand, 0, len(cmds))
+
+	disabled := make(map[string]struct{}, len(disabledCmds))
+
+	for _, cmd := range disabledCmds {
+		disabled[cmd] = struct{}{}
+	}
+
+	for _, cmd := range cmds {
+		if _, ok := disabled[cmd.Command]; ok {
+			continue
+		}
+
+		filtered = append(filtered, cmd)
+	}
+
+	return filtered
+}
+
 func maybeUpdateCommands(ctx context.Context, bot *tgbotapi.Bot) {
 	cmds, err := bot.GetMyCommands(&tgbotapi.GetMyCommandsParams{})
 	if err != nil {
@@ -257,7 +281,9 @@ func maybeUpdateCommands(ctx context.Context, bot *tgbotapi.Bot) {
 
 	var equal bool
 
-	for _, cmd := range commands {
+	enabled := filterCommands(commands)
+
+	for _, cmd := range enabled {
 		desc, ok := registeredCommands[cmd.Command]
 		if !ok || desc != cmd.Description {
 			equal = false
@@ -275,7 +301,7 @@ func maybeUpdateCommands(ctx context.Context, bot *tgbotapi.Bot) {
 	log.Info(ctx, "Updating bot commands")
 
 	err = bot.SetMyCommands(&tgbotapi.SetMyCommandsParams{
-		Commands: commands,
+		Commands: enabled,
 	})
 	if err != nil {
 		log.WithError(ctx, err).Error("failed to set bot commands")
