@@ -6,6 +6,7 @@ import (
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	tu "github.com/mymmrac/telego/telegoutil"
 	log "github.com/obalunenko/logger"
 )
 
@@ -13,29 +14,21 @@ func notFoundHandler(ctx context.Context) th.Handler {
 	return unsupportedHandler(ctx, "Command not found.")
 }
 
-func notCommandHandler(ctx context.Context) th.Handler {
-	return unsupportedHandler(ctx, "This is not a command.")
-}
-
 func unsupportedHandler(ctx context.Context, text string) th.Handler {
-	ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", "unsupported"))
+	msg := fmt.Sprintf("%s Use /%s command to see all available commands.", text, cmdHelp)
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-		chatID := update.Message.Chat.ID
+		ctx = update.Context()
 
-		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "chat_id", chatID))
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", "unsupported"))
 
 		log.Debug(ctx, "Called unsupported handler")
 
-		msg := fmt.Sprintf("%s Use /%s command to see all available commands.", text, cmdHelp)
-
-		sendMessage(ctx, bot, chatID, msg)
+		sendMessage(ctx, bot, msg)
 	}
 }
 
 func startHandler(ctx context.Context) th.Handler {
-	ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdStart))
-
 	msgFormat := `Hello, %s! 👋 Welcome to %s. 
 
 I'm here to assist you in scheduling, announcing, and joining exciting bike trips with your community. 
@@ -55,22 +48,26 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 `
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-		sender := update.Message.From
-		chatID := update.Message.Chat.ID
+		ctx = update.Context()
 
-		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "chat_id", chatID))
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdStart))
+
+		sess := sessionFromContext(ctx)
+		if sess == nil {
+			log.Error(ctx, "Session is nil")
+
+			return
+		}
 
 		log.Debug(ctx, "Called start handler")
 
-		msg := fmt.Sprintf(msgFormat, sender.FirstName, botName, cmdHelp, sender.FirstName)
+		msg := fmt.Sprintf(msgFormat, sess.user.firstname, botName, cmdHelp, sess.user.firstname)
 
-		sendMessage(ctx, bot, chatID, msg)
+		sendMessage(ctx, bot, msg)
 	}
 }
 
-func helpHandler(ctx context.Context) th.Handler {
-	ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdHelp))
-
+func helpHandler() th.Handler {
 	msgFormat := `Welcome to %s Help!
 
 Here's a list of commands that you can use: 
@@ -82,9 +79,9 @@ Enjoy planning and going on your bike trips with %s!
 `
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-		chatID := update.Message.Chat.ID
+		ctx := update.Context()
 
-		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "chat_id", chatID))
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdHelp))
 
 		log.Debug(ctx, "Called help handler")
 
@@ -101,60 +98,90 @@ Enjoy planning and going on your bike trips with %s!
 
 		msg := fmt.Sprintf(msgFormat, botName, cmdsStr, cmdHelp, botName)
 
-		sendMessage(ctx, bot, chatID, msg)
+		sendMessage(ctx, bot, msg)
 	}
 }
 
-func newTripHandler(ctx context.Context) th.Handler {
-	// 1. Ask for date and time
-
-	// 2. Ask for description
-
-	// 3. Ask for a track link. If not provided, ask for track file
-
-	// 4. Ask for a photo (optional)
-
-	// 5. Subscribe the creator to the trip (maybe implement it later)
-
-	// 6. Announce the trip.
-
-	// 7. Pin the trip announcement to the chat.
-
-	return notImplementedHandler(ctx, cmdNewTrip)
-}
-
-func tripsHandler(ctx context.Context) th.Handler {
-	return notImplementedHandler(ctx, cmdTrips)
-}
-
-func subscribeHandler(ctx context.Context) th.Handler {
-	return notImplementedHandler(ctx, cmdSubscribe)
-}
-
-func unsubscribeHandler(ctx context.Context) th.Handler {
-	return notImplementedHandler(ctx, cmdUnsubscribe)
-}
-
-func myTripsHandler(ctx context.Context) th.Handler {
-	return notImplementedHandler(ctx, cmdMyTrips)
-}
-
-func subscribedHandler(ctx context.Context) th.Handler {
-	return notImplementedHandler(ctx, cmdSubscribed)
-}
-
-func notImplementedHandler(ctx context.Context, cmd string) th.Handler {
-	ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmd))
-
+func newTripHandler() th.Handler {
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-		chatID := update.Message.Chat.ID
+		ctx := update.Context()
 
-		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "chat_id", chatID))
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdNewTrip))
+
+		sess := sessionFromContext(ctx)
+		if sess == nil {
+			log.Error(ctx, "Session is nil")
+
+			return
+		}
+
+		// 1. Ask for date and time
+		keyboard := tu.Keyboard(
+			tu.KeyboardRow(
+				tu.KeyboardButton("today"),
+			),
+			tu.KeyboardRow(
+				tu.KeyboardButton("tomorrow"),
+			),
+		).WithResizeKeyboard().WithInputFieldPlaceholder("Enter date")
+
+		msg := tu.Message(tu.ID(sess.chatID), "Please select date and time")
+
+		msg.WithReplyMarkup(keyboard)
+
+		sent, err := bot.SendMessage(msg)
+		if err != nil {
+			log.WithError(ctx, err).Error("Failed to send message")
+		}
+
+		if reply := sent.ReplyToMessage; reply != nil {
+			log.WithField(ctx, "reply_to_message", reply.Text).Debug("Reply to message")
+		}
+
+		// 2. Ask for description
+
+		// 3. Ask for a track link. If not provided, ask for track file
+
+		// 4. Ask for a photo (optional)
+
+		// 5. Subscribe the creator to the trip (maybe implement it later)
+
+		// 6. Announce the trip.
+
+		// 7. Pin the trip announcement to the chat.
+	}
+}
+
+func tripsHandler() th.Handler {
+	return notImplementedHandler(cmdTrips)
+}
+
+func subscribeHandler() th.Handler {
+	return notImplementedHandler(cmdSubscribe)
+}
+
+func unsubscribeHandler() th.Handler {
+	return notImplementedHandler(cmdUnsubscribe)
+}
+
+func myTripsHandler() th.Handler {
+	return notImplementedHandler(cmdMyTrips)
+}
+
+func subscribedHandler() th.Handler {
+	return notImplementedHandler(cmdSubscribed)
+}
+
+func notImplementedHandler(cmd string) th.Handler {
+	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+		ctx := update.Context()
+
+		log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmd))
 
 		log.Debug(ctx, "Called not_implemented handler")
 
 		msg := fmt.Sprintf("Not implemented yet. Use /%s command to see all available commands.", cmdHelp)
 
-		sendMessage(ctx, bot, chatID, msg)
+		sendMessage(ctx, bot, msg)
 	}
 }

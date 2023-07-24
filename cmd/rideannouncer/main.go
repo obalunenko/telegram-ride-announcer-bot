@@ -33,7 +33,7 @@ var (
 	// Disabled commands,
 	// because they are not implemented yet.
 	disabledCmds = []string{
-		cmdNewTrip, cmdTrips, cmdSubscribe, cmdUnsubscribe, cmdMyTrips, cmdSubscribed,
+		cmdTrips, cmdSubscribe, cmdUnsubscribe, cmdMyTrips, cmdSubscribed,
 	}
 	commands = []tgbotapi.BotCommand{
 		{
@@ -69,8 +69,6 @@ var (
 			Description: "show trips you've subscribed to",
 		},
 	}
-	chatIDs map[int64]struct{}
-	mu      sync.RWMutex
 )
 
 func main() {
@@ -111,7 +109,7 @@ func main() {
 
 	wg.Add(1)
 
-	go gracefulShutdown(ctx, &wg, bot, handleUpdate(ctx, bot))
+	go gracefulShutdown(ctx, &wg, bot, initHandlers(ctx, bot))
 
 	wg.Wait()
 
@@ -130,7 +128,9 @@ func gracefulShutdown(ctx context.Context, wg *sync.WaitGroup, bot *tgbotapi.Bot
 	for id := range chatIDs {
 		msg := "I'm going to sleep. Bye!"
 
-		sendMessage(ctx, bot, id, msg)
+		sendMessage(contextWithSession(ctx, &session{
+			chatID: id,
+		}), bot, msg)
 	}
 
 	mu.RUnlock()
@@ -147,7 +147,7 @@ func gracefulShutdown(ctx context.Context, wg *sync.WaitGroup, bot *tgbotapi.Bot
 
 type stopFunc func(ctx context.Context)
 
-func handleUpdate(ctx context.Context, bot *tgbotapi.Bot) stopFunc {
+func initHandlers(ctx context.Context, bot *tgbotapi.Bot) stopFunc {
 	pollChan, err := bot.UpdatesViaLongPolling(&tgbotapi.GetUpdatesParams{},
 		tgbotapi.WithLongPollingContext(ctx))
 	if err != nil {
@@ -160,19 +160,21 @@ func handleUpdate(ctx context.Context, bot *tgbotapi.Bot) stopFunc {
 	}
 
 	handler.Use(th.PanicRecovery)
-	handler.Use(getChatIDMiddleware(ctx))
+	handler.Use(setContextMiddleware(ctx))
+	handler.Use(setSessionMiddleware())
+	handler.Use(loggerMiddleware())
+	handler.Use(getChatIDMiddleware())
 
-	handler.Handle(helpHandler(ctx), th.CommandEqual(cmdHelp))
+	handler.Handle(helpHandler(), th.CommandEqual(cmdHelp))
 	handler.Handle(startHandler(ctx), th.CommandEqual(cmdStart))
-	handler.Handle(newTripHandler(ctx), th.CommandEqual(cmdNewTrip))
-	handler.Handle(tripsHandler(ctx), th.CommandEqual(cmdTrips))
-	handler.Handle(subscribeHandler(ctx), th.CommandEqual(cmdSubscribe))
-	handler.Handle(unsubscribeHandler(ctx), th.CommandEqual(cmdUnsubscribe))
-	handler.Handle(myTripsHandler(ctx), th.CommandEqual(cmdMyTrips))
-	handler.Handle(subscribedHandler(ctx), th.CommandEqual(cmdSubscribed))
+	handler.Handle(newTripHandler(), th.CommandEqual(cmdNewTrip))
+	handler.Handle(tripsHandler(), th.CommandEqual(cmdTrips))
+	handler.Handle(subscribeHandler(), th.CommandEqual(cmdSubscribe))
+	handler.Handle(unsubscribeHandler(), th.CommandEqual(cmdUnsubscribe))
+	handler.Handle(myTripsHandler(), th.CommandEqual(cmdMyTrips))
+	handler.Handle(subscribedHandler(), th.CommandEqual(cmdSubscribed))
 
 	handler.Handle(notFoundHandler(ctx), th.AnyCommand())
-	handler.Handle(notCommandHandler(ctx), th.AnyMessage())
 
 	go handler.Start()
 
