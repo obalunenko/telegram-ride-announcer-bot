@@ -59,6 +59,11 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 			return
 		}
 
+		// Reset session state.
+		sess.setState(stateStart)
+
+		sess.save()
+
 		log.Debug(ctx, "Called start handler")
 
 		msg := fmt.Sprintf(msgFormat, sess.user.firstname, botName, cmdHelp, sess.user.firstname)
@@ -85,6 +90,18 @@ Enjoy planning and going on your bike trips with %s!
 
 		log.Debug(ctx, "Called help handler")
 
+		sess := sessionFromContext(ctx)
+		if sess == nil {
+			log.Error(ctx, "Session is nil")
+
+			return
+		}
+
+		// Reset session state.
+		sess.setState(stateStart)
+
+		sess.save()
+
 		cmds, err := bot.GetMyCommands(&tgbotapi.GetMyCommandsParams{})
 		if err != nil {
 			log.WithError(ctx, err).Error("Failed to get bot commands")
@@ -108,12 +125,75 @@ func newTripHandler() th.Handler {
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdNewTrip))
 
+		log.Debug(ctx, "Called new_trip handler")
+
 		sess := sessionFromContext(ctx)
 		if sess == nil {
 			log.Error(ctx, "Session is nil")
 
 			return
 		}
+
+		defer sess.save()
+
+		if sess.isStateAny(stateStart) {
+			sess.setState(stateNewTrip)
+
+			sess.save()
+		}
+
+		if err := createTrip(ctx, bot, update); err != nil {
+			log.WithError(ctx, err).Error("Failed to create trip")
+		}
+	}
+}
+
+func createTrip(ctx context.Context, bot *tgbotapi.Bot, update tgbotapi.Update) error {
+	sess := sessionFromContext(ctx)
+	if sess == nil {
+		log.Error(ctx, "Session is nil")
+
+		return fmt.Errorf("session is nil")
+	}
+
+	defer sess.save()
+
+	// 1. Ask for trip name.
+
+	// 2. Ask for date and time
+
+	// 3. Ask for description
+
+	// 4. Ask for a track link. If not provided, ask for track file
+
+	// 5. Ask for a photo (optional)
+
+	// 6. Ask for confirmation
+
+	// 7. Subscribe the creator to the trip (maybe implement it later)
+
+	// 8. Announce the trip.
+
+	// 9. Pin the trip announcement to the chat.
+
+	switch sess.getState() {
+	case stateNewTrip: // 1. Ask for trip name.
+		// Trip creation is started.
+		// Ask for trip name.
+		sess.setState(stateNewTripName)
+
+		msg := "Please enter trip name"
+
+		sendMessage(ctx, bot, msg)
+
+		return nil
+	case stateNewTripName: // 2. Ask for date and time
+		// Waiting for trip name.
+
+		name := update.Message.Text
+		log.Debug(ctx, "Trip name: "+name)
+
+		sess.setState(stateNewTripDate)
 
 		// 1. Ask for date and time
 		keyboard := tu.Keyboard(
@@ -123,32 +203,65 @@ func newTripHandler() th.Handler {
 			tu.KeyboardRow(
 				tu.KeyboardButton("tomorrow"),
 			),
-		).WithResizeKeyboard().WithInputFieldPlaceholder("Enter date")
+		).WithResizeKeyboard().WithInputFieldPlaceholder("Enter date").WithOneTimeKeyboard()
 
-		msg := tu.Message(tu.ID(sess.chatID), "Please select date and time")
+		msg := tu.Message(tu.ID(sess.chatID), fmt.Sprintf("Your trip name %q. Please select date and time", name))
 
 		msg.WithReplyMarkup(keyboard)
 
-		sent, err := bot.SendMessage(msg)
+		_, err := bot.SendMessage(msg)
 		if err != nil {
 			log.WithError(ctx, err).Error("Failed to send message")
 		}
 
-		if reply := sent.ReplyToMessage; reply != nil {
-			log.WithField(ctx, "reply_to_message", reply.Text).Debug("Reply to message")
+		return nil
+
+	case stateNewTripDate: // 3. Ask for description
+		// Waiting for trip date.
+
+		date := update.Message.Text
+		log.Debug(ctx, "Trip date: "+date)
+
+		sendMessage(ctx, bot, "Your trip date: "+date)
+
+		return nil
+	default:
+		log.WithField(ctx, "state", sess.getState()).Error("Unexpected state")
+
+		return nil
+	}
+}
+
+func textHandler() th.Handler {
+	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+		ctx := update.Context()
+
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", "text"))
+
+		log.Debug(ctx, "Called text handler")
+
+		// Check session state.
+		// If session state is not empty, then we are in the middle of creating a trip.
+		sess := sessionFromContext(ctx)
+		if sess == nil {
+			log.Error(ctx, "Session is nil")
+
+			return
 		}
 
-		// 2. Ask for description
+		switch sess.getState() {
+		case stateStart:
+			// If session state is empty, then we are not in the middle of creating a trip.
+			notFoundHandler(ctx)(bot, update)
 
-		// 3. Ask for a track link. If not provided, ask for track file
+			return
+		case stateNewTrip, stateNewTripName, stateNewTripDate, stateNewTripTime, stateNewTripDescription, stateNewTripConfirm:
+			newTripHandler()(bot, update)
 
-		// 4. Ask for a photo (optional)
-
-		// 5. Subscribe the creator to the trip (maybe implement it later)
-
-		// 6. Announce the trip.
-
-		// 7. Pin the trip announcement to the chat.
+			return
+		default:
+			notFoundHandler(ctx)(bot, update)
+		}
 	}
 }
 

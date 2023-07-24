@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
@@ -15,8 +16,8 @@ func setContextMiddleware(ctx context.Context) th.Middleware {
 			next(bot, update)
 		}
 	}
-
 }
+
 func getChatIDMiddleware() th.Middleware {
 	mu.Lock()
 	if chatIDs == nil {

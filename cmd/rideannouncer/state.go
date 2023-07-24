@@ -6,15 +6,16 @@ type state uint
 
 const (
 	stateUnknown state = iota
-	stateStart
-	stateNewTrip
-	stateNewTripName
-	stateNewTripDate
-	stateNewTripTime
-	stateNewTripDescription
-	stateNewTripConfirm
-	stateNewTripConfirmYes
-	stateNewTripConfirmNo
+
+	stateStart              // Start command, mean that user is new or want to reset state
+	stateNewTrip            // Just started creating a new trip
+	stateNewTripName        // Waiting for trip name
+	stateNewTripDate        // Waiting for trip date
+	stateNewTripTime        // Waiting for trip time
+	stateNewTripDescription // Waiting for trip description
+	stateNewTripConfirm     // Waiting for confirmation
+
+	stateSentinel // Sentinel value.
 )
 
 type session struct {
@@ -43,7 +44,7 @@ func newSession(u *user, chatID int64) *session {
 	return &session{
 		user:   u,
 		chatID: chatID,
-		state:  stateUnknown,
+		state:  stateStart,
 	}
 }
 
@@ -94,6 +95,10 @@ func (s *session) setState(st state) {
 
 func (s *session) getState() state {
 	return s.state
+}
+
+func (s *session) save() {
+	setSession(s, s.user.id)
 }
 
 func (s *session) isState(st state) bool {

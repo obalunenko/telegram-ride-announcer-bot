@@ -176,6 +176,8 @@ func initHandlers(ctx context.Context, bot *tgbotapi.Bot) stopFunc {
 
 	handler.Handle(notFoundHandler(ctx), th.AnyCommand())
 
+	handler.Handle(textHandler(), th.AnyMessageWithText())
+
 	go handler.Start()
 
 	return func(ctx context.Context) {

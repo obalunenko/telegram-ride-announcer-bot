@@ -10,6 +10,9 @@ func sessionFromContext(ctx context.Context) *session {
 		return nil
 	}
 
+	// Update session from storage.
+	sess = getSession(sess.user.id)
+
 	return sess
 }
 
