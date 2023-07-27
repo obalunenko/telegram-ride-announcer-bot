@@ -36,7 +36,7 @@ github.com/mymmrac/telego
 github.com/mymmrac/telego/telegoapi
 github.com/mymmrac/telego/telegohandler
 github.com/mymmrac/telego/telegoutil
-# github.com/obalunenko/getenv v1.10.0
+# github.com/obalunenko/getenv v1.11.0
 ## explicit; go 1.20
 github.com/obalunenko/getenv
 github.com/obalunenko/getenv/internal
@@ -63,6 +63,9 @@ github.com/valyala/bytebufferpool
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttputil
 github.com/valyala/fasthttp/stackless
+# golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
+## explicit; go 1.20
+golang.org/x/exp/constraints
 # golang.org/x/sys v0.10.0
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
