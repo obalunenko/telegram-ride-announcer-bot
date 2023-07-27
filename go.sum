@@ -18,8 +18,8 @@ github.com/klauspost/compress v1.16.7 h1:2mk3MPGNzKyxErAw8YaohYh69+pa4sIQSC0fPGC
 github.com/klauspost/compress v1.16.7/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
 github.com/mymmrac/telego v0.25.1 h1:tMNmrRm0YGyLS56CBi0NDHwO1ZI6V7QMgX4KWSWuT1U=
 github.com/mymmrac/telego v0.25.1/go.mod h1:nBO4SUqRV8j60JOS7trIr6bHPofwYCGJxYeqtQWgu2c=
-github.com/obalunenko/getenv v1.10.0 h1:hal7n2T/1YmlHohX/GU9NVhzYp9hqdbfxEP+CrBygeA=
-github.com/obalunenko/getenv v1.10.0/go.mod h1:aWb6RzOdu+NT7sBd0VcmYtu2YQ3TO34C5+ExFXIaLqw=
+github.com/obalunenko/getenv v1.11.0 h1:Mg+xW7b2PkZb0jfpUjFXj+oFuyXyCCLm/jAvpvqXA04=
+github.com/obalunenko/getenv v1.11.0/go.mod h1:gSbJ3/CrgFGvTFzKE4A+inlAhWe3Ns/8HDXOuLQ7Po4=
 github.com/obalunenko/logger v0.6.0 h1:Sif4MYn6aGUA5pBTcKkMtJXTZNRZ52EiP4KLiFgMEkI=
 github.com/obalunenko/logger v0.6.0/go.mod h1:AOThqVHT+qlG5yMVarmVYPP37yytKxL89HfY8S56a1s=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
@@ -37,6 +37,8 @@ github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6Kllzaw
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasthttp v1.48.0 h1:oJWvHb9BIZToTQS3MuQ2R3bJZiNSa2KiNdeI8A+79Tc=
 github.com/valyala/fasthttp v1.48.0/go.mod h1:k2zXd82h/7UZc3VOdJ2WaUqt1uZ/XpXAfE9i+HBC3lA=
+golang.org/x/exp v0.0.0-20230725093048-515e97ebf090 h1:Di6/M8l0O2lCLc6VVRWhgCiApHV8MnQurBnFSHsQtNY=
+golang.org/x/exp v0.0.0-20230725093048-515e97ebf090/go.mod h1:FXUEEKJgO7OQYeo8N01OfiKP8RXMtf6e8aTskBGqWdc=
 golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.10.0 h1:SqMFp9UcQJZa+pmYuAKjd9xq1f0j5rLcDIk0mj4qAsA=
 golang.org/x/sys v0.10.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
