@@ -3,11 +3,12 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+
 	tgbotapi "github.com/mymmrac/telego"
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
-	"os"
-	"os/signal"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
