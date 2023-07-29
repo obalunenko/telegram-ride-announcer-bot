@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"context"
@@ -8,13 +8,16 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 	log "github.com/obalunenko/logger"
+
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 )
 
-func notFoundHandler(ctx context.Context) th.Handler {
-	return unsupportedHandler(ctx, "Command not found.")
+func (s *Service) notFoundHandler(ctx context.Context) th.Handler {
+	return s.unsupportedHandler(ctx, "Command not found.")
 }
 
-func unsupportedHandler(ctx context.Context, text string) th.Handler {
+func (s *Service) unsupportedHandler(ctx context.Context, text string) th.Handler {
 	msg := fmt.Sprintf("%s Use /%s command to see all available commands.", text, cmdHelp)
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
@@ -24,11 +27,11 @@ func unsupportedHandler(ctx context.Context, text string) th.Handler {
 
 		log.Debug(ctx, "Called unsupported handler")
 
-		sendMessage(ctx, bot, msg)
+		s.sendMessage(ctx, msg)
 	}
 }
 
-func startHandler(ctx context.Context) th.Handler {
+func (s *Service) startHandler(ctx context.Context) th.Handler {
 	msgFormat := `Hello, %s! 👋 Welcome to %s. 
 
 I'm here to assist you in scheduling, announcing, and joining exciting bike trips with your community. 
@@ -59,20 +62,30 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 			return
 		}
 
-		// Reset session state.
-		sess.setState(stateStart)
+		// Reset Session State.
+		sess.State = models.StateStart
 
-		sess.save()
+		err := s.sessions.Update(ctx, &sessions.Session{
+			ID:     sess.ID,
+			UserID: sess.User.ID,
+			ChatID: sess.ChatID,
+			State:  sessions.State(sess.State),
+		})
+		if err != nil {
+			log.WithError(ctx, err).Error("Failed to update session")
+
+			return
+		}
 
 		log.Debug(ctx, "Called start handler")
 
-		msg := fmt.Sprintf(msgFormat, sess.user.firstname, botName, cmdHelp, sess.user.firstname)
+		msg := fmt.Sprintf(msgFormat, sess.User.Firstname, botName, cmdHelp, sess.User.Firstname)
 
-		sendMessage(ctx, bot, msg)
+		s.sendMessage(ctx, msg)
 	}
 }
 
-func helpHandler() th.Handler {
+func (s *Service) helpHandler() th.Handler {
 	msgFormat := `Welcome to %s Help!
 
 Here's a list of commands that you can use: 
@@ -97,10 +110,20 @@ Enjoy planning and going on your bike trips with %s!
 			return
 		}
 
-		// Reset session state.
-		sess.setState(stateStart)
+		// Reset Session State.
+		sess.State = models.StateStart
 
-		sess.save()
+		err := s.sessions.Update(ctx, &sessions.Session{
+			ID:     sess.ID,
+			UserID: sess.User.ID,
+			ChatID: sess.ChatID,
+			State:  sessions.State(sess.State),
+		})
+		if err != nil {
+			log.WithError(ctx, err).Error("Failed to update session")
+
+			return
+		}
 
 		cmds, err := bot.GetMyCommands(&tgbotapi.GetMyCommandsParams{})
 		if err != nil {
@@ -115,11 +138,11 @@ Enjoy planning and going on your bike trips with %s!
 
 		msg := fmt.Sprintf(msgFormat, botName, cmdsStr, cmdHelp, botName)
 
-		sendMessage(ctx, bot, msg)
+		s.sendMessage(ctx, msg)
 	}
 }
 
-func newTripHandler() th.Handler {
+func (s *Service) newTripHandler() th.Handler {
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
@@ -134,21 +157,52 @@ func newTripHandler() th.Handler {
 			return
 		}
 
-		defer sess.save()
+		defer func() {
+			err := s.sessions.Update(ctx, &sessions.Session{
+				ID:     sess.ID,
+				UserID: sess.User.ID,
+				ChatID: sess.ChatID,
+				State:  sessions.State(sess.State),
+			})
+			if err != nil {
+				log.WithError(ctx, err).Error("Failed to update session")
 
-		if sess.isStateAny(stateStart) {
-			sess.setState(stateNewTrip)
+				return
+			}
+		}()
 
-			sess.save()
+		if sess.State.IsAny(models.StateStart) {
+			sess.State = models.StateNewTrip
+
+			err := s.sessions.Update(ctx, &sessions.Session{
+				ID:     sess.ID,
+				UserID: sess.User.ID,
+				ChatID: sess.ChatID,
+				State:  sessions.State(sess.State),
+			})
+			if err != nil {
+				log.WithError(ctx, err).Error("Failed to update session")
+
+				return
+			}
 		}
 
-		if err := createTrip(ctx, bot, update); err != nil {
+		if err := s.createTrip(ctx, update); err != nil {
 			log.WithError(ctx, err).Error("Failed to create trip")
 		}
 	}
 }
 
-func createTrip(ctx context.Context, bot *tgbotapi.Bot, update tgbotapi.Update) error {
+func (s *Service) saveSession(ctx context.Context, sess *models.Session) error {
+	return s.sessions.Update(ctx, &sessions.Session{
+		ID:     sess.ID,
+		UserID: sess.User.ID,
+		ChatID: sess.ChatID,
+		State:  sessions.State(sess.State),
+	})
+}
+
+func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error {
 	sess := sessionFromContext(ctx)
 	if sess == nil {
 		log.Error(ctx, "Session is nil")
@@ -156,7 +210,11 @@ func createTrip(ctx context.Context, bot *tgbotapi.Bot, update tgbotapi.Update) 
 		return fmt.Errorf("session is nil")
 	}
 
-	defer sess.save()
+	log.WithField(ctx, "State", sess.State.String()).Debug("Current Session State")
+
+	defer func() {
+		log.WithField(ctx, "State", sess.State.String()).Debug("Saving Session")
+	}()
 
 	// 1. Ask for trip name.
 
@@ -176,24 +234,24 @@ func createTrip(ctx context.Context, bot *tgbotapi.Bot, update tgbotapi.Update) 
 
 	// 9. Pin the trip announcement to the chat.
 
-	switch sess.getState() {
-	case stateNewTrip: // 1. Ask for trip name.
+	switch sess.State {
+	case models.StateNewTrip: // 1. Ask for trip name.
 		// Trip creation is started.
 		// Ask for trip name.
-		sess.setState(stateNewTripName)
+		sess.State = models.StateNewTripName
 
 		msg := "Please enter trip name"
 
-		sendMessage(ctx, bot, msg)
+		s.sendMessage(ctx, msg)
 
 		return nil
-	case stateNewTripName: // 2. Ask for date and time
+	case models.StateNewTripName: // 2. Ask for date and time
 		// Waiting for trip name.
 
 		name := update.Message.Text
 		log.Debug(ctx, "Trip name: "+name)
 
-		sess.setState(stateNewTripDate)
+		sess.State = models.StateNewTripDate
 
 		// 1. Ask for date and time
 		keyboard := tu.Keyboard(
@@ -205,34 +263,34 @@ func createTrip(ctx context.Context, bot *tgbotapi.Bot, update tgbotapi.Update) 
 			),
 		).WithResizeKeyboard().WithInputFieldPlaceholder("Enter date").WithOneTimeKeyboard()
 
-		msg := tu.Message(tu.ID(sess.chatID), fmt.Sprintf("Your trip name %q. Please select date and time", name))
+		msg := tu.Message(tu.ID(sess.ChatID), fmt.Sprintf("Your trip name %q. Please select date and time", name))
 
 		msg.WithReplyMarkup(keyboard)
 
-		_, err := bot.SendMessage(msg)
+		_, err := s.bot.SendMessage(msg)
 		if err != nil {
 			log.WithError(ctx, err).Error("Failed to send message")
 		}
 
 		return nil
 
-	case stateNewTripDate: // 3. Ask for description
+	case models.StateNewTripDate: // 3. Ask for description
 		// Waiting for trip date.
 
 		date := update.Message.Text
 		log.Debug(ctx, "Trip date: "+date)
 
-		sendMessage(ctx, bot, "Your trip date: "+date)
+		s.sendMessage(ctx, "Your trip date: "+date)
 
 		return nil
 	default:
-		log.WithField(ctx, "state", sess.getState()).Error("Unexpected state")
+		log.WithField(ctx, "State", sess.State.String()).Error("Unexpected State")
 
 		return nil
 	}
 }
 
-func textHandler() th.Handler {
+func (s *Service) textHandler() th.Handler {
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
@@ -240,8 +298,8 @@ func textHandler() th.Handler {
 
 		log.Debug(ctx, "Called text handler")
 
-		// Check session state.
-		// If session state is not empty, then we are in the middle of creating a trip.
+		// Check Session State.
+		// If the Session State is not empty, then we are in the middle of creating a trip.
 		sess := sessionFromContext(ctx)
 		if sess == nil {
 			log.Error(ctx, "Session is nil")
@@ -249,43 +307,47 @@ func textHandler() th.Handler {
 			return
 		}
 
-		switch sess.getState() {
-		case stateStart:
-			// If session state is empty, then we are not in the middle of creating a trip.
-			notFoundHandler(ctx)(bot, update)
+		st := sess.State
+
+		log.WithField(ctx, "State", st.String()).Debug("Current Session State")
+
+		switch st {
+		case models.StateStart:
+			// If Session State is empty, then we are not in the middle of creating a trip.
+			s.notFoundHandler(ctx)(bot, update)
 
 			return
-		case stateNewTrip, stateNewTripName, stateNewTripDate, stateNewTripTime, stateNewTripDescription, stateNewTripConfirm:
-			newTripHandler()(bot, update)
+		case models.StateNewTrip, models.StateNewTripName, models.StateNewTripDate, models.StateNewTripTime, models.StateNewTripDescription, models.StateNewTripConfirm:
+			s.newTripHandler()(bot, update)
 
 			return
 		default:
-			notFoundHandler(ctx)(bot, update)
+			s.notFoundHandler(ctx)(bot, update)
 		}
 	}
 }
 
-func tripsHandler() th.Handler {
-	return notImplementedHandler(cmdTrips)
+func (s *Service) tripsHandler() th.Handler {
+	return s.notImplementedHandler(cmdTrips)
 }
 
-func subscribeHandler() th.Handler {
-	return notImplementedHandler(cmdSubscribe)
+func (s *Service) subscribeHandler() th.Handler {
+	return s.notImplementedHandler(cmdSubscribe)
 }
 
-func unsubscribeHandler() th.Handler {
-	return notImplementedHandler(cmdUnsubscribe)
+func (s *Service) unsubscribeHandler() th.Handler {
+	return s.notImplementedHandler(cmdUnsubscribe)
 }
 
-func myTripsHandler() th.Handler {
-	return notImplementedHandler(cmdMyTrips)
+func (s *Service) myTripsHandler() th.Handler {
+	return s.notImplementedHandler(cmdMyTrips)
 }
 
-func subscribedHandler() th.Handler {
-	return notImplementedHandler(cmdSubscribed)
+func (s *Service) subscribedHandler() th.Handler {
+	return s.notImplementedHandler(cmdSubscribed)
 }
 
-func notImplementedHandler(cmd string) th.Handler {
+func (s *Service) notImplementedHandler(cmd string) th.Handler {
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
@@ -295,6 +357,6 @@ func notImplementedHandler(cmd string) th.Handler {
 
 		msg := fmt.Sprintf("Not implemented yet. Use /%s command to see all available commands.", cmdHelp)
 
-		sendMessage(ctx, bot, msg)
+		s.sendMessage(ctx, msg)
 	}
 }

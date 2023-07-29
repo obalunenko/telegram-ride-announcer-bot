@@ -1,14 +1,13 @@
-package main
+package service
 
 import (
 	"context"
 
-	tgbotapi "github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 	log "github.com/obalunenko/logger"
 )
 
-func sendMessage(ctx context.Context, bot *tgbotapi.Bot, text string) {
+func (s *Service) sendMessage(ctx context.Context, text string) {
 	sess := sessionFromContext(ctx)
 	if sess == nil {
 		log.Error(ctx, "Session is nil")
@@ -16,9 +15,9 @@ func sendMessage(ctx context.Context, bot *tgbotapi.Bot, text string) {
 		return
 	}
 
-	msg := tu.Message(tu.ID(sess.chatID), text)
+	msg := tu.Message(tu.ID(sess.ChatID), text)
 
-	_, err := bot.SendMessage(msg)
+	_, err := s.bot.SendMessage(msg)
 	if err != nil {
 		log.WithError(ctx, err).Error("Failed to send message")
 	}
