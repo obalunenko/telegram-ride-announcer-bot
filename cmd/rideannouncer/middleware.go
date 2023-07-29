@@ -18,42 +18,6 @@ func setContextMiddleware(ctx context.Context) th.Middleware {
 	}
 }
 
-func getChatIDMiddleware() th.Middleware {
-	mu.Lock()
-	if chatIDs == nil {
-		chatIDs = make(map[int64]struct{})
-	}
-	mu.Unlock()
-
-	return func(next th.Handler) th.Handler {
-		return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-			ctx := update.Context()
-
-			defer next(bot, update)
-
-			sess := sessionFromContext(ctx)
-			if sess == nil {
-				log.Error(ctx, "Session is nil")
-
-				return
-			}
-
-			mu.RLock()
-			cid := sess.chatID
-			_, exist := chatIDs[cid]
-			mu.RUnlock()
-
-			if !exist {
-				mu.Lock()
-				chatIDs[cid] = struct{}{}
-				mu.Unlock()
-
-				log.Info(ctx, "New chat added")
-			}
-		}
-	}
-}
-
 func loggerMiddleware() th.Middleware {
 	return func(next th.Handler) th.Handler {
 		return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
@@ -88,7 +52,10 @@ func setSessionMiddleware() th.Middleware {
 					newUser(uid, update.Message.From.Username, update.Message.From.FirstName, update.Message.From.LastName),
 					cid,
 				)
+
+				log.WithField(ctx, "user_id", uid).Debug("New session created")
 			}
+
 			setSession(sess, uid)
 			ctx = contextWithSession(ctx, sess)
 

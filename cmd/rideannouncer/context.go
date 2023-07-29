@@ -6,7 +6,7 @@ type sessionKey struct{}
 
 func sessionFromContext(ctx context.Context) *session {
 	sess, ok := ctx.Value(sessionKey{}).(*session)
-	if !ok {
+	if !ok || sess == nil {
 		return nil
 	}
 

@@ -20,7 +20,7 @@ const (
 
 type session struct {
 	user   *user
-	chatID int64
+	chatID chatID
 	state  state
 }
 
@@ -55,7 +55,6 @@ type (
 
 var (
 	sessions = make(map[userID]*session)
-	chatIDs  map[chatID]struct{}
 	mu       sync.RWMutex
 )
 

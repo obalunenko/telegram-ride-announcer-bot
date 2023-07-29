@@ -124,16 +124,23 @@ func gracefulShutdown(ctx context.Context, wg *sync.WaitGroup, bot *tgbotapi.Bot
 	log.Info(ctx, "Received stop signal")
 
 	mu.RLock()
+	ids := make([]userID, 0, len(sessions))
 
-	for id := range chatIDs {
-		msg := "I'm going to sleep. Bye!"
+	for id := range sessions {
+		id := id
 
-		sendMessage(contextWithSession(ctx, &session{
-			chatID: id,
-		}), bot, msg)
+		ids = append(ids, id)
 	}
 
 	mu.RUnlock()
+
+	for _, id := range ids {
+		msg := "I'm going to sleep. Bye!"
+
+		sendMessage(contextWithSession(ctx, sessions[id]), bot, msg)
+
+		deleteSession(id)
+	}
 
 	log.Info(ctx, "Stop receiving updates")
 	bot.StopLongPolling()
@@ -163,7 +170,6 @@ func initHandlers(ctx context.Context, bot *tgbotapi.Bot) stopFunc {
 	handler.Use(setContextMiddleware(ctx))
 	handler.Use(setSessionMiddleware())
 	handler.Use(loggerMiddleware())
-	handler.Use(getChatIDMiddleware())
 
 	handler.Handle(helpHandler(), th.CommandEqual(cmdHelp))
 	handler.Handle(startHandler(ctx), th.CommandEqual(cmdStart))
