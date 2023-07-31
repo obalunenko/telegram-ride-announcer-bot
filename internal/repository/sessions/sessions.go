@@ -16,16 +16,16 @@ var (
 )
 
 type Repository interface {
-	// Create creates a new session.
-	Create(ctx context.Context, userID, chatID int64, state State) error
-	// List returns all sessions.
-	List(ctx context.Context) ([]*Session, error)
-	// GetByUserID returns a session by user ID.
-	GetByUserID(ctx context.Context, userID int64) (*Session, error)
-	// Update updates a session.
-	Update(ctx context.Context, sess *Session) error
-	// Delete deletes a session.
-	Delete(ctx context.Context, userID int64) error
+	// CreateSession creates a new session.
+	CreateSession(ctx context.Context, userID, chatID int64, state State) error
+	// ListSessions returns all sessions.
+	ListSessions(ctx context.Context) ([]*Session, error)
+	// GetSessionByUserID returns a session by user ID.
+	GetSessionByUserID(ctx context.Context, userID int64) (*Session, error)
+	// UpdateSession updates a session.
+	UpdateSession(ctx context.Context, sess *Session) error
+	// DeleteSession deletes a session.
+	DeleteSession(ctx context.Context, userID int64) error
 }
 
 //go:generate stringer -type=State -output=state_string.go -trimprefix=State
@@ -79,7 +79,7 @@ type inMemoryRepository struct {
 	sessions map[int64]*Session
 }
 
-func (i *inMemoryRepository) List(ctx context.Context) ([]*Session, error) {
+func (i *inMemoryRepository) ListSessions(ctx context.Context) ([]*Session, error) {
 	i.RLock()
 	defer i.RUnlock()
 
@@ -92,7 +92,7 @@ func (i *inMemoryRepository) List(ctx context.Context) ([]*Session, error) {
 	return sessions, nil
 }
 
-func (i *inMemoryRepository) Create(ctx context.Context, userID, chatID int64, state State) error {
+func (i *inMemoryRepository) CreateSession(ctx context.Context, userID, chatID int64, state State) error {
 	s := newSession(userID, chatID, state)
 
 	i.Lock()
@@ -107,7 +107,7 @@ func (i *inMemoryRepository) Create(ctx context.Context, userID, chatID int64, s
 	return nil
 }
 
-func (i *inMemoryRepository) GetByUserID(ctx context.Context, userID int64) (*Session, error) {
+func (i *inMemoryRepository) GetSessionByUserID(ctx context.Context, userID int64) (*Session, error) {
 	i.RLock()
 	defer i.RUnlock()
 
@@ -119,7 +119,7 @@ func (i *inMemoryRepository) GetByUserID(ctx context.Context, userID int64) (*Se
 	return s, nil
 }
 
-func (i *inMemoryRepository) Update(ctx context.Context, sess *Session) error {
+func (i *inMemoryRepository) UpdateSession(ctx context.Context, sess *Session) error {
 	if sess == nil {
 		return errors.New("session is nil")
 	}
@@ -138,7 +138,7 @@ func (i *inMemoryRepository) Update(ctx context.Context, sess *Session) error {
 	return nil
 }
 
-func (i *inMemoryRepository) Delete(ctx context.Context, userID int64) error {
+func (i *inMemoryRepository) DeleteSession(ctx context.Context, userID int64) error {
 	i.Lock()
 	defer i.Unlock()
 

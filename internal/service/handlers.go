@@ -38,7 +38,7 @@ I'm here to assist you in scheduling, announcing, and joining exciting bike trip
 
 Here are some of the things I can do:
 
-🔹 Create new bike trip announcements.
+🔹 CreateState new bike trip announcements.
 🔹 Display a list of upcoming trips.
 🔹 Subscribe you to a bike trip.
 🔹 Provide outfit and SPF recommendations based on the weather.
@@ -65,7 +65,7 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 		// Reset Session State.
 		sess.State = models.StateStart
 
-		err := s.sessions.Update(ctx, &sessions.Session{
+		err := s.sessions.UpdateSession(ctx, &sessions.Session{
 			ID:     sess.ID,
 			UserID: sess.User.ID,
 			ChatID: sess.ChatID,
@@ -113,7 +113,7 @@ Enjoy planning and going on your bike trips with %s!
 		// Reset Session State.
 		sess.State = models.StateStart
 
-		err := s.sessions.Update(ctx, &sessions.Session{
+		err := s.sessions.UpdateSession(ctx, &sessions.Session{
 			ID:     sess.ID,
 			UserID: sess.User.ID,
 			ChatID: sess.ChatID,
@@ -142,59 +142,8 @@ Enjoy planning and going on your bike trips with %s!
 	}
 }
 
-func (s *Service) newTripHandler() th.Handler {
-	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
-		ctx := update.Context()
-
-		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdNewTrip))
-
-		log.Debug(ctx, "Called new_trip handler")
-
-		sess := sessionFromContext(ctx)
-		if sess == nil {
-			log.Error(ctx, "Session is nil")
-
-			return
-		}
-
-		defer func() {
-			err := s.sessions.Update(ctx, &sessions.Session{
-				ID:     sess.ID,
-				UserID: sess.User.ID,
-				ChatID: sess.ChatID,
-				State:  sessions.State(sess.State),
-			})
-			if err != nil {
-				log.WithError(ctx, err).Error("Failed to update session")
-
-				return
-			}
-		}()
-
-		if sess.State.IsAny(models.StateStart) {
-			sess.State = models.StateNewTrip
-
-			err := s.sessions.Update(ctx, &sessions.Session{
-				ID:     sess.ID,
-				UserID: sess.User.ID,
-				ChatID: sess.ChatID,
-				State:  sessions.State(sess.State),
-			})
-			if err != nil {
-				log.WithError(ctx, err).Error("Failed to update session")
-
-				return
-			}
-		}
-
-		if err := s.createTrip(ctx, update); err != nil {
-			log.WithError(ctx, err).Error("Failed to create trip")
-		}
-	}
-}
-
 func (s *Service) saveSession(ctx context.Context, sess *models.Session) error {
-	return s.sessions.Update(ctx, &sessions.Session{
+	return s.sessions.UpdateSession(ctx, &sessions.Session{
 		ID:     sess.ID,
 		UserID: sess.User.ID,
 		ChatID: sess.ChatID,

@@ -81,7 +81,7 @@ func (s *Service) setSessionMiddleware() th.Middleware {
 				return
 			}
 
-			sess, err := s.sessions.GetByUserID(ctx, uid)
+			sess, err := s.sessions.GetSessionByUserID(ctx, uid)
 			if err != nil {
 				if !errors.Is(err, sessions.ErrNotFound) {
 					log.WithError(ctx, err).Error("Failed to get session by user id")
@@ -91,14 +91,14 @@ func (s *Service) setSessionMiddleware() th.Middleware {
 			}
 
 			if sess == nil {
-				err = s.sessions.Create(ctx, uid, cid, sessions.State(models.StateStart))
+				err = s.sessions.CreateSession(ctx, uid, cid, sessions.State(models.StateStart))
 				if err != nil {
 					log.WithError(ctx, err).Error("Failed to create session")
 
 					return
 				}
 
-				sess, err = s.sessions.GetByUserID(ctx, uid)
+				sess, err = s.sessions.GetSessionByUserID(ctx, uid)
 				if err != nil {
 					log.WithError(ctx, err).Error("Failed to get session by user id")
 

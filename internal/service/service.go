@@ -103,7 +103,7 @@ func (s *Service) Start(ctx context.Context) {
 // Shutdown is a helper function that will be called when the program receives an interrupt signal.
 // It will gracefully shut down the bot by waiting for all requests to be processed before shutting down.
 func (s *Service) Shutdown(ctx context.Context) {
-	list, err := s.sessions.List(ctx)
+	list, err := s.sessions.ListSessions(ctx)
 	if err != nil {
 		log.WithError(ctx, err).Error("Failed to get sessions")
 
@@ -131,7 +131,7 @@ func (s *Service) Shutdown(ctx context.Context) {
 			State:  models.State(sess.State),
 		}), msg)
 
-		if err = s.sessions.Delete(ctx, sess.UserID); err != nil {
+		if err = s.sessions.DeleteSession(ctx, sess.UserID); err != nil {
 			return
 		}
 	}
