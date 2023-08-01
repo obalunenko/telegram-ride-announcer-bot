@@ -8,11 +8,11 @@ import (
 
 	"github.com/valyala/fasthttp"
 
-	"github.com/mymmrac/telego/telegoapi"
+	ta "github.com/mymmrac/telego/telegoapi"
 )
 
 // WithAPICaller sets custom API caller to use
-func WithAPICaller(caller telegoapi.Caller) BotOption {
+func WithAPICaller(caller ta.Caller) BotOption {
 	return func(bot *Bot) error {
 		bot.api = caller
 		return nil
@@ -22,7 +22,7 @@ func WithAPICaller(caller telegoapi.Caller) BotOption {
 // WithFastHTTPClient sets fasthttp client to use
 func WithFastHTTPClient(client *fasthttp.Client) BotOption {
 	return func(bot *Bot) error {
-		bot.api = telegoapi.FastHTTPCaller{Client: client}
+		bot.api = ta.FastHTTPCaller{Client: client}
 		return nil
 	}
 }
@@ -30,13 +30,13 @@ func WithFastHTTPClient(client *fasthttp.Client) BotOption {
 // WithHTTPClient sets http client to use
 func WithHTTPClient(client *http.Client) BotOption {
 	return func(bot *Bot) error {
-		bot.api = telegoapi.HTTPCaller{Client: client}
+		bot.api = ta.HTTPCaller{Client: client}
 		return nil
 	}
 }
 
 // WithRequestConstructor sets custom request constructor to use
-func WithRequestConstructor(constructor telegoapi.RequestConstructor) BotOption {
+func WithRequestConstructor(constructor ta.RequestConstructor) BotOption {
 	return func(bot *Bot) error {
 		bot.constructor = constructor
 		return nil
@@ -59,7 +59,7 @@ func WithDefaultLogger(debugMode, printErrors bool) BotOption {
 	}
 }
 
-// WithExtendedDefaultLogger configures default logger, replacer can be nil. Redefines existing logger.
+// WithExtendedDefaultLogger configures default logger, replacer can be nil. Redefines existing loggers.
 // Note: Keep in mind that debug logs will include your bot token. It's only safe to have them enabled in
 // testing environment, or hide sensitive information (like bot token) yourself.
 func WithExtendedDefaultLogger(debugMode, printErrors bool, replacer *strings.Replacer) BotOption {
@@ -86,7 +86,7 @@ func WithDiscardLogger() BotOption {
 	return WithDefaultLogger(false, false)
 }
 
-// WithLogger sets logger to use. Redefines existing logger.
+// WithLogger sets logger to use. Redefines existing loggers.
 // Note: Keep in mind that debug logs will include your bot token. It's only safe to have them enabled in
 // testing environment, or hide sensitive information (like bot token) yourself.
 func WithLogger(log Logger) BotOption {
@@ -100,7 +100,7 @@ func WithLogger(log Logger) BotOption {
 func WithAPIServer(apiURL string) BotOption {
 	return func(bot *Bot) error {
 		if apiURL == "" {
-			return errors.New("telego: empty bot api server url")
+			return errors.New("empty bot api server url")
 		}
 
 		bot.apiURL = apiURL

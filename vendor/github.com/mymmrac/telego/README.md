@@ -97,6 +97,8 @@ More examples can be seen here:
 - [Update processor](examples/update_processor/main.go)
 - [Message entities](examples/message_entity/main.go)
 - [Multi bot webhook](examples/multi_bot_webhook/main.go)
+- [Retry caller](examples/retry_caller/main.go)
+- [Menu bot](examples/menu_bot/main.go)
 
 </details>
 
@@ -569,11 +571,9 @@ func main() {
 	// Init ...
 
 	// Add global middleware, it will be applied in order of addition
-	bh.Use(func(next th.Handler) th.Handler {
-		return func(bot *telego.Bot, update telego.Update) {
-			fmt.Println("Global middleware") // Will be called first
-			next(bot, update)
-		}
+	bh.Use(func(bot *telego.Bot, update telego.Update, next th.Handler) {
+		fmt.Println("Global middleware") // Will be called first
+		next(bot, update)
 	})
 
 	// Create any groups with or without predicates
@@ -582,13 +582,11 @@ func main() {
 	task := bh.Group(th.TextContains("task"))
 
 	// Add middleware to groups
-	task.Use(func(next th.Handler) th.Handler {
-		return func(bot *telego.Bot, update telego.Update) {
-			fmt.Println("Group based middleware") // Will be called second
+	task.Use(func(bot *telego.Bot, update telego.Update, next th.Handler) {
+		fmt.Println("Group-based middleware") // Will be called second
 
-			if len(update.Message.Text) < 10 {
-				next(bot, update)
-			}
+		if len(update.Message.Text) < 10 {
+			next(bot, update)
 		}
 	})
 
