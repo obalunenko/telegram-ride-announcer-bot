@@ -33,7 +33,7 @@ github.com/gofrs/uuid/v5
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip
 github.com/klauspost/compress/zlib
-# github.com/mymmrac/telego v0.25.1
+# github.com/mymmrac/telego v0.26.0
 ## explicit; go 1.20
 github.com/mymmrac/telego
 github.com/mymmrac/telego/telegoapi

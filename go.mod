@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/gofrs/uuid/v5 v5.0.0
-	github.com/mymmrac/telego v0.25.1
+	github.com/mymmrac/telego v0.26.0
 	github.com/obalunenko/getenv v1.11.0
 	github.com/obalunenko/logger v0.6.0
 )
