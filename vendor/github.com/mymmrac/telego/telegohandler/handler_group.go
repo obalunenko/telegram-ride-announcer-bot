@@ -1,7 +1,6 @@
 package telegohandler
 
 import (
-	"context"
 	"sync"
 
 	"github.com/mymmrac/telego"
@@ -9,14 +8,15 @@ import (
 
 // conditionalHandler represents handler with respectful predicates
 type conditionalHandler struct {
-	Handler    Handler
-	Predicates []Predicate
+	handler    Handler
+	predicates []Predicate
 }
 
 // match matches the current update and handler
 func (h conditionalHandler) match(update telego.Update) bool {
-	for _, p := range h.Predicates {
-		if !p(update.Clone()) {
+	update = update.Clone()
+	for _, p := range h.predicates {
+		if !p(update) {
 			return false
 		}
 	}
@@ -25,71 +25,76 @@ func (h conditionalHandler) match(update telego.Update) bool {
 
 // HandlerGroup represents a group of handlers, middlewares and child groups
 type HandlerGroup struct {
-	parent      *HandlerGroup
 	predicates  []Predicate
+	middlewares []Middleware
 	groups      []*HandlerGroup
 	handlers    []conditionalHandler
-	middlewares []Middleware
-}
-
-// applyMiddlewares applies all parent middlewares and its own in reverse order
-func (h *HandlerGroup) applyMiddlewares(next Handler) Handler {
-	for i := len(h.middlewares) - 1; i >= 0; i-- {
-		next = h.middlewares[i](next)
-	}
-
-	if h.parent != nil {
-		next = h.parent.applyMiddlewares(next)
-	}
-
-	return next
-}
-
-// useHandlers tries to match update to a handler
-func (h *HandlerGroup) useHandlers(bot *telego.Bot, update telego.Update, wg *sync.WaitGroup) bool {
-	for _, handler := range h.handlers {
-		if !handler.match(update) {
-			continue
-		}
-
-		wg.Add(1)
-		go func(ch conditionalHandler) {
-			ctx, cancel := context.WithCancel(update.Context())
-			h.applyMiddlewares(ch.Handler)(bot, update.WithContext(ctx))
-			wg.Done()
-			cancel()
-		}(handler)
-
-		return true
-	}
-
-	return false
 }
 
 // match matches the current update and group
 func (h *HandlerGroup) match(update telego.Update) bool {
+	update = update.Clone()
 	for _, p := range h.predicates {
-		if !p(update.Clone()) {
+		if !p(update) {
 			return false
 		}
 	}
 	return true
 }
 
-// useHandlers tries to match update to a group
-func (h *HandlerGroup) useGroups(bot *telego.Bot, update telego.Update, wg *sync.WaitGroup) bool {
-	for _, group := range h.groups {
-		if !group.match(update) {
-			continue
-		}
+// processUpdate checks all group predicates, runs middlewares, checks handler predicates,
+// tries to process update in first matched handler
+func (h *HandlerGroup) processUpdate(bot *telego.Bot, update telego.Update) {
+	_ = h.processUpdateWithMiddlewares(bot, update, h.middlewares)
+}
 
-		if ok := group.useGroups(bot, update, wg); ok {
+func (h *HandlerGroup) processUpdateWithMiddlewares(
+	bot *telego.Bot, update telego.Update, middlewares []Middleware,
+) bool {
+	ctx := update.Context()
+	select {
+	case <-ctx.Done():
+		return false
+	default:
+		// Continue
+	}
+
+	// Check group predicates once
+	if len(middlewares) == len(h.middlewares) && !h.match(update) {
+		return false
+	}
+
+	// Process all middlewares
+	if len(middlewares) != 0 {
+		once := sync.Once{}
+		done := make(chan bool, 1)
+		middlewares[0](bot, update, func(bot *telego.Bot, update telego.Update) {
+			once.Do(func() {
+				done <- h.processUpdateWithMiddlewares(bot, update, middlewares[1:])
+			})
+		})
+
+		select {
+		case <-ctx.Done():
+			return false
+		case matched := <-done:
+			return matched
+		}
+	}
+
+	// Process all groups
+	for _, group := range h.groups {
+		if group.processUpdateWithMiddlewares(bot, update, group.middlewares) {
 			return true
 		}
 	}
 
-	if ok := h.useHandlers(bot, update, wg); ok {
-		return true
+	// Process all handlers
+	for _, handler := range h.handlers {
+		if handler.match(update) {
+			handler.handler(bot, update)
+			return true
+		}
 	}
 
 	return false
@@ -97,9 +102,10 @@ func (h *HandlerGroup) useGroups(bot *telego.Bot, update telego.Update, wg *sync
 
 // Handle registers new handler in the group, update will be processed only by first-matched handler,
 // order of registration determines the order of matching handlers.
-// Important to notice, update's context will be automatically canceled once the handler will finish processing.
+// Important to notice, update's context will be automatically canceled once the handler will finish processing or
+// the bot handler stopped.
 // Note: All handlers will process updates in parallel, there is no guaranty on order of processed updates, also keep
-// in mind that predicates are checked sequentially.
+// in mind that middlewares and predicates are checked sequentially.
 //
 // Warning: Panics if nil handler or predicates passed
 func (h *HandlerGroup) Handle(handler Handler, predicates ...Predicate) {
@@ -114,8 +120,8 @@ func (h *HandlerGroup) Handle(handler Handler, predicates ...Predicate) {
 	}
 
 	h.handlers = append(h.handlers, conditionalHandler{
-		Handler:    handler,
-		Predicates: predicates,
+		handler:    handler,
+		predicates: predicates,
 	})
 }
 
@@ -131,7 +137,6 @@ func (h *HandlerGroup) Group(predicates ...Predicate) *HandlerGroup {
 	}
 
 	group := &HandlerGroup{
-		parent:     h,
 		predicates: predicates,
 	}
 	h.groups = append(h.groups, group)
@@ -140,7 +145,9 @@ func (h *HandlerGroup) Group(predicates ...Predicate) *HandlerGroup {
 }
 
 // Use applies middleware to the group
-// Note: The Handler chain will be stopped if middleware doesn't call the next func
+// Note: The chain will be stopped if middleware doesn't call the next func,
+// if there is no context timeout then update will be stuck,
+// if there is time out then the group will be skipped since not all middlewares were called
 //
 // Warning: Panics if nil middlewares passed
 func (h *HandlerGroup) Use(middlewares ...Middleware) {
