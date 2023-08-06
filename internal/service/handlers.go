@@ -172,7 +172,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 	// 9. Pin the trip announcement to the chat.
 
 	switch sess.UserState.State {
-	case models.StateNewTrip: // 1. Ask for trip name.
+	case models.StateNewTrip:
 		if sess.UserState.Trip == nil {
 			t, err := ops.CreateTrip(ctx, s.trips, ops.CreateTripParams{
 				Name:        "",
@@ -189,8 +189,6 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 			sess.UserState.Trip = t
 		}
 
-		// Trip creation is started.
-		// Ask for trip name.
 		sess.UserState.State = models.StateNewTripName
 
 		msg := "Please enter trip name"
@@ -198,9 +196,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		s.sendMessage(ctx, msg)
 
 		return nil
-	case models.StateNewTripName: // 2. Ask for date and time
-		// Waiting for trip name.
-
+	case models.StateNewTripName:
 		name := update.Message.Text
 		sess.UserState.Trip.Name = name
 
@@ -236,9 +232,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		return nil
 
-	case models.StateNewTripDate: // 3. Ask for description
-		// Waiting for trip date.
-
+	case models.StateNewTripDate:
 		date := update.Message.Text
 
 		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
@@ -252,16 +246,13 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		sess.UserState.State = models.StateNewTripDescription
 
-		// 2. Ask for description
 		msg := "Please enter trip description"
 
 		s.sendMessage(ctx, msg)
 
 		return nil
 
-	case models.StateNewTripDescription: // 4. Ask for a track link. If not provided, ask for track file
-		// Waiting for trip description.
-
+	case models.StateNewTripDescription:
 		description := update.Message.Text
 
 		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
@@ -295,21 +286,19 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		return nil
 
-	case models.StateNewTripConfirm: // 5. Ask for a photo (optional)
-		// Waiting for trip confirmation.
-
+	case models.StateNewTripConfirm:
 		confirm := update.Message.Text
 
 		if confirm == "no" {
 			sess.UserState.State = models.StateNewTrip
-			err := ops.DeleteTrip(ctx, s.trips, sess.UserState.Trip.ID)
-			if err != nil {
+
+			if err := ops.DeleteTrip(ctx, s.trips, sess.UserState.Trip.ID); err != nil {
 				return fmt.Errorf("failed to delete trip: %w", err)
 			}
 
 			sess.UserState.Trip = nil
 
-			msg := "Your trip is cancelled. Thank you!"
+			msg := "Your trip is canceled. Thank you!"
 
 			s.sendMessage(ctx, msg)
 
@@ -325,12 +314,9 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		sess.UserState.Trip = trip
 
-		sess.UserState.State = models.StateNewTripPublication
+		sess.UserState.State = models.StateNewTripPublish
 
-		// Get trip string representation.
 		t := sess.UserState.Trip.String()
-
-		// Format message.
 
 		msgtxt := fmt.Sprintf("Your trip %s published. Thank you!", t)
 
@@ -382,6 +368,7 @@ func (s *Service) textHandler() th.Handler {
 
 		if update.Message != nil {
 			if strings.HasPrefix(update.Message.Text, "/") {
+				// TODO: Handle commands.
 			}
 		}
 
@@ -395,7 +382,7 @@ func (s *Service) textHandler() th.Handler {
 			s.notFoundHandler(ctx)(bot, update)
 
 			return
-		case models.StateNewTrip, models.StateNewTripName, models.StateNewTripDate, models.StateNewTripTime, models.StateNewTripDescription, models.StateNewTripConfirm, models.StateNewTripPublication:
+		case models.StateNewTrip, models.StateNewTripName, models.StateNewTripDate, models.StateNewTripTime, models.StateNewTripDescription, models.StateNewTripConfirm, models.StateNewTripPublish:
 			s.newTripHandler()(bot, update)
 
 			return

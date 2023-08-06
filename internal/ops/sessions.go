@@ -15,6 +15,7 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
 
+// GetSession returns session for user.
 func GetSession(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, tripsRepo trips.Repository, user *models.User) (*models.Session, error) {
 	// Check if user exists.
 	sess, err := sessRepo.GetSessionByUserID(ctx, user.ID)
@@ -36,9 +37,7 @@ func GetSession(ctx context.Context, sessRepo sessions.Repository, statesRepo st
 		}
 	}
 
-	var resp *models.Session
-
-	resp = &models.Session{
+	resp := models.Session{
 		ID:     sess.ID,
 		User:   user,
 		ChatID: sess.ChatID,
@@ -49,14 +48,16 @@ func GetSession(ctx context.Context, sessRepo sessions.Repository, statesRepo st
 		},
 	}
 
-	return resp, nil
+	return &resp, nil
 }
 
+// CreateSessionParams is a params for CreateSession function.
 type CreateSessionParams struct {
 	User   *models.User
 	ChatID int64
 }
 
+// CreateSession creates a new session.
 func CreateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, tripsRepo trips.Repository, p CreateSessionParams) (*models.Session, error) {
 	// check if state exists
 	state, err := statesRepo.GetStateByUserID(ctx, p.User.ID)
@@ -92,8 +93,10 @@ func CreateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 	return GetSession(ctx, sessRepo, statesRepo, tripsRepo, p.User)
 }
 
+// UpdateSession updates session.
 func UpdateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, sess *models.Session) error {
 	uid := sess.User.ID
+
 	var tid *uuid.UUID
 
 	if sess.UserState.Trip != nil {
@@ -134,6 +137,7 @@ func UpdateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 	return nil
 }
 
+// ListSessions returns list of sessions.
 func ListSessions(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, tripsRepo trips.Repository, usersRepo users.Repository) ([]*models.Session, error) {
 	list, err := sessRepo.ListSessions(ctx)
 	if err != nil {
@@ -179,4 +183,19 @@ func ListSessions(ctx context.Context, sessRepo sessions.Repository, statesRepo 
 	}
 
 	return resp, nil
+}
+
+// DeleteSession deletes session.
+func DeleteSession(ctx context.Context, sessRepo sessions.Repository, sess *models.Session) error {
+	err := sessRepo.DeleteSession(ctx, sess.User.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete session: %w", err)
+	}
+
+	log.WithFields(ctx, log.Fields{
+		"user_id": sess.User.ID,
+		"chat_id": sess.ChatID,
+	}).Debug("Session deleted")
+
+	return nil
 }

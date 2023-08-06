@@ -1,3 +1,4 @@
+// Package states provides a repository for states.
 package states
 
 import (
@@ -18,6 +19,7 @@ var (
 	ErrAlreadyExists = errors.New("state already exists")
 )
 
+// Repository provides access to the state storage.
 type Repository interface {
 	// CreateState creates a new state.
 	CreateState(ctx context.Context, params CreateParams) (*State, error)
@@ -31,6 +33,7 @@ type Repository interface {
 	UpdateState(ctx context.Context, state *State) error
 }
 
+// State represents a state.
 type State struct {
 	ID      uuid.UUID  `db:"id"`
 	UserID  int64      `db:"user_id"`
@@ -39,6 +42,7 @@ type State struct {
 	Step    uint       `db:"step"`
 }
 
+// CreateParams contains the parameters for CreateState.
 type CreateParams struct {
 	UserID  int64
 	Command string
@@ -46,6 +50,7 @@ type CreateParams struct {
 	Step    uint
 }
 
+// NewInMemory creates a new in-memory repository.
 func NewInMemory() Repository {
 	return &inMemoryRepository{
 		RWMutex: sync.RWMutex{},
@@ -59,7 +64,7 @@ type inMemoryRepository struct {
 	states map[uuid.UUID]*State
 }
 
-func (i *inMemoryRepository) CreateState(ctx context.Context, params CreateParams) (*State, error) {
+func (i *inMemoryRepository) CreateState(_ context.Context, params CreateParams) (*State, error) {
 	i.Lock()
 	defer i.Unlock()
 
@@ -88,7 +93,7 @@ func (i *inMemoryRepository) CreateState(ctx context.Context, params CreateParam
 	return newState, nil
 }
 
-func (i *inMemoryRepository) ListStates(ctx context.Context) ([]*State, error) {
+func (i *inMemoryRepository) ListStates(_ context.Context) ([]*State, error) {
 	i.RLock()
 	defer i.RUnlock()
 
@@ -101,7 +106,7 @@ func (i *inMemoryRepository) ListStates(ctx context.Context) ([]*State, error) {
 	return states, nil
 }
 
-func (i *inMemoryRepository) GetStateByID(ctx context.Context, id uuid.UUID) (*State, error) {
+func (i *inMemoryRepository) GetStateByID(_ context.Context, id uuid.UUID) (*State, error) {
 	i.RLock()
 	defer i.RUnlock()
 
@@ -113,7 +118,7 @@ func (i *inMemoryRepository) GetStateByID(ctx context.Context, id uuid.UUID) (*S
 	return state, nil
 }
 
-func (i *inMemoryRepository) GetStateByUserID(ctx context.Context, userID int64) (*State, error) {
+func (i *inMemoryRepository) GetStateByUserID(_ context.Context, userID int64) (*State, error) {
 	i.RLock()
 	defer i.RUnlock()
 
@@ -126,7 +131,7 @@ func (i *inMemoryRepository) GetStateByUserID(ctx context.Context, userID int64)
 	return nil, ErrNotFound
 }
 
-func (i *inMemoryRepository) UpdateState(ctx context.Context, newState *State) error {
+func (i *inMemoryRepository) UpdateState(_ context.Context, newState *State) error {
 	i.Lock()
 	defer i.Unlock()
 

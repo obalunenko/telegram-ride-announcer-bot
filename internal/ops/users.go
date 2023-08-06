@@ -1,3 +1,4 @@
+// Package ops provide operations for business logic.
 package ops
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
 
+// GetUser returns user by ID.
 func GetUser(ctx context.Context, usersRepo users.Repository, userID int64) (*models.User, error) {
 	// check is user exists
 	user, err := usersRepo.GetBuID(ctx, userID)
@@ -24,6 +26,7 @@ func GetUser(ctx context.Context, usersRepo users.Repository, userID int64) (*mo
 	}, nil
 }
 
+// CreateUser creates a new user.
 func CreateUser(ctx context.Context, usersRepo users.Repository, userID int64, username, firstname, lastname string) (*models.User, error) {
 	err := usersRepo.Create(ctx, &users.User{
 		ID:        userID,

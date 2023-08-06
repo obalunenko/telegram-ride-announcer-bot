@@ -11,6 +11,7 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
 )
 
+// CreateTripParams is a params for CreateTrip function.
 type CreateTripParams struct {
 	Name        string
 	Date        string
@@ -18,6 +19,7 @@ type CreateTripParams struct {
 	CreatedBy   int64
 }
 
+// CreateTrip creates a new trip.
 func CreateTrip(ctx context.Context, tripsRepo trips.Repository, p CreateTripParams) (*models.Trip, error) {
 	t, err := tripsRepo.CreateTrip(ctx, p.Name, p.Date, p.Description, p.CreatedBy)
 	if err != nil {
@@ -31,6 +33,7 @@ func CreateTrip(ctx context.Context, tripsRepo trips.Repository, p CreateTripPar
 	return GetTrip(ctx, tripsRepo, t.ID)
 }
 
+// GetTrip returns trip by ID.
 func GetTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID) (*models.Trip, error) {
 	t, err := tripsRepo.GetTripByID(ctx, id)
 	if err != nil {
@@ -48,6 +51,7 @@ func GetTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID) (*mo
 	}, nil
 }
 
+// UpdateTripParams is a params for UpdateTrip function.
 type UpdateTripParams struct {
 	Name        *string
 	Date        *string
@@ -55,6 +59,7 @@ type UpdateTripParams struct {
 	Completed   *bool
 }
 
+// UpdateTrip updates a trip.
 func UpdateTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID, p UpdateTripParams) (*models.Trip, error) {
 	err := tripsRepo.UpdateTrip(ctx, id, trips.UpdateTripParams{
 		Name:        p.Name,
@@ -72,6 +77,7 @@ func UpdateTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID, p
 	return GetTrip(ctx, tripsRepo, id)
 }
 
+// DeleteTrip deletes a trip.
 func DeleteTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID) error {
 	err := tripsRepo.DeleteTrip(ctx, id)
 	if err != nil {

@@ -1,3 +1,4 @@
+// Package trips provides a repository for trips.
 package trips
 
 import (
@@ -12,6 +13,7 @@ import (
 // ErrNotFound is returned when a trip is not found.
 var ErrNotFound = errors.New("trip not found")
 
+// Repository provides access to the trip storage.
 type Repository interface {
 	// CreateTrip creates a new trip.
 	CreateTrip(ctx context.Context, name, date, description string, createdBy int64) (*Trip, error)
@@ -25,6 +27,7 @@ type Repository interface {
 	DeleteTrip(ctx context.Context, id uuid.UUID) error
 }
 
+// UpdateTripParams contains the parameters for UpdateTrip.
 type UpdateTripParams struct {
 	Name        *string
 	Date        *string
@@ -32,6 +35,7 @@ type UpdateTripParams struct {
 	Completed   *bool
 }
 
+// Trip represents a trip.
 type Trip struct {
 	ID          uuid.UUID
 	Name        string
@@ -50,7 +54,15 @@ type inMemoryRepository struct {
 	trips map[uuid.UUID]*Trip
 }
 
-func (i *inMemoryRepository) DeleteTrip(ctx context.Context, id uuid.UUID) error {
+// NewInMemory creates a new in-memory repository.
+func NewInMemory() Repository {
+	return &inMemoryRepository{
+		mu:    sync.RWMutex{},
+		trips: make(map[uuid.UUID]*Trip),
+	}
+}
+
+func (i *inMemoryRepository) DeleteTrip(_ context.Context, id uuid.UUID) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -62,16 +74,15 @@ func (i *inMemoryRepository) DeleteTrip(ctx context.Context, id uuid.UUID) error
 	if !trip.DeletedAt.IsZero() {
 		return ErrNotFound
 	}
-	deletedAt := time.Now()
 
-	trip.DeletedAt = deletedAt
+	trip.DeletedAt = time.Now()
 
 	i.trips[id] = trip
 
 	return nil
 }
 
-func (i *inMemoryRepository) UpdateTrip(ctx context.Context, id uuid.UUID, params UpdateTripParams) error {
+func (i *inMemoryRepository) UpdateTrip(_ context.Context, id uuid.UUID, params UpdateTripParams) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -107,14 +118,7 @@ func (i *inMemoryRepository) UpdateTrip(ctx context.Context, id uuid.UUID, param
 	return nil
 }
 
-func NewInMemory() Repository {
-	return &inMemoryRepository{
-		mu:    sync.RWMutex{},
-		trips: make(map[uuid.UUID]*Trip),
-	}
-}
-
-func (i *inMemoryRepository) CreateTrip(ctx context.Context, name, date, description string, createdBy int64) (*Trip, error) {
+func (i *inMemoryRepository) CreateTrip(_ context.Context, name, date, description string, createdBy int64) (*Trip, error) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -135,7 +139,7 @@ func (i *inMemoryRepository) CreateTrip(ctx context.Context, name, date, descrip
 	return trip, nil
 }
 
-func (i *inMemoryRepository) ListTrips(ctx context.Context) ([]*Trip, error) {
+func (i *inMemoryRepository) ListTrips(_ context.Context) ([]*Trip, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -150,7 +154,7 @@ func (i *inMemoryRepository) ListTrips(ctx context.Context) ([]*Trip, error) {
 	return trips, nil
 }
 
-func (i *inMemoryRepository) GetTripByID(ctx context.Context, id uuid.UUID) (*Trip, error) {
+func (i *inMemoryRepository) GetTripByID(_ context.Context, id uuid.UUID) (*Trip, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 

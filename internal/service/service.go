@@ -1,3 +1,4 @@
+// Package service provides Telegram bot service.
 package service
 
 import (
@@ -74,6 +75,7 @@ var (
 	}
 )
 
+// Service is a Telegram bot service.
 type Service struct {
 	bot      *tgbotapi.Bot
 	sessions sessions.Repository
@@ -84,39 +86,47 @@ type Service struct {
 	stopFns []stopFunc
 }
 
-var ErrNilBot = errors.New("bot is nil")
+// NewParams is a set of parameters for creating a new Service.
+type NewParams struct {
+	SessionsRepo sessions.Repository
+	UsersRepo    users.Repository
+	StatesRepo   states.Repository
+	TripsRepo    trips.Repository
+}
 
-func New(bot *tgbotapi.Bot, sessRepo sessions.Repository, usersRepo users.Repository, statesRepo states.Repository, tripsRepo trips.Repository) (*Service, error) {
+// New creates a new Service.
+func New(bot *tgbotapi.Bot, p NewParams) (*Service, error) {
 	if bot == nil {
-		return nil, ErrNilBot
+		return nil, errors.New("bot is nil")
 	}
 
-	if statesRepo == nil {
+	if p.StatesRepo == nil {
 		return nil, errors.New("states repository is nil")
 	}
 
-	if tripsRepo == nil {
+	if p.TripsRepo == nil {
 		return nil, errors.New("trips repository is nil")
 	}
 
-	if usersRepo == nil {
+	if p.UsersRepo == nil {
 		return nil, errors.New("users repository is nil")
 	}
 
-	if sessRepo == nil {
+	if p.SessionsRepo == nil {
 		return nil, errors.New("sessions repository is nil")
 	}
 
 	return &Service{
 		bot:      bot,
-		sessions: sessRepo,
-		users:    usersRepo,
-		states:   statesRepo,
-		trips:    tripsRepo,
+		sessions: p.SessionsRepo,
+		users:    p.UsersRepo,
+		states:   p.StatesRepo,
+		trips:    p.TripsRepo,
 		stopFns:  nil,
 	}, nil
 }
 
+// Start is a helper function that will be called when the program starts.
 func (s *Service) Start(ctx context.Context) {
 	s.updateOnStart(ctx)
 
@@ -145,7 +155,7 @@ func (s *Service) Shutdown(ctx context.Context) {
 
 		s.sendMessage(contextWithSession(ctx, sess), msg)
 
-		if err = s.sessions.DeleteSession(ctx, sess.User.ID); err != nil {
+		if err = ops.DeleteSession(ctx, s.sessions, sess); err != nil {
 			log.WithError(ctx, err).WithField("user_id", sess.User.ID).Warn("Failed to delete session")
 
 			continue
@@ -187,9 +197,7 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 	handler.Handle(s.unsubscribeHandler(), th.CommandEqual(cmdUnsubscribe))
 	handler.Handle(s.myTripsHandler(), th.CommandEqual(cmdMyTrips))
 	handler.Handle(s.subscribedHandler(), th.CommandEqual(cmdSubscribed))
-
 	handler.Handle(s.notFoundHandler(ctx), th.AnyCommand())
-
 	handler.Handle(s.textHandler(), th.AnyMessageWithText())
 
 	go handler.Start()

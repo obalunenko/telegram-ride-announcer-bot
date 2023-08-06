@@ -1,15 +1,19 @@
+// Package models contains models.
 package models
 
 import (
 	"encoding/json"
 	"time"
 
-	uuid "github.com/gofrs/uuid/v5"
+	"github.com/gofrs/uuid/v5"
 )
 
 type (
+	// ChatID is a chat ID.
 	ChatID = int64
+	// UserID is a user ID.
 	UserID = int64
+	// TripID is a trip ID.
 	TripID = uuid.UUID
 )
 
@@ -45,15 +49,6 @@ type User struct {
 	Lastname  string `json:"lastname,omitempty"`
 }
 
-func NewUser(id int64, username, firstname, lastname string) *User {
-	return &User{
-		ID:        id,
-		Username:  username,
-		Firstname: firstname,
-		Lastname:  lastname,
-	}
-}
-
 // Session represents a session.
 type Session struct {
 	ID        uuid.UUID `json:"id,omitempty"`
@@ -62,42 +57,47 @@ type Session struct {
 	UserState UserState `json:"state,omitempty"`
 }
 
+// UserState represents a user state.
 type UserState struct {
 	ID    uuid.UUID
 	State State
 	Trip  *Trip
 }
 
-func NewUserState(id uuid.UUID, state State, trip *Trip) UserState {
-	return UserState{
-		ID:    id,
-		State: state,
-		Trip:  trip,
-	}
-}
-
 //go:generate stringer -type=State -output=state_string.go -trimprefix=State
+
+// State represents a state.
 type State uint
 
 const (
 	stateUnknown State = iota
 
+	// StateStart is the start state.
 	StateStart
-	StateNewTrip            // Just started creating a new trip
-	StateNewTripName        // Waiting for trip name
-	StateNewTripDate        // Waiting for trip date
-	StateNewTripTime        // Waiting for trip time
-	StateNewTripDescription // Waiting for trip description
-	StateNewTripConfirm     // Waiting for confirmation
-	StateNewTripPublication // Waiting for publication
+	// StateNewTrip means that a new trip is just started.
+	StateNewTrip
+	// StateNewTripName means that trip on progress and waiting for trip name
+	StateNewTripName
+	// StateNewTripDate means that trip on progress and waiting for trip date
+	StateNewTripDate
+	// StateNewTripTime means that trip on progress and waiting for trip time
+	StateNewTripTime
+	// StateNewTripDescription means that trip on progress and waiting for trip description
+	StateNewTripDescription
+	// StateNewTripConfirm means that trip on progress and waiting for trip confirmation
+	StateNewTripConfirm
+	// StateNewTripPublish means that trip on progress and waiting for trip publish
+	StateNewTripPublish
 
 	stateSentinel // Sentinel value.
 )
 
+// Valid checks if state is valid.
 func (s State) Valid() bool {
 	return s > stateUnknown && s < stateSentinel
 }
 
+// NewSession creates a new session.
 func NewSession(id uuid.UUID, user *User, chatID ChatID, state UserState) *Session {
 	return &Session{
 		ID:        id,
@@ -107,6 +107,7 @@ func NewSession(id uuid.UUID, user *User, chatID ChatID, state UserState) *Sessi
 	}
 }
 
+// IsAny checks if state is any of given states.
 func (s State) IsAny(states ...State) bool {
 	for _, state := range states {
 		if s == state {

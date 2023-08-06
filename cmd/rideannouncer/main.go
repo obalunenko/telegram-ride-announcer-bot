@@ -51,7 +51,14 @@ func main() {
 	statesRepo := states.NewInMemory()
 	tripsRepo := trips.NewInMemory()
 
-	svc, err := service.New(bot, sessionsRepo, usersRepo, statesRepo, tripsRepo)
+	params := service.NewParams{
+		SessionsRepo: sessionsRepo,
+		UsersRepo:    usersRepo,
+		StatesRepo:   statesRepo,
+		TripsRepo:    tripsRepo,
+	}
+
+	svc, err := service.New(bot, params)
 	if err != nil {
 		log.WithError(ctx, err).Fatal("failed to create service")
 	}

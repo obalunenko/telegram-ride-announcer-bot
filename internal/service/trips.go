@@ -22,6 +22,7 @@ func (s *Service) newTripHandler() th.Handler {
 
 			return
 		}
+
 		tripStates := []models.State{
 			models.StateNewTrip,
 			models.StateNewTripName,
@@ -34,6 +35,7 @@ func (s *Service) newTripHandler() th.Handler {
 		if !sess.UserState.State.IsAny(tripStates...) {
 			sess.UserState.State = models.StateNewTrip
 			sess.UserState.Trip = nil
+
 			if err := s.saveSession(ctx, sess); err != nil {
 				log.WithError(ctx, err).Error("Failed to save session")
 

@@ -1,3 +1,4 @@
+// Package users provides a repository for users.
 package users
 
 import (
@@ -7,16 +8,23 @@ import (
 )
 
 var (
+	// ErrAlreadyExists is returned when user already exists.
 	ErrAlreadyExists = errors.New("user already exists")
-	ErrNotFound      = errors.New("user not found")
+	// ErrNotFound is returned when user is not found.
+	ErrNotFound = errors.New("user not found")
 )
 
+// Repository provides access to the user storage.
 type Repository interface {
+	// Create creates a new user.
 	Create(ctx context.Context, user *User) error
+	// GetBuID returns a user by ID.
 	GetBuID(ctx context.Context, id int64) (*User, error)
+	// List returns all users.
 	List(ctx context.Context) ([]*User, error)
 }
 
+// User represents a user.
 type User struct {
 	ID        int64
 	Username  string
@@ -31,6 +39,7 @@ type inMemoryRepository struct {
 	users map[int64]*User
 }
 
+// NewInMemory creates a new in-memory repository for users.
 func NewInMemory() Repository {
 	return &inMemoryRepository{
 		RWMutex: sync.RWMutex{},
@@ -38,7 +47,7 @@ func NewInMemory() Repository {
 	}
 }
 
-func (i *inMemoryRepository) Create(ctx context.Context, user *User) error {
+func (i *inMemoryRepository) Create(_ context.Context, user *User) error {
 	i.Lock()
 	defer i.Unlock()
 
@@ -51,7 +60,7 @@ func (i *inMemoryRepository) Create(ctx context.Context, user *User) error {
 	return nil
 }
 
-func (i *inMemoryRepository) GetBuID(ctx context.Context, id int64) (*User, error) {
+func (i *inMemoryRepository) GetBuID(_ context.Context, id int64) (*User, error) {
 	i.RLock()
 	defer i.RUnlock()
 
@@ -63,7 +72,7 @@ func (i *inMemoryRepository) GetBuID(ctx context.Context, id int64) (*User, erro
 	return u, nil
 }
 
-func (i *inMemoryRepository) List(ctx context.Context) ([]*User, error) {
+func (i *inMemoryRepository) List(_ context.Context) ([]*User, error) {
 	i.RLock()
 	defer i.RUnlock()
 

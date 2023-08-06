@@ -16,13 +16,13 @@ func _() {
 	_ = x[StateNewTripTime-5]
 	_ = x[StateNewTripDescription-6]
 	_ = x[StateNewTripConfirm-7]
-	_ = x[StateNewTripPublication-8]
+	_ = x[StateNewTripPublish-8]
 	_ = x[stateSentinel-9]
 }
 
-const _State_name = "stateUnknownStartNewTripNewTripNameNewTripDateNewTripTimeNewTripDescriptionNewTripConfirmNewTripPublicationstateSentinel"
+const _State_name = "stateUnknownStartNewTripNewTripNameNewTripDateNewTripTimeNewTripDescriptionNewTripConfirmNewTripPublishstateSentinel"
 
-var _State_index = [...]uint8{0, 12, 17, 24, 35, 46, 57, 75, 89, 107, 120}
+var _State_index = [...]uint8{0, 12, 17, 24, 35, 46, 57, 75, 89, 103, 116}
 
 func (i State) String() string {
 	if i >= State(len(_State_index)-1) {
