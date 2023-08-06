@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
+	"runtime/debug"
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -80,6 +82,21 @@ func (s *Service) setSessionMiddleware() th.Middleware {
 		ctx = contextWithSession(ctx, session)
 
 		update = update.WithContext(ctx)
+
+		next(bot, update)
+	}
+}
+
+// PanicRecovery is a middleware that will recover handler from panic
+func (s *Service) panicRecovery() th.Middleware {
+	return func(bot *tgbotapi.Bot, update tgbotapi.Update, next th.Handler) {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println(string(debug.Stack()))
+
+				log.WithError(update.Context(), err.(error)).Error("Panic recovered")
+			}
+		}()
 
 		next(bot, update)
 	}

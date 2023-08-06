@@ -151,11 +151,6 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		if err := s.saveSession(ctx, sess); err != nil {
 			log.WithError(ctx, err).Error("Failed to update session")
 		}
-
-		// Send trip info.
-		log.WithField(ctx, "Trip", sess.UserState.Trip.String()).Debug("Trip info")
-
-		s.sendMessage(ctx, sess.UserState.Trip.String())
 	}()
 
 	// 1. Ask for trip name.
@@ -255,7 +250,112 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		sess.UserState.Trip = trip
 
+		sess.UserState.State = models.StateNewTripDescription
+
+		// 2. Ask for description
+		msg := "Please enter trip description"
+
+		s.sendMessage(ctx, msg)
+
 		return nil
+
+	case models.StateNewTripDescription: // 4. Ask for a track link. If not provided, ask for track file
+		// Waiting for trip description.
+
+		description := update.Message.Text
+
+		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+			Description: &description,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update trip: %w", err)
+		}
+
+		sess.UserState.Trip = trip
+
+		sess.UserState.State = models.StateNewTripConfirm
+
+		keyboard := tu.Keyboard(
+			tu.KeyboardRow(
+				tu.KeyboardButton("yes"),
+			),
+			tu.KeyboardRow(
+				tu.KeyboardButton("no"),
+			),
+		).WithResizeKeyboard().WithInputFieldPlaceholder("Confirm").WithOneTimeKeyboard()
+
+		msg := tu.Message(tu.ID(sess.ChatID), fmt.Sprintf("Your trip %s. Please confirm", trip.String()))
+
+		msg.WithReplyMarkup(keyboard)
+
+		_, err = s.bot.SendMessage(msg)
+		if err != nil {
+			return fmt.Errorf("failed to send message: %w", err)
+		}
+
+		return nil
+
+	case models.StateNewTripConfirm: // 5. Ask for a photo (optional)
+		// Waiting for trip confirmation.
+
+		confirm := update.Message.Text
+
+		if confirm == "no" {
+			sess.UserState.State = models.StateNewTrip
+			err := ops.DeleteTrip(ctx, s.trips, sess.UserState.Trip.ID)
+			if err != nil {
+				return fmt.Errorf("failed to delete trip: %w", err)
+			}
+
+			sess.UserState.Trip = nil
+
+			msg := "Your trip is cancelled. Thank you!"
+
+			s.sendMessage(ctx, msg)
+
+			return nil
+		}
+
+		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+			Completed: boolPtr(true),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update trip: %w", err)
+		}
+
+		sess.UserState.Trip = trip
+
+		sess.UserState.State = models.StateNewTripPublication
+
+		// Get trip string representation.
+		t := sess.UserState.Trip.String()
+
+		// Format message.
+
+		msgtxt := fmt.Sprintf("Your trip %s published. Thank you!", t)
+
+		msg := tu.Message(tu.ID(sess.ChatID), msgtxt)
+
+		resp, err := s.bot.SendMessage(msg)
+		if err != nil {
+			return fmt.Errorf("failed to send message: %w", err)
+		}
+
+		// TODO: Check if message really pinned
+		err = s.bot.PinChatMessage(&tgbotapi.PinChatMessageParams{
+			ChatID:              tu.ID(resp.Chat.ID),
+			MessageID:           resp.MessageID,
+			DisableNotification: false,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to pin message: %w", err)
+		}
+
+		sess.UserState.State = models.StateStart
+		sess.UserState.Trip = nil
+
+		return nil
+
 	default:
 		log.WithField(ctx, "UserState", sess.UserState.State.String()).Error("Unexpected UserState")
 
@@ -295,7 +395,7 @@ func (s *Service) textHandler() th.Handler {
 			s.notFoundHandler(ctx)(bot, update)
 
 			return
-		case models.StateNewTrip, models.StateNewTripName, models.StateNewTripDate, models.StateNewTripTime, models.StateNewTripDescription, models.StateNewTripConfirm:
+		case models.StateNewTrip, models.StateNewTripName, models.StateNewTripDate, models.StateNewTripTime, models.StateNewTripDescription, models.StateNewTripConfirm, models.StateNewTripPublication:
 			s.newTripHandler()(bot, update)
 
 			return
@@ -337,4 +437,8 @@ func (s *Service) notImplementedHandler(cmd string) th.Handler {
 
 		s.sendMessage(ctx, msg)
 	}
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

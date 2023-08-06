@@ -89,6 +89,7 @@ const (
 	StateNewTripTime        // Waiting for trip time
 	StateNewTripDescription // Waiting for trip description
 	StateNewTripConfirm     // Waiting for confirmation
+	StateNewTripPublication // Waiting for publication
 
 	stateSentinel // Sentinel value.
 )

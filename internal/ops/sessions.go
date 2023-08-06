@@ -12,6 +12,7 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
 
 func GetSession(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, tripsRepo trips.Repository, user *models.User) (*models.Session, error) {
@@ -131,4 +132,51 @@ func UpdateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 	}).Debug("Session updated")
 
 	return nil
+}
+
+func ListSessions(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, tripsRepo trips.Repository, usersRepo users.Repository) ([]*models.Session, error) {
+	list, err := sessRepo.ListSessions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list sessions: %w", err)
+	}
+
+	var resp []*models.Session
+
+	for _, sess := range list {
+		user, err := GetUser(ctx, usersRepo, sess.UserID)
+		if err != nil {
+			log.WithError(ctx, err).WithFields(log.Fields{
+				"user_id": sess.UserID,
+			}).Warn("Failed to get user by id")
+
+			continue
+		}
+
+		state, err := statesRepo.GetStateByUserID(ctx, user.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get state by user id[%d]: %w", user.ID, err)
+		}
+
+		var trip *models.Trip
+
+		if state.TripID != nil {
+			trip, err = GetTrip(ctx, tripsRepo, *state.TripID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get trip by id[%s]: %w", state.TripID, err)
+			}
+		}
+
+		resp = append(resp, &models.Session{
+			ID:     sess.ID,
+			User:   user,
+			ChatID: sess.ChatID,
+			UserState: models.UserState{
+				ID:    state.ID,
+				State: models.State(state.Step),
+				Trip:  trip,
+			},
+		})
+	}
+
+	return resp, nil
 }

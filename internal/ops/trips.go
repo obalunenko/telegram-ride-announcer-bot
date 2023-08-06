@@ -52,6 +52,7 @@ type UpdateTripParams struct {
 	Name        *string
 	Date        *string
 	Description *string
+	Completed   *bool
 }
 
 func UpdateTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID, p UpdateTripParams) (*models.Trip, error) {
@@ -69,4 +70,17 @@ func UpdateTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID, p
 	}).Debug("Trip updated")
 
 	return GetTrip(ctx, tripsRepo, id)
+}
+
+func DeleteTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID) error {
+	err := tripsRepo.DeleteTrip(ctx, id)
+	if err != nil {
+		return fmt.Errorf("delete trip: %w", err)
+	}
+
+	log.WithFields(ctx, log.Fields{
+		"trip_id": id,
+	}).Debug("Trip deleted")
+
+	return nil
 }

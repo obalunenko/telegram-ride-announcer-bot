@@ -3,12 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
 
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
@@ -132,7 +133,7 @@ func (s *Service) Start(ctx context.Context) {
 // Shutdown is a helper function that will be called when the program receives an interrupt signal.
 // It will gracefully shut down the bot by waiting for all requests to be processed before shutting down.
 func (s *Service) Shutdown(ctx context.Context) {
-	list, err := s.sessions.ListSessions(ctx)
+	list, err := ops.ListSessions(ctx, s.sessions, s.states, s.trips, s.users)
 	if err != nil {
 		log.WithError(ctx, err).Error("Failed to get sessions")
 
@@ -140,28 +141,14 @@ func (s *Service) Shutdown(ctx context.Context) {
 	}
 
 	for _, sess := range list {
-		msg := "I'm going to sleep. Bye!"
+		msg := fmt.Sprintf("I'm going to sleep. Bye, %s!", sess.User.Username)
 
-		var user *models.User
+		s.sendMessage(contextWithSession(ctx, sess), msg)
 
-		u, err := s.users.GetBuID(ctx, sess.UserID)
-		if err != nil {
-			log.WithError(ctx, err).Error("Failed to get user")
+		if err = s.sessions.DeleteSession(ctx, sess.User.ID); err != nil {
+			log.WithError(ctx, err).WithField("user_id", sess.User.ID).Warn("Failed to delete session")
 
-			user = models.NewUser(sess.UserID, "", "", "")
-		} else {
-			user = models.NewUser(u.ID, u.Username, u.Firstname, u.Lastname)
-		}
-
-		s.sendMessage(contextWithSession(ctx, &models.Session{
-			ID:        sess.ID,
-			User:      user,
-			ChatID:    sess.ChatID,
-			UserState: models.UserState{},
-		}), msg)
-
-		if err = s.sessions.DeleteSession(ctx, sess.UserID); err != nil {
-			return
+			continue
 		}
 	}
 
@@ -187,6 +174,7 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 		log.WithError(ctx, err).Fatal("Failed to create bot handler")
 	}
 
+	handler.Use(s.panicRecovery())
 	handler.Use(s.setContextMiddleware(ctx))
 	handler.Use(s.setSessionMiddleware())
 	handler.Use(s.loggerMiddleware())
