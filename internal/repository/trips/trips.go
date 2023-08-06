@@ -13,12 +13,20 @@ import (
 var ErrNotFound = errors.New("trip not found")
 
 type Repository interface {
-	// Create creates a new trip.
-	Create(ctx context.Context, name, date, description string, createdBy int64) (*Trip, error)
-	// List returns all trips.
-	List(ctx context.Context) ([]*Trip, error)
-	// GetByID returns a trip by ID.
-	GetByID(ctx context.Context, id uuid.UUID) (*Trip, error)
+	// CreateTrip creates a new trip.
+	CreateTrip(ctx context.Context, name, date, description string, createdBy int64) (*Trip, error)
+	// ListTrips returns all trips.
+	ListTrips(ctx context.Context) ([]*Trip, error)
+	// GetTripByID returns a trip by ID.
+	GetTripByID(ctx context.Context, id uuid.UUID) (*Trip, error)
+	// UpdateTrip updates a trip.
+	UpdateTrip(ctx context.Context, id uuid.UUID, params UpdateTripParams) error
+}
+
+type UpdateTripParams struct {
+	Name        *string
+	Date        *string
+	Description *string
 }
 
 type Trip struct {
@@ -37,6 +45,34 @@ type inMemoryRepository struct {
 	trips map[uuid.UUID]*Trip
 }
 
+func (i *inMemoryRepository) UpdateTrip(ctx context.Context, id uuid.UUID, params UpdateTripParams) error {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	trip, ok := i.trips[id]
+	if !ok {
+		return ErrNotFound
+	}
+
+	if params.Name != nil {
+		trip.Name = *params.Name
+	}
+
+	if params.Date != nil {
+		trip.Date = *params.Date
+	}
+
+	if params.Description != nil {
+		trip.Description = *params.Description
+	}
+
+	trip.UpdatedAt = time.Now()
+
+	i.trips[id] = trip
+
+	return nil
+}
+
 func NewInMemory() Repository {
 	return &inMemoryRepository{
 		mu:    sync.RWMutex{},
@@ -44,7 +80,7 @@ func NewInMemory() Repository {
 	}
 }
 
-func (i *inMemoryRepository) Create(ctx context.Context, name, date, description string, createdBy int64) (*Trip, error) {
+func (i *inMemoryRepository) CreateTrip(ctx context.Context, name, date, description string, createdBy int64) (*Trip, error) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -63,7 +99,7 @@ func (i *inMemoryRepository) Create(ctx context.Context, name, date, description
 	return trip, nil
 }
 
-func (i *inMemoryRepository) List(ctx context.Context) ([]*Trip, error) {
+func (i *inMemoryRepository) ListTrips(ctx context.Context) ([]*Trip, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -76,7 +112,7 @@ func (i *inMemoryRepository) List(ctx context.Context) ([]*Trip, error) {
 	return trips, nil
 }
 
-func (i *inMemoryRepository) GetByID(ctx context.Context, id uuid.UUID) (*Trip, error) {
+func (i *inMemoryRepository) GetTripByID(ctx context.Context, id uuid.UUID) (*Trip, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 

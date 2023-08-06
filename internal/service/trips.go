@@ -6,7 +6,6 @@ import (
 	log "github.com/obalunenko/logger"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 )
 
 func (s *Service) newTripHandler() th.Handler {
@@ -23,32 +22,20 @@ func (s *Service) newTripHandler() th.Handler {
 
 			return
 		}
+		tripStates := []models.State{
+			models.StateNewTrip,
+			models.StateNewTripName,
+			models.StateNewTripDate,
+			models.StateNewTripTime,
+			models.StateNewTripDescription,
+			models.StateNewTripConfirm,
+		}
 
-		defer func() {
-			err := s.sessions.UpdateSession(ctx, &sessions.Session{
-				ID:     sess.ID,
-				UserID: sess.User.ID,
-				ChatID: sess.ChatID,
-				State:  sessions.State(sess.State),
-			})
-			if err != nil {
-				log.WithError(ctx, err).Error("Failed to update session")
-
-				return
-			}
-		}()
-
-		if sess.State.IsAny(models.StateStart) {
-			sess.State = models.StateNewTrip
-
-			err := s.sessions.UpdateSession(ctx, &sessions.Session{
-				ID:     sess.ID,
-				UserID: sess.User.ID,
-				ChatID: sess.ChatID,
-				State:  sessions.State(sess.State),
-			})
-			if err != nil {
-				log.WithError(ctx, err).Error("Failed to update session")
+		if !sess.UserState.State.IsAny(tripStates...) {
+			sess.UserState.State = models.StateNewTrip
+			sess.UserState.Trip = nil
+			if err := s.saveSession(ctx, sess); err != nil {
+				log.WithError(ctx, err).Error("Failed to save session")
 
 				return
 			}

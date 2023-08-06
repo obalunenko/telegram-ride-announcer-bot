@@ -17,7 +17,7 @@ var (
 
 type Repository interface {
 	// CreateSession creates a new session.
-	CreateSession(ctx context.Context, userID, chatID int64, state State) error
+	CreateSession(ctx context.Context, userID, chatID int64, stateID *uuid.UUID) error
 	// ListSessions returns all sessions.
 	ListSessions(ctx context.Context) ([]*Session, error)
 	// GetSessionByUserID returns a session by user ID.
@@ -50,18 +50,18 @@ func (s State) Valid() bool {
 }
 
 type Session struct {
-	ID     uuid.UUID
-	UserID int64
-	ChatID int64
-	State  State
+	ID      uuid.UUID  `db:"id"`
+	UserID  int64      `db:"user_id"`
+	ChatID  int64      `db:"chat_id"`
+	StateID *uuid.UUID `db:"state_id"`
 }
 
-func newSession(userID, chatID int64, state State) *Session {
+func newSession(userID, chatID int64, stateID *uuid.UUID) *Session {
 	return &Session{
-		ID:     uuid.Must(uuid.NewV4()),
-		UserID: userID,
-		ChatID: chatID,
-		State:  state,
+		ID:      uuid.Must(uuid.NewV4()),
+		UserID:  userID,
+		ChatID:  chatID,
+		StateID: stateID,
 	}
 }
 
@@ -92,8 +92,8 @@ func (i *inMemoryRepository) ListSessions(ctx context.Context) ([]*Session, erro
 	return sessions, nil
 }
 
-func (i *inMemoryRepository) CreateSession(ctx context.Context, userID, chatID int64, state State) error {
-	s := newSession(userID, chatID, state)
+func (i *inMemoryRepository) CreateSession(ctx context.Context, userID, chatID int64, stateID *uuid.UUID) error {
+	s := newSession(userID, chatID, stateID)
 
 	i.Lock()
 	defer i.Unlock()
@@ -113,7 +113,7 @@ func (i *inMemoryRepository) GetSessionByUserID(ctx context.Context, userID int6
 
 	s, ok := i.sessions[userID]
 	if !ok {
-		return nil, nil
+		return nil, ErrNotFound
 	}
 
 	return s, nil

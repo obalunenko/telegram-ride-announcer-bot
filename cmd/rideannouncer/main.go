@@ -11,6 +11,8 @@ import (
 	log "github.com/obalunenko/logger"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service"
 )
@@ -46,8 +48,13 @@ func main() {
 
 	sessionsRepo := sessions.NewInMemory()
 	usersRepo := users.NewInMemory()
+	statesRepo := states.NewInMemory()
+	tripsRepo := trips.NewInMemory()
 
-	svc := service.New(bot, sessionsRepo, usersRepo)
+	svc, err := service.New(bot, sessionsRepo, usersRepo, statesRepo, tripsRepo)
+	if err != nil {
+		log.WithError(ctx, err).Fatal("failed to create service")
+	}
 
 	svc.Start(ctx)
 

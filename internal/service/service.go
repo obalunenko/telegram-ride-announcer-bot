@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
 
@@ -74,17 +77,43 @@ type Service struct {
 	bot      *tgbotapi.Bot
 	sessions sessions.Repository
 	users    users.Repository
+	states   states.Repository
+	trips    trips.Repository
 
 	stopFns []stopFunc
 }
 
-func New(bot *tgbotapi.Bot, sessions sessions.Repository, users users.Repository) *Service {
+var ErrNilBot = errors.New("bot is nil")
+
+func New(bot *tgbotapi.Bot, sessRepo sessions.Repository, usersRepo users.Repository, statesRepo states.Repository, tripsRepo trips.Repository) (*Service, error) {
+	if bot == nil {
+		return nil, ErrNilBot
+	}
+
+	if statesRepo == nil {
+		return nil, errors.New("states repository is nil")
+	}
+
+	if tripsRepo == nil {
+		return nil, errors.New("trips repository is nil")
+	}
+
+	if usersRepo == nil {
+		return nil, errors.New("users repository is nil")
+	}
+
+	if sessRepo == nil {
+		return nil, errors.New("sessions repository is nil")
+	}
+
 	return &Service{
 		bot:      bot,
-		sessions: sessions,
-		users:    users,
+		sessions: sessRepo,
+		users:    usersRepo,
+		states:   statesRepo,
+		trips:    tripsRepo,
 		stopFns:  nil,
-	}
+	}, nil
 }
 
 func (s *Service) Start(ctx context.Context) {
@@ -125,10 +154,10 @@ func (s *Service) Shutdown(ctx context.Context) {
 		}
 
 		s.sendMessage(contextWithSession(ctx, &models.Session{
-			ID:     sess.ID,
-			User:   user,
-			ChatID: sess.ChatID,
-			State:  models.State(sess.State),
+			ID:        sess.ID,
+			User:      user,
+			ChatID:    sess.ChatID,
+			UserState: models.UserState{},
 		}), msg)
 
 		if err = s.sessions.DeleteSession(ctx, sess.UserID); err != nil {
@@ -158,7 +187,6 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 		log.WithError(ctx, err).Fatal("Failed to create bot handler")
 	}
 
-	handler.Use(th.PanicRecovery)
 	handler.Use(s.setContextMiddleware(ctx))
 	handler.Use(s.setSessionMiddleware())
 	handler.Use(s.loggerMiddleware())

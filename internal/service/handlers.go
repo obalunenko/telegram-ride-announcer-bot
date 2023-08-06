@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -10,7 +11,7 @@ import (
 	log "github.com/obalunenko/logger"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
 )
 
 func (s *Service) notFoundHandler(ctx context.Context) th.Handler {
@@ -62,16 +63,10 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 			return
 		}
 
-		// Reset Session State.
-		sess.State = models.StateStart
+		// Reset Session UserState.
+		sess.UserState.State = models.StateStart
 
-		err := s.sessions.UpdateSession(ctx, &sessions.Session{
-			ID:     sess.ID,
-			UserID: sess.User.ID,
-			ChatID: sess.ChatID,
-			State:  sessions.State(sess.State),
-		})
-		if err != nil {
+		if err := s.saveSession(ctx, sess); err != nil {
 			log.WithError(ctx, err).Error("Failed to update session")
 
 			return
@@ -110,16 +105,10 @@ Enjoy planning and going on your bike trips with %s!
 			return
 		}
 
-		// Reset Session State.
-		sess.State = models.StateStart
+		// Reset Session UserState.
+		sess.UserState.State = models.StateStart
 
-		err := s.sessions.UpdateSession(ctx, &sessions.Session{
-			ID:     sess.ID,
-			UserID: sess.User.ID,
-			ChatID: sess.ChatID,
-			State:  sessions.State(sess.State),
-		})
-		if err != nil {
+		if err := s.saveSession(ctx, sess); err != nil {
 			log.WithError(ctx, err).Error("Failed to update session")
 
 			return
@@ -143,12 +132,7 @@ Enjoy planning and going on your bike trips with %s!
 }
 
 func (s *Service) saveSession(ctx context.Context, sess *models.Session) error {
-	return s.sessions.UpdateSession(ctx, &sessions.Session{
-		ID:     sess.ID,
-		UserID: sess.User.ID,
-		ChatID: sess.ChatID,
-		State:  sessions.State(sess.State),
-	})
+	return ops.UpdateSession(ctx, s.sessions, s.states, sess)
 }
 
 func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error {
@@ -159,10 +143,19 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		return fmt.Errorf("session is nil")
 	}
 
-	log.WithField(ctx, "State", sess.State.String()).Debug("Current Session State")
+	log.WithField(ctx, "UserState", sess.UserState.State.String()).Debug("Current Session UserState")
 
 	defer func() {
-		log.WithField(ctx, "State", sess.State.String()).Debug("Saving Session")
+		log.WithField(ctx, "UserState", sess.UserState.State.String()).Debug("Saving Session")
+
+		if err := s.saveSession(ctx, sess); err != nil {
+			log.WithError(ctx, err).Error("Failed to update session")
+		}
+
+		// Send trip info.
+		log.WithField(ctx, "Trip", sess.UserState.Trip.String()).Debug("Trip info")
+
+		s.sendMessage(ctx, sess.UserState.Trip.String())
 	}()
 
 	// 1. Ask for trip name.
@@ -183,11 +176,27 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 	// 9. Pin the trip announcement to the chat.
 
-	switch sess.State {
+	switch sess.UserState.State {
 	case models.StateNewTrip: // 1. Ask for trip name.
+		if sess.UserState.Trip == nil {
+			t, err := ops.CreateTrip(ctx, s.trips, ops.CreateTripParams{
+				Name:        "",
+				Date:        "",
+				Description: "",
+				CreatedBy:   sess.User.ID,
+			})
+			if err != nil {
+				log.WithError(ctx, err).Error("Failed to create trip")
+
+				return err
+			}
+
+			sess.UserState.Trip = t
+		}
+
 		// Trip creation is started.
 		// Ask for trip name.
-		sess.State = models.StateNewTripName
+		sess.UserState.State = models.StateNewTripName
 
 		msg := "Please enter trip name"
 
@@ -198,9 +207,18 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		// Waiting for trip name.
 
 		name := update.Message.Text
-		log.Debug(ctx, "Trip name: "+name)
+		sess.UserState.Trip.Name = name
 
-		sess.State = models.StateNewTripDate
+		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+			Name: &name,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update trip: %w", err)
+		}
+
+		sess.UserState.Trip = trip
+
+		sess.UserState.State = models.StateNewTripDate
 
 		// 1. Ask for date and time
 		keyboard := tu.Keyboard(
@@ -216,7 +234,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		msg.WithReplyMarkup(keyboard)
 
-		_, err := s.bot.SendMessage(msg)
+		_, err = s.bot.SendMessage(msg)
 		if err != nil {
 			log.WithError(ctx, err).Error("Failed to send message")
 		}
@@ -227,13 +245,19 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		// Waiting for trip date.
 
 		date := update.Message.Text
-		log.Debug(ctx, "Trip date: "+date)
 
-		s.sendMessage(ctx, "Your trip date: "+date)
+		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+			Date: &date,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update trip: %w", err)
+		}
+
+		sess.UserState.Trip = trip
 
 		return nil
 	default:
-		log.WithField(ctx, "State", sess.State.String()).Error("Unexpected State")
+		log.WithField(ctx, "UserState", sess.UserState.State.String()).Error("Unexpected UserState")
 
 		return nil
 	}
@@ -247,8 +271,8 @@ func (s *Service) textHandler() th.Handler {
 
 		log.Debug(ctx, "Called text handler")
 
-		// Check Session State.
-		// If the Session State is not empty, then we are in the middle of creating a trip.
+		// Check Session UserState.
+		// If the Session UserState is not empty, then we are in the middle of creating a trip.
 		sess := sessionFromContext(ctx)
 		if sess == nil {
 			log.Error(ctx, "Session is nil")
@@ -256,13 +280,18 @@ func (s *Service) textHandler() th.Handler {
 			return
 		}
 
-		st := sess.State
+		if update.Message != nil {
+			if strings.HasPrefix(update.Message.Text, "/") {
+			}
+		}
 
-		log.WithField(ctx, "State", st.String()).Debug("Current Session State")
+		st := sess.UserState.State
+
+		log.WithField(ctx, "UserState", st.String()).Debug("Current Session UserState")
 
 		switch st {
 		case models.StateStart:
-			// If Session State is empty, then we are not in the middle of creating a trip.
+			// If Session UserState is empty, then we are not in the middle of creating a trip.
 			s.notFoundHandler(ctx)(bot, update)
 
 			return

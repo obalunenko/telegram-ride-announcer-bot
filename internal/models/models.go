@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	uuid "github.com/gofrs/uuid/v5"
@@ -23,12 +24,17 @@ type Trip struct {
 	CreatedBy   UserID    `json:"created_by,omitempty"`
 }
 
-func NewTrip() *Trip {
-	return &Trip{
-		ID:        uuid.Must(uuid.NewV4()),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+func (t Trip) String() string {
+	var s string
+
+	v, err := json.MarshalIndent(t, "", "  ")
+	if err != nil {
+		panic(err)
 	}
+
+	s = string(v)
+
+	return s
 }
 
 // User represents a user.
@@ -50,10 +56,24 @@ func NewUser(id int64, username, firstname, lastname string) *User {
 
 // Session represents a session.
 type Session struct {
-	ID     uuid.UUID `json:"id,omitempty"`
-	User   *User     `json:"user,omitempty"`
-	ChatID ChatID    `json:"chat_id,omitempty"`
-	State  State     `json:"state,omitempty"`
+	ID        uuid.UUID `json:"id,omitempty"`
+	User      *User     `json:"user,omitempty"`
+	ChatID    ChatID    `json:"chat_id,omitempty"`
+	UserState UserState `json:"state,omitempty"`
+}
+
+type UserState struct {
+	ID    uuid.UUID
+	State State
+	Trip  *Trip
+}
+
+func NewUserState(id uuid.UUID, state State, trip *Trip) UserState {
+	return UserState{
+		ID:    id,
+		State: state,
+		Trip:  trip,
+	}
 }
 
 //go:generate stringer -type=State -output=state_string.go -trimprefix=State
@@ -77,12 +97,12 @@ func (s State) Valid() bool {
 	return s > stateUnknown && s < stateSentinel
 }
 
-func NewSession(id uuid.UUID, user *User, chatID ChatID, state State) *Session {
+func NewSession(id uuid.UUID, user *User, chatID ChatID, state UserState) *Session {
 	return &Session{
-		ID:     id,
-		User:   user,
-		ChatID: chatID,
-		State:  state,
+		ID:        id,
+		User:      user,
+		ChatID:    chatID,
+		UserState: state,
 	}
 }
 

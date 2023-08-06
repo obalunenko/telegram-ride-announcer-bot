@@ -8,7 +8,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
 
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
@@ -46,66 +46,38 @@ func (s *Service) setSessionMiddleware() th.Middleware {
 		uid := update.Message.From.ID
 		cid := update.Message.Chat.ID
 
-		user, err := s.users.GetBuID(ctx, uid)
+		user, err := ops.GetUser(ctx, s.users, uid)
 		if err != nil {
-			if !errors.Is(err, users.ErrNotFound) {
-				log.WithError(ctx, err).Error("Failed to get user by id")
+			if errors.Is(err, users.ErrNotFound) {
+				user, err = ops.CreateUser(ctx, s.users, uid, update.Message.From.Username, update.Message.From.FirstName, update.Message.From.LastName)
+				if err != nil {
+					log.WithError(ctx, err).Error("Failed to create user")
 
-				return
+					return
+				}
 			}
 		}
 
-		if user == nil {
-			err = s.users.Create(ctx, &users.User{
-				ID:        uid,
-				Username:  update.Message.From.Username,
-				Firstname: update.Message.From.FirstName,
-				Lastname:  update.Message.From.LastName,
-			})
-			if err != nil {
-				log.WithError(ctx, err).Error("Failed to create user")
-
-				return
-			}
-		}
-
-		user, err = s.users.GetBuID(ctx, uid)
-		if err != nil {
-			log.WithError(ctx, err).Error("Failed to get user by id")
+		session, err := ops.GetSession(ctx, s.sessions, s.states, s.trips, user)
+		if err != nil && !errors.Is(err, sessions.ErrNotFound) {
+			log.WithError(ctx, err).Error("Failed to get session")
 
 			return
 		}
 
-		sess, err := s.sessions.GetSessionByUserID(ctx, uid)
-		if err != nil {
-			if !errors.Is(err, sessions.ErrNotFound) {
-				log.WithError(ctx, err).Error("Failed to get session by user id")
-
-				return
-			}
-		}
-
-		if sess == nil {
-			err = s.sessions.CreateSession(ctx, uid, cid, sessions.State(models.StateStart))
+		if session == nil {
+			session, err = ops.CreateSession(ctx, s.sessions, s.states, s.trips, ops.CreateSessionParams{
+				User:   user,
+				ChatID: cid,
+			})
 			if err != nil {
 				log.WithError(ctx, err).Error("Failed to create session")
 
 				return
 			}
-
-			sess, err = s.sessions.GetSessionByUserID(ctx, uid)
-			if err != nil {
-				log.WithError(ctx, err).Error("Failed to get session by user id")
-
-				return
-			}
-
-			log.WithField(ctx, "user_id", uid).Debug("New Session created")
 		}
 
-		u := models.NewUser(user.ID, user.Username, user.Firstname, user.Lastname)
-
-		ctx = contextWithSession(ctx, models.NewSession(sess.ID, u, sess.ChatID, models.State(sess.State)))
+		ctx = contextWithSession(ctx, session)
 
 		update = update.WithContext(ctx)
 
