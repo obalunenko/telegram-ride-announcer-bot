@@ -20,8 +20,8 @@ type CreateTripParams struct {
 }
 
 // CreateTrip creates a new trip.
-func CreateTrip(ctx context.Context, tripsRepo trips.Repository, p CreateTripParams) (*models.Trip, error) {
-	t, err := tripsRepo.CreateTrip(ctx, p.Name, p.Date, p.Description, p.CreatedBy)
+func CreateTrip(ctx context.Context, b backends, p CreateTripParams) (*models.Trip, error) {
+	t, err := b.TripsRepository().CreateTrip(ctx, p.Name, p.Date, p.Description, p.CreatedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -30,12 +30,12 @@ func CreateTrip(ctx context.Context, tripsRepo trips.Repository, p CreateTripPar
 		"trip_id": t.ID,
 	}).Debug("New trip created")
 
-	return GetTrip(ctx, tripsRepo, t.ID)
+	return GetTrip(ctx, b, t.ID)
 }
 
 // GetTrip returns trip by ID.
-func GetTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID) (*models.Trip, error) {
-	t, err := tripsRepo.GetTripByID(ctx, id)
+func GetTrip(ctx context.Context, b backends, id uuid.UUID) (*models.Trip, error) {
+	t, err := b.TripsRepository().GetTripByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +60,8 @@ type UpdateTripParams struct {
 }
 
 // UpdateTrip updates a trip.
-func UpdateTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID, p UpdateTripParams) (*models.Trip, error) {
-	err := tripsRepo.UpdateTrip(ctx, id, trips.UpdateTripParams{
+func UpdateTrip(ctx context.Context, b backends, id uuid.UUID, p UpdateTripParams) (*models.Trip, error) {
+	err := b.TripsRepository().UpdateTrip(ctx, id, trips.UpdateTripParams{
 		Name:        p.Name,
 		Date:        p.Date,
 		Description: p.Description,
@@ -74,12 +74,12 @@ func UpdateTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID, p
 		"trip_id": id,
 	}).Debug("Trip updated")
 
-	return GetTrip(ctx, tripsRepo, id)
+	return GetTrip(ctx, b, id)
 }
 
 // DeleteTrip deletes a trip.
-func DeleteTrip(ctx context.Context, tripsRepo trips.Repository, id uuid.UUID) error {
-	err := tripsRepo.DeleteTrip(ctx, id)
+func DeleteTrip(ctx context.Context, b backends, id uuid.UUID) error {
+	err := b.TripsRepository().DeleteTrip(ctx, id)
 	if err != nil {
 		return fmt.Errorf("delete trip: %w", err)
 	}

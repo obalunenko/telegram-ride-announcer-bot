@@ -19,7 +19,7 @@ func (s *Service) notFoundHandler(ctx context.Context) th.Handler {
 }
 
 func (s *Service) unsupportedHandler(ctx context.Context, text string) th.Handler {
-	msg := fmt.Sprintf("%s Use /%s command to see all available commands.", text, cmdHelp)
+	msg := fmt.Sprintf("%s Use /%s command to see all available commands.", text, CmdHelp)
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx = update.Context()
@@ -54,7 +54,7 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx = update.Context()
 
-		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdStart))
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdStart))
 
 		sess := sessionFromContext(ctx)
 		if sess == nil {
@@ -74,7 +74,7 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 
 		log.Debug(ctx, "Called start handler")
 
-		msg := fmt.Sprintf(msgFormat, sess.User.Firstname, botName, cmdHelp, sess.User.Firstname)
+		msg := fmt.Sprintf(msgFormat, sess.User.Firstname, s.bot.Username(), CmdHelp, sess.User.Firstname)
 
 		s.sendMessage(ctx, msg)
 	}
@@ -94,7 +94,7 @@ Enjoy planning and going on your bike trips with %s!
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
-		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdHelp))
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdHelp))
 
 		log.Debug(ctx, "Called help handler")
 
@@ -114,25 +114,20 @@ Enjoy planning and going on your bike trips with %s!
 			return
 		}
 
-		cmds, err := bot.GetMyCommands(&tgbotapi.GetMyCommandsParams{})
-		if err != nil {
-			log.WithError(ctx, err).Error("Failed to get bot commands")
-		}
-
 		var cmdsStr string
 
-		for _, cmd := range cmds {
+		for _, cmd := range s.bot.Commands() {
 			cmdsStr += fmt.Sprintf("\t/%s - %s\n", cmd.Command, cmd.Description)
 		}
 
-		msg := fmt.Sprintf(msgFormat, botName, cmdsStr, cmdHelp, botName)
+		msg := fmt.Sprintf(msgFormat, s.bot.Username(), cmdsStr, CmdHelp, s.bot.Username())
 
 		s.sendMessage(ctx, msg)
 	}
 }
 
 func (s *Service) saveSession(ctx context.Context, sess *models.Session) error {
-	return ops.UpdateSession(ctx, s.sessions, s.states, sess)
+	return ops.UpdateSession(ctx, s.backends, sess)
 }
 
 func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error {
@@ -174,7 +169,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 	switch sess.UserState.State {
 	case models.StateNewTrip:
 		if sess.UserState.Trip == nil {
-			t, err := ops.CreateTrip(ctx, s.trips, ops.CreateTripParams{
+			t, err := ops.CreateTrip(ctx, s.backends, ops.CreateTripParams{
 				Name:        "",
 				Date:        "",
 				Description: "",
@@ -200,7 +195,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		name := update.Message.Text
 		sess.UserState.Trip.Name = name
 
-		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 			Name: &name,
 		})
 		if err != nil {
@@ -225,7 +220,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		msg.WithReplyMarkup(keyboard)
 
-		_, err = s.bot.SendMessage(msg)
+		_, err = s.bot.Client().SendMessage(msg)
 		if err != nil {
 			log.WithError(ctx, err).Error("Failed to send message")
 		}
@@ -235,7 +230,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 	case models.StateNewTripDate:
 		date := update.Message.Text
 
-		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 			Date: &date,
 		})
 		if err != nil {
@@ -255,7 +250,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 	case models.StateNewTripDescription:
 		description := update.Message.Text
 
-		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 			Description: &description,
 		})
 		if err != nil {
@@ -279,7 +274,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		msg.WithReplyMarkup(keyboard)
 
-		_, err = s.bot.SendMessage(msg)
+		_, err = s.bot.Client().SendMessage(msg)
 		if err != nil {
 			return fmt.Errorf("failed to send message: %w", err)
 		}
@@ -292,7 +287,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		if confirm == "no" {
 			sess.UserState.State = models.StateNewTrip
 
-			if err := ops.DeleteTrip(ctx, s.trips, sess.UserState.Trip.ID); err != nil {
+			if err := ops.DeleteTrip(ctx, s.backends, sess.UserState.Trip.ID); err != nil {
 				return fmt.Errorf("failed to delete trip: %w", err)
 			}
 
@@ -305,7 +300,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 			return nil
 		}
 
-		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 			Completed: boolPtr(true),
 		})
 		if err != nil {
@@ -322,13 +317,13 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		msg := tu.Message(tu.ID(sess.ChatID), msgtxt)
 
-		resp, err := s.bot.SendMessage(msg)
+		resp, err := s.bot.Client().SendMessage(msg)
 		if err != nil {
 			return fmt.Errorf("failed to send message: %w", err)
 		}
 
 		// TODO: Check if message really pinned
-		err = s.bot.PinChatMessage(&tgbotapi.PinChatMessageParams{
+		err = s.bot.Client().PinChatMessage(&tgbotapi.PinChatMessageParams{
 			ChatID:              tu.ID(resp.Chat.ID),
 			MessageID:           resp.MessageID,
 			DisableNotification: false,
@@ -382,7 +377,13 @@ func (s *Service) textHandler() th.Handler {
 			s.notFoundHandler(ctx)(bot, update)
 
 			return
-		case models.StateNewTrip, models.StateNewTripName, models.StateNewTripDate, models.StateNewTripTime, models.StateNewTripDescription, models.StateNewTripConfirm, models.StateNewTripPublish:
+		case models.StateNewTrip,
+			models.StateNewTripDate,
+			models.StateNewTripName,
+			models.StateNewTripTime,
+			models.StateNewTripDescription,
+			models.StateNewTripConfirm,
+			models.StateNewTripPublish:
 			s.newTripHandler()(bot, update)
 
 			return
@@ -393,23 +394,23 @@ func (s *Service) textHandler() th.Handler {
 }
 
 func (s *Service) tripsHandler() th.Handler {
-	return s.notImplementedHandler(cmdTrips)
+	return s.notImplementedHandler(CmdTrips)
 }
 
 func (s *Service) subscribeHandler() th.Handler {
-	return s.notImplementedHandler(cmdSubscribe)
+	return s.notImplementedHandler(CmdSubscribe)
 }
 
 func (s *Service) unsubscribeHandler() th.Handler {
-	return s.notImplementedHandler(cmdUnsubscribe)
+	return s.notImplementedHandler(CmdUnsubscribe)
 }
 
 func (s *Service) myTripsHandler() th.Handler {
-	return s.notImplementedHandler(cmdMyTrips)
+	return s.notImplementedHandler(CmdMyTrips)
 }
 
 func (s *Service) subscribedHandler() th.Handler {
-	return s.notImplementedHandler(cmdSubscribed)
+	return s.notImplementedHandler(CmdSubscribed)
 }
 
 func (s *Service) notImplementedHandler(cmd string) th.Handler {
@@ -420,7 +421,7 @@ func (s *Service) notImplementedHandler(cmd string) th.Handler {
 
 		log.Debug(ctx, "Called not_implemented handler")
 
-		msg := fmt.Sprintf("Not implemented yet. Use /%s command to see all available commands.", cmdHelp)
+		msg := fmt.Sprintf("Not implemented yet. Use /%s command to see all available commands.", CmdHelp)
 
 		s.sendMessage(ctx, msg)
 	}

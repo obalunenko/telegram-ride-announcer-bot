@@ -48,10 +48,24 @@ func (s *Service) setSessionMiddleware() th.Middleware {
 		uid := update.Message.From.ID
 		cid := update.Message.Chat.ID
 
-		user, err := ops.GetUser(ctx, s.users, uid)
+		if uid == s.bot.ID() {
+			// Don't create a session for bot.
+			log.WithField(ctx, "user_id", uid).Debug("Bot is trying to create a session for itself")
+
+			return
+		}
+
+		user, err := ops.GetUser(ctx, s.backends, uid)
 		if err != nil {
 			if errors.Is(err, users.ErrNotFound) {
-				user, err = ops.CreateUser(ctx, s.users, uid, update.Message.From.Username, update.Message.From.FirstName, update.Message.From.LastName)
+				p := ops.CreateUserParams{
+					UserID:    uid,
+					Username:  update.Message.From.Username,
+					Firstname: update.Message.From.FirstName,
+					Lastname:  update.Message.From.LastName,
+				}
+
+				user, err = ops.CreateUser(ctx, s.backends, p)
 				if err != nil {
 					log.WithError(ctx, err).Error("Failed to create user")
 
@@ -60,7 +74,7 @@ func (s *Service) setSessionMiddleware() th.Middleware {
 			}
 		}
 
-		session, err := ops.GetSession(ctx, s.sessions, s.states, s.trips, user)
+		session, err := ops.GetSession(ctx, s.backends, user)
 		if err != nil && !errors.Is(err, sessions.ErrNotFound) {
 			log.WithError(ctx, err).Error("Failed to get session")
 
@@ -68,7 +82,7 @@ func (s *Service) setSessionMiddleware() th.Middleware {
 		}
 
 		if session == nil {
-			session, err = ops.CreateSession(ctx, s.sessions, s.states, s.trips, ops.CreateSessionParams{
+			session, err = ops.CreateSession(ctx, s.backends, ops.CreateSessionParams{
 				User:   user,
 				ChatID: cid,
 			})
