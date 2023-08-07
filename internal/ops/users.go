@@ -11,9 +11,9 @@ import (
 )
 
 // GetUser returns user by ID.
-func GetUser(ctx context.Context, usersRepo users.Repository, userID int64) (*models.User, error) {
+func GetUser(ctx context.Context, b backends, userID int64) (*models.User, error) {
 	// check is user exists
-	user, err := usersRepo.GetBuID(ctx, userID)
+	user, err := b.UsersRepository().GetBuID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -26,21 +26,29 @@ func GetUser(ctx context.Context, usersRepo users.Repository, userID int64) (*mo
 	}, nil
 }
 
+// CreateUserParams is a params for CreateUser function.
+type CreateUserParams struct {
+	UserID    int64
+	Username  string
+	Firstname string
+	Lastname  string
+}
+
 // CreateUser creates a new user.
-func CreateUser(ctx context.Context, usersRepo users.Repository, userID int64, username, firstname, lastname string) (*models.User, error) {
-	err := usersRepo.Create(ctx, &users.User{
-		ID:        userID,
-		Username:  username,
-		Firstname: firstname,
-		Lastname:  lastname,
+func CreateUser(ctx context.Context, b backends, p CreateUserParams) (*models.User, error) {
+	err := b.UsersRepository().Create(ctx, &users.User{
+		ID:        p.UserID,
+		Username:  p.Username,
+		Firstname: p.Firstname,
+		Lastname:  p.Lastname,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	log.WithFields(ctx, log.Fields{
-		"user_id": userID,
+		"user_id": p.UserID,
 	}).Debug("New user created")
 
-	return GetUser(ctx, usersRepo, userID)
+	return GetUser(ctx, b, p.UserID)
 }

@@ -127,7 +127,7 @@ Enjoy planning and going on your bike trips with %s!
 }
 
 func (s *Service) saveSession(ctx context.Context, sess *models.Session) error {
-	return ops.UpdateSession(ctx, s.sessions, s.states, sess)
+	return ops.UpdateSession(ctx, s.backends, sess)
 }
 
 func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error {
@@ -169,7 +169,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 	switch sess.UserState.State {
 	case models.StateNewTrip:
 		if sess.UserState.Trip == nil {
-			t, err := ops.CreateTrip(ctx, s.trips, ops.CreateTripParams{
+			t, err := ops.CreateTrip(ctx, s.backends, ops.CreateTripParams{
 				Name:        "",
 				Date:        "",
 				Description: "",
@@ -195,7 +195,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		name := update.Message.Text
 		sess.UserState.Trip.Name = name
 
-		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 			Name: &name,
 		})
 		if err != nil {
@@ -230,7 +230,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 	case models.StateNewTripDate:
 		date := update.Message.Text
 
-		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 			Date: &date,
 		})
 		if err != nil {
@@ -250,7 +250,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 	case models.StateNewTripDescription:
 		description := update.Message.Text
 
-		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 			Description: &description,
 		})
 		if err != nil {
@@ -287,7 +287,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		if confirm == "no" {
 			sess.UserState.State = models.StateNewTrip
 
-			if err := ops.DeleteTrip(ctx, s.trips, sess.UserState.Trip.ID); err != nil {
+			if err := ops.DeleteTrip(ctx, s.backends, sess.UserState.Trip.ID); err != nil {
 				return fmt.Errorf("failed to delete trip: %w", err)
 			}
 
@@ -300,7 +300,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 			return nil
 		}
 
-		trip, err := ops.UpdateTrip(ctx, s.trips, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 			Completed: boolPtr(true),
 		})
 		if err != nil {
@@ -377,7 +377,13 @@ func (s *Service) textHandler() th.Handler {
 			s.notFoundHandler(ctx)(bot, update)
 
 			return
-		case models.StateNewTrip, models.StateNewTripName, models.StateNewTripDate, models.StateNewTripTime, models.StateNewTripDescription, models.StateNewTripConfirm, models.StateNewTripPublish:
+		case models.StateNewTrip,
+			models.StateNewTripDate,
+			models.StateNewTripName,
+			models.StateNewTripTime,
+			models.StateNewTripDescription,
+			models.StateNewTripConfirm,
+			models.StateNewTripPublish:
 			s.newTripHandler()(bot, update)
 
 			return

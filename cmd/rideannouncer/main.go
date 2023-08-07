@@ -9,6 +9,7 @@ import (
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
 
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/backends"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
@@ -74,14 +75,19 @@ func main() {
 	statesRepo := states.NewInMemory()
 	tripsRepo := trips.NewInMemory()
 
-	params := service.NewParams{
-		SessionsRepo: sessionsRepo,
-		UsersRepo:    usersRepo,
-		StatesRepo:   statesRepo,
-		TripsRepo:    tripsRepo,
+	params := backends.NewParams{
+		Sessions: sessionsRepo,
+		Users:    usersRepo,
+		States:   statesRepo,
+		Trips:    tripsRepo,
 	}
 
-	svc, err := service.New(bot, params)
+	b, err := backends.New(params)
+	if err != nil {
+		log.WithError(ctx, err).Fatal("failed to create backends for service")
+	}
+
+	svc, err := service.New(bot, b)
 	if err != nil {
 		log.WithError(ctx, err).Fatal("failed to create service")
 	}

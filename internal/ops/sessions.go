@@ -11,19 +11,17 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
 
 // GetSession returns session for user.
-func GetSession(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, tripsRepo trips.Repository, user *models.User) (*models.Session, error) {
+func GetSession(ctx context.Context, b backends, user *models.User) (*models.Session, error) {
 	// Check if user exists.
-	sess, err := sessRepo.GetSessionByUserID(ctx, user.ID)
+	sess, err := b.SessionsRepository().GetSessionByUserID(ctx, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session by user id[%d]: %w", user.ID, err)
 	}
 
-	state, err := statesRepo.GetStateByUserID(ctx, user.ID)
+	state, err := b.StatesRepository().GetStateByUserID(ctx, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get state by user id[%d]: %w", user.ID, err)
 	}
@@ -31,7 +29,7 @@ func GetSession(ctx context.Context, sessRepo sessions.Repository, statesRepo st
 	var trip *models.Trip
 
 	if state.TripID != nil {
-		trip, err = GetTrip(ctx, tripsRepo, *state.TripID)
+		trip, err = GetTrip(ctx, b, *state.TripID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get trip by id[%s]: %w", state.TripID, err)
 		}
@@ -58,9 +56,9 @@ type CreateSessionParams struct {
 }
 
 // CreateSession creates a new session.
-func CreateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, tripsRepo trips.Repository, p CreateSessionParams) (*models.Session, error) {
+func CreateSession(ctx context.Context, b backends, p CreateSessionParams) (*models.Session, error) {
 	// check if state exists
-	state, err := statesRepo.GetStateByUserID(ctx, p.User.ID)
+	state, err := b.StatesRepository().GetStateByUserID(ctx, p.User.ID)
 	if err != nil && !errors.Is(err, states.ErrNotFound) {
 		return nil, fmt.Errorf("failed to get state by user id[%d]: %w", p.User.ID, err)
 	}
@@ -68,7 +66,7 @@ func CreateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 	if state == nil {
 		// create session and state
 		// Create state
-		state, err = statesRepo.CreateState(ctx, states.CreateParams{
+		state, err = b.StatesRepository().CreateState(ctx, states.CreateParams{
 			UserID:  p.User.ID,
 			Command: "",
 			TripID:  nil,
@@ -80,7 +78,7 @@ func CreateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 	}
 
 	// Create session
-	err = sessRepo.CreateSession(ctx, p.User.ID, p.ChatID, &state.ID)
+	err = b.SessionsRepository().CreateSession(ctx, p.User.ID, p.ChatID, &state.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
@@ -90,11 +88,11 @@ func CreateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 		"chat_id": p.ChatID,
 	}).Debug("New session created")
 
-	return GetSession(ctx, sessRepo, statesRepo, tripsRepo, p.User)
+	return GetSession(ctx, b, p.User)
 }
 
 // UpdateSession updates session.
-func UpdateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, sess *models.Session) error {
+func UpdateSession(ctx context.Context, b backends, sess *models.Session) error {
 	uid := sess.User.ID
 
 	var tid *uuid.UUID
@@ -104,7 +102,7 @@ func UpdateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 	}
 
 	// update state
-	err := statesRepo.UpdateState(ctx, &states.State{
+	err := b.StatesRepository().UpdateState(ctx, &states.State{
 		ID:      sess.UserState.ID,
 		UserID:  uid,
 		TripID:  tid,
@@ -116,7 +114,7 @@ func UpdateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 	}
 
 	// update session
-	err = sessRepo.UpdateSession(ctx, &sessions.Session{
+	err = b.SessionsRepository().UpdateSession(ctx, &sessions.Session{
 		ID:      sess.ID,
 		UserID:  uid,
 		ChatID:  sess.ChatID,
@@ -138,8 +136,8 @@ func UpdateSession(ctx context.Context, sessRepo sessions.Repository, statesRepo
 }
 
 // ListSessions returns list of sessions.
-func ListSessions(ctx context.Context, sessRepo sessions.Repository, statesRepo states.Repository, tripsRepo trips.Repository, usersRepo users.Repository) ([]*models.Session, error) {
-	list, err := sessRepo.ListSessions(ctx)
+func ListSessions(ctx context.Context, b backends) ([]*models.Session, error) {
+	list, err := b.SessionsRepository().ListSessions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sessions: %w", err)
 	}
@@ -147,7 +145,7 @@ func ListSessions(ctx context.Context, sessRepo sessions.Repository, statesRepo 
 	var resp []*models.Session
 
 	for _, sess := range list {
-		user, err := GetUser(ctx, usersRepo, sess.UserID)
+		user, err := GetUser(ctx, b, sess.UserID)
 		if err != nil {
 			log.WithError(ctx, err).WithFields(log.Fields{
 				"user_id": sess.UserID,
@@ -156,7 +154,7 @@ func ListSessions(ctx context.Context, sessRepo sessions.Repository, statesRepo 
 			continue
 		}
 
-		state, err := statesRepo.GetStateByUserID(ctx, user.ID)
+		state, err := b.StatesRepository().GetStateByUserID(ctx, user.ID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get state by user id[%d]: %w", user.ID, err)
 		}
@@ -164,7 +162,7 @@ func ListSessions(ctx context.Context, sessRepo sessions.Repository, statesRepo 
 		var trip *models.Trip
 
 		if state.TripID != nil {
-			trip, err = GetTrip(ctx, tripsRepo, *state.TripID)
+			trip, err = GetTrip(ctx, b, *state.TripID)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get trip by id[%s]: %w", state.TripID, err)
 			}
@@ -186,8 +184,8 @@ func ListSessions(ctx context.Context, sessRepo sessions.Repository, statesRepo 
 }
 
 // DeleteSession deletes session.
-func DeleteSession(ctx context.Context, sessRepo sessions.Repository, sess *models.Session) error {
-	err := sessRepo.DeleteSession(ctx, sess.User.ID)
+func DeleteSession(ctx context.Context, b backends, sess *models.Session) error {
+	err := b.SessionsRepository().DeleteSession(ctx, sess.User.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}

@@ -11,10 +11,6 @@ import (
 	log "github.com/obalunenko/logger"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/telegram"
 )
 
@@ -40,50 +36,20 @@ const (
 // Service is a Telegram bot service.
 type Service struct {
 	bot      *telegram.Bot
-	sessions sessions.Repository
-	users    users.Repository
-	states   states.Repository
-	trips    trips.Repository
+	backends Backends
 
 	stopFns []stopFunc
 }
 
-// NewParams is a set of parameters for creating a new Service.
-type NewParams struct {
-	SessionsRepo sessions.Repository
-	UsersRepo    users.Repository
-	StatesRepo   states.Repository
-	TripsRepo    trips.Repository
-}
-
 // New creates a new Service.
-func New(bot *telegram.Bot, p NewParams) (*Service, error) {
+func New(bot *telegram.Bot, b Backends) (*Service, error) {
 	if bot == nil {
 		return nil, errors.New("bot is nil")
 	}
 
-	if p.StatesRepo == nil {
-		return nil, errors.New("states repository is nil")
-	}
-
-	if p.TripsRepo == nil {
-		return nil, errors.New("trips repository is nil")
-	}
-
-	if p.UsersRepo == nil {
-		return nil, errors.New("users repository is nil")
-	}
-
-	if p.SessionsRepo == nil {
-		return nil, errors.New("sessions repository is nil")
-	}
-
 	return &Service{
 		bot:      bot,
-		sessions: p.SessionsRepo,
-		users:    p.UsersRepo,
-		states:   p.StatesRepo,
-		trips:    p.TripsRepo,
+		backends: b,
 		stopFns:  nil,
 	}, nil
 }
@@ -98,7 +64,7 @@ func (s *Service) Start(ctx context.Context) {
 // Shutdown is a helper function that will be called when the program receives an interrupt signal.
 // It will gracefully shut down the bot by waiting for all requests to be processed before shutting down.
 func (s *Service) Shutdown(ctx context.Context) {
-	list, err := ops.ListSessions(ctx, s.sessions, s.states, s.trips, s.users)
+	list, err := ops.ListSessions(ctx, s.backends)
 	if err != nil {
 		log.WithError(ctx, err).Error("Failed to get sessions")
 
@@ -106,11 +72,11 @@ func (s *Service) Shutdown(ctx context.Context) {
 	}
 
 	for _, sess := range list {
-		msg := fmt.Sprintf("I'm going to sleep. Bye, %s!", sess.User.Username)
+		msg := fmt.Sprintf("I'm going to sleep. Bye, %s!", sess.User.Firstname)
 
 		s.sendMessage(contextWithSession(ctx, sess), msg)
 
-		if err = ops.DeleteSession(ctx, s.sessions, sess); err != nil {
+		if err = ops.DeleteSession(ctx, s.backends, sess); err != nil {
 			log.WithError(ctx, err).WithField("user_id", sess.User.ID).Warn("Failed to delete session")
 
 			continue
