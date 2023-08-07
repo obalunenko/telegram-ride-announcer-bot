@@ -9,12 +9,12 @@ import (
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
 
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/backends"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service/backends"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/telegram"
 )
 
