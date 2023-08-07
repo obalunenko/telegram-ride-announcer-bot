@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
+	"html/template"
 	"strings"
 
 	tgbotapi "github.com/mymmrac/telego"
@@ -80,16 +82,17 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 	}
 }
 
+//go:embed templates/cmd_help.gotmpl
+var cmdHelpTemplate string
+
 func (s *Service) helpHandler() th.Handler {
-	msgFormat := `Welcome to %s Help!
+	msgTpl := template.Must(template.New(CmdHelp).Parse(cmdHelpTemplate))
 
-Here's a list of commands that you can use: 
-%s
-
-Remember, you can always type /%s to see this list of commands again. 
-
-Enjoy planning and going on your bike trips with %s!
-`
+	type helpTplParams struct {
+		BotUsername string
+		Commands    string
+		HelpCmd     string
+	}
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
@@ -120,9 +123,24 @@ Enjoy planning and going on your bike trips with %s!
 			cmdsStr += fmt.Sprintf("\t/%s - %s\n", cmd.Command, cmd.Description)
 		}
 
-		msg := fmt.Sprintf(msgFormat, s.bot.Username(), cmdsStr, CmdHelp, s.bot.Username())
+		var buf strings.Builder
 
-		s.sendMessage(ctx, msg)
+		defer func() {
+			buf.Reset()
+		}()
+
+		err := msgTpl.Execute(&buf, helpTplParams{
+			BotUsername: s.bot.Username(),
+			Commands:    cmdsStr,
+			HelpCmd:     fmt.Sprintf("/%s", CmdHelp),
+		})
+		if err != nil {
+			log.WithError(ctx, err).Error("Failed to execute template")
+
+			return
+		}
+
+		s.sendMessage(ctx, buf.String())
 	}
 }
 
