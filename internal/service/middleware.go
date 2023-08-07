@@ -48,6 +48,13 @@ func (s *Service) setSessionMiddleware() th.Middleware {
 		uid := update.Message.From.ID
 		cid := update.Message.Chat.ID
 
+		if uid == s.bot.ID() {
+			// Don't create a session for bot.
+			log.WithField(ctx, "user_id", uid).Debug("Bot is trying to create a session for itself")
+
+			return
+		}
+
 		user, err := ops.GetUser(ctx, s.users, uid)
 		if err != nil {
 			if errors.Is(err, users.ErrNotFound) {
