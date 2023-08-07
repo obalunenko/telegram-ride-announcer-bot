@@ -12,7 +12,7 @@ func (s *Service) newTripHandler() th.Handler {
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
-		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmdNewTrip))
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdNewTrip))
 
 		log.Debug(ctx, "Called new_trip handler")
 

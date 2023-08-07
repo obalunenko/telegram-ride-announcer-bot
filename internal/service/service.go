@@ -15,69 +15,31 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/trips"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/telegram"
 )
 
 const (
-	// BotName is a Command of the bot.
-	botName        = "Ride Announcer Bot"
-	botDescription = "Bot for scheduling and announcing planned bicycle trips in chat groups."
-
-	cmdHelp        = "help"
-	cmdStart       = "start"
-	cmdNewTrip     = "newtrip"
-	cmdTrips       = "trips"
-	cmdSubscribe   = "subscribe"
-	cmdUnsubscribe = "unsubscribe"
-	cmdMyTrips     = "mytrips"
-	cmdSubscribed  = "subscribed"
-)
-
-var (
-	// Disabled commands,
-	// because they are not implemented yet.
-	disabledCmds = []string{
-		cmdTrips, cmdSubscribe, cmdUnsubscribe, cmdMyTrips, cmdSubscribed,
-	}
-
-	commands = []tgbotapi.BotCommand{
-		{
-			Command:     cmdHelp,
-			Description: "show this help message",
-		},
-		{
-			Command:     cmdStart,
-			Description: "start using the bot",
-		},
-		{
-			Command:     cmdTrips,
-			Description: "show all trips",
-		},
-		{
-			Command:     cmdNewTrip,
-			Description: "create new trip",
-		},
-		{
-			Command:     cmdSubscribe,
-			Description: "subscribe to a trip",
-		},
-		{
-			Command:     cmdUnsubscribe,
-			Description: "unsubscribe from a trip",
-		},
-		{
-			Command:     cmdMyTrips,
-			Description: "show trips you've created",
-		},
-		{
-			Command:     cmdSubscribed,
-			Description: "show trips you've subscribed to",
-		},
-	}
+	// CmdHelp is a command for getting help.
+	CmdHelp = "help"
+	// CmdStart is a command for starting the bot.
+	CmdStart = "start"
+	// CmdNewTrip is a command for creating a new trip.
+	CmdNewTrip = "newtrip"
+	// CmdTrips is a command for getting trips.
+	CmdTrips = "trips"
+	// CmdSubscribe is a command for subscribing to trip.
+	CmdSubscribe = "subscribe"
+	// CmdUnsubscribe is a command for unsubscribing from a trip.
+	CmdUnsubscribe = "unsubscribe"
+	// CmdMyTrips is a command for getting user's trips.
+	CmdMyTrips = "mytrips"
+	// CmdSubscribed is a command for getting user's subscribed trips.
+	CmdSubscribed = "subscribed"
 )
 
 // Service is a Telegram bot service.
 type Service struct {
-	bot      *tgbotapi.Bot
+	bot      *telegram.Bot
 	sessions sessions.Repository
 	users    users.Repository
 	states   states.Repository
@@ -95,7 +57,7 @@ type NewParams struct {
 }
 
 // New creates a new Service.
-func New(bot *tgbotapi.Bot, p NewParams) (*Service, error) {
+func New(bot *telegram.Bot, p NewParams) (*Service, error) {
 	if bot == nil {
 		return nil, errors.New("bot is nil")
 	}
@@ -128,14 +90,7 @@ func New(bot *tgbotapi.Bot, p NewParams) (*Service, error) {
 
 // Start is a helper function that will be called when the program starts.
 func (s *Service) Start(ctx context.Context) {
-	s.updateOnStart(ctx)
-
-	self, err := s.bot.GetMe()
-	if err != nil {
-		log.WithError(ctx, err).Fatal("failed to get bot info")
-	}
-
-	log.WithField(ctx, "Username", self.Username).Info("Authorized on account")
+	log.WithField(ctx, "Username", s.bot.Username()).Info("Authorized on account")
 
 	s.stopFns = append(s.stopFns, s.initHandlers(ctx))
 }
@@ -163,7 +118,7 @@ func (s *Service) Shutdown(ctx context.Context) {
 	}
 
 	log.Info(ctx, "Stop receiving updates")
-	s.bot.StopLongPolling()
+	s.bot.Client().StopLongPolling()
 
 	for _, fn := range s.stopFns {
 		fn(ctx)
@@ -173,13 +128,13 @@ func (s *Service) Shutdown(ctx context.Context) {
 type stopFunc func(ctx context.Context)
 
 func (s *Service) initHandlers(ctx context.Context) stopFunc {
-	pollChan, err := s.bot.UpdatesViaLongPolling(&tgbotapi.GetUpdatesParams{},
+	pollChan, err := s.bot.Client().UpdatesViaLongPolling(&tgbotapi.GetUpdatesParams{},
 		tgbotapi.WithLongPollingContext(ctx))
 	if err != nil {
 		log.WithError(ctx, err).Fatal("Failed to get updates via long polling")
 	}
 
-	handler, err := th.NewBotHandler(s.bot, pollChan)
+	handler, err := th.NewBotHandler(s.bot.Client(), pollChan)
 	if err != nil {
 		log.WithError(ctx, err).Fatal("Failed to create bot handler")
 	}
@@ -189,14 +144,14 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 	handler.Use(s.setSessionMiddleware())
 	handler.Use(s.loggerMiddleware())
 
-	handler.Handle(s.helpHandler(), th.CommandEqual(cmdHelp))
-	handler.Handle(s.startHandler(ctx), th.CommandEqual(cmdStart))
-	handler.Handle(s.newTripHandler(), th.CommandEqual(cmdNewTrip))
-	handler.Handle(s.tripsHandler(), th.CommandEqual(cmdTrips))
-	handler.Handle(s.subscribeHandler(), th.CommandEqual(cmdSubscribe))
-	handler.Handle(s.unsubscribeHandler(), th.CommandEqual(cmdUnsubscribe))
-	handler.Handle(s.myTripsHandler(), th.CommandEqual(cmdMyTrips))
-	handler.Handle(s.subscribedHandler(), th.CommandEqual(cmdSubscribed))
+	handler.Handle(s.helpHandler(), th.CommandEqual(CmdHelp))
+	handler.Handle(s.startHandler(ctx), th.CommandEqual(CmdStart))
+	handler.Handle(s.newTripHandler(), th.CommandEqual(CmdNewTrip))
+	handler.Handle(s.tripsHandler(), th.CommandEqual(CmdTrips))
+	handler.Handle(s.subscribeHandler(), th.CommandEqual(CmdSubscribe))
+	handler.Handle(s.unsubscribeHandler(), th.CommandEqual(CmdUnsubscribe))
+	handler.Handle(s.myTripsHandler(), th.CommandEqual(CmdMyTrips))
+	handler.Handle(s.subscribedHandler(), th.CommandEqual(CmdSubscribed))
 	handler.Handle(s.notFoundHandler(ctx), th.AnyCommand())
 	handler.Handle(s.textHandler(), th.AnyMessageWithText())
 
@@ -209,129 +164,4 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 
 		log.Info(ctx, "Bot handler stopped")
 	}
-}
-
-func (s *Service) updateOnStart(ctx context.Context) {
-	maybeUpdateBotName(ctx, s.bot)
-	maybeUpdateDescriptionBot(ctx, s.bot)
-	maybeUpdateCommands(ctx, s.bot)
-}
-
-func maybeUpdateBotName(ctx context.Context, bot *tgbotapi.Bot) {
-	self, err := bot.GetMe()
-	if err != nil {
-		log.WithError(ctx, err).Error("Failed to get bot info")
-	}
-
-	isUpToDate := self.Username != botName
-
-	if isUpToDate {
-		log.Info(ctx, "Bot name is up to date")
-
-		return
-	}
-
-	log.Info(ctx, "Updating bot name")
-
-	err = bot.SetMyName(&tgbotapi.SetMyNameParams{
-		Name: botName,
-	})
-	if err != nil {
-		log.WithError(ctx, err).Error("Failed to set bot name")
-
-		return
-	}
-
-	log.Info(ctx, "Bot name is up to date")
-}
-
-func maybeUpdateDescriptionBot(ctx context.Context, bot *tgbotapi.Bot) {
-	desc, err := bot.GetMyDescription(&tgbotapi.GetMyDescriptionParams{})
-	if err != nil {
-		log.WithError(ctx, err).Error("Failed to get bot info")
-	}
-
-	isUpToDate := desc.Description != botDescription
-
-	if isUpToDate {
-		log.Info(ctx, "Bot description is up to date")
-
-		return
-	}
-
-	log.Info(ctx, "Updating bot description")
-
-	err = bot.SetMyDescription(&tgbotapi.SetMyDescriptionParams{
-		Description: botDescription,
-	})
-	if err != nil {
-		log.WithError(ctx, err).Error("Failed to set bot description")
-
-		return
-	}
-
-	log.Info(ctx, "Bot description is up to date")
-}
-
-func filterCommands(cmds []tgbotapi.BotCommand) []tgbotapi.BotCommand {
-	filtered := make([]tgbotapi.BotCommand, 0, len(cmds))
-
-	disabled := make(map[string]struct{}, len(disabledCmds))
-
-	for _, cmd := range disabledCmds {
-		disabled[cmd] = struct{}{}
-	}
-
-	for _, cmd := range cmds {
-		if _, ok := disabled[cmd.Command]; ok {
-			continue
-		}
-
-		filtered = append(filtered, cmd)
-	}
-
-	return filtered
-}
-
-func maybeUpdateCommands(ctx context.Context, bot *tgbotapi.Bot) {
-	cmds, err := bot.GetMyCommands(&tgbotapi.GetMyCommandsParams{})
-	if err != nil {
-		log.WithError(ctx, err).Error("Failed to get bot commands")
-	}
-
-	registeredCommands := make(map[string]string, len(cmds))
-
-	for _, cmd := range cmds {
-		registeredCommands[cmd.Command] = cmd.Description
-	}
-
-	var equal bool
-
-	enabled := filterCommands(commands)
-
-	for _, cmd := range enabled {
-		desc, ok := registeredCommands[cmd.Command]
-		if !ok || desc != cmd.Description {
-			equal = false
-
-			break
-		}
-	}
-
-	if equal {
-		log.Info(ctx, "Bot commands are up to date")
-
-		return
-	}
-
-	log.Info(ctx, "Updating bot commands")
-
-	err = bot.SetMyCommands(&tgbotapi.SetMyCommandsParams{
-		Commands: enabled,
-	})
-	if err != nil {
-		log.WithError(ctx, err).Error("failed to set bot commands")
-	}
-
-	log.Info(ctx, "Bot commands set")
 }
