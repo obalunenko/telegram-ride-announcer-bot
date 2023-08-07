@@ -7,8 +7,8 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
 
-// Backends is a set of repositories.
-type Backends interface {
+// backends is a set of repositories.
+type backends interface {
 	UsersRepository() users.Repository
 	SessionsRepository() sessions.Repository
 	TripsRepository() trips.Repository

@@ -36,13 +36,13 @@ const (
 // Service is a Telegram bot service.
 type Service struct {
 	bot      *telegram.Bot
-	backends Backends
+	backends backends
 
 	stopFns []stopFunc
 }
 
 // New creates a new Service.
-func New(bot *telegram.Bot, b Backends) (*Service, error) {
+func New(bot *telegram.Bot, b backends) (*Service, error) {
 	if bot == nil {
 		return nil, errors.New("bot is nil")
 	}
