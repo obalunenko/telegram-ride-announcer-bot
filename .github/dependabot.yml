@@ -29,7 +29,7 @@ updates:
       include: "scope"
 
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "/build/docker/go-tools"
     schedule:
       interval: "daily"
     labels:
