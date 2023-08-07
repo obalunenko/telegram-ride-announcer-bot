@@ -1,7 +1,7 @@
 release:
   github:
     owner: obalunenko
-    name: georgia-tax-calculator
+    name: telegram-ride-announcer-bot
   footer: |
     **Full Changelog**: https://github.com/obalunenko/telegram-ride-announcer-bot/compare/{{ .PreviousTag }}...{{ .Tag }}
 
