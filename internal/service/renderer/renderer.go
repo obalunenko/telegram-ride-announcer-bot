@@ -96,6 +96,6 @@ func parseTemplate(name, path string) (*template.Template, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse %q template: %w", name, err)
 	}
-	
+
 	return tmpl, nil
 }
