@@ -16,6 +16,7 @@ var templatesFS embed.FS
 type Renderer interface {
 	Help(params HelpParams) (string, error)
 	Welcome(params WelcomeParams) (string, error)
+	Trip(params TripParams) (string, error)
 }
 
 // New creates a new Renderer.
@@ -32,6 +33,11 @@ func New() (Renderer, error) {
 		errs = errors.Join(errs, err)
 	}
 
+	tripTpl, err := parseTemplate("trip", "templates/trip.gotmpl")
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
 	if errs != nil {
 		return nil, errs
 	}
@@ -39,6 +45,7 @@ func New() (Renderer, error) {
 	t := templates{
 		help:    helpTpl,
 		welcome: welcomeTpl,
+		trip:    tripTpl,
 	}
 
 	return &t, nil
@@ -48,6 +55,7 @@ func New() (Renderer, error) {
 type templates struct {
 	help    *template.Template
 	welcome *template.Template
+	trip    *template.Template
 }
 
 // HelpParams is a set of parameters for Help template.
@@ -72,6 +80,19 @@ type WelcomeParams struct {
 // Welcome renders a welcome message.
 func (t *templates) Welcome(params WelcomeParams) (string, error) {
 	return renderTemplate(t.welcome, params)
+}
+
+// TripParams is a set of parameters for Trip template.
+type TripParams struct {
+	Title       string
+	Description string
+	Date        string
+	CreatedBy   string
+}
+
+// Trip renders a trip message.
+func (t *templates) Trip(params TripParams) (string, error) {
+	return renderTemplate(t.trip, params)
 }
 
 // renderTemplate renders a template.
