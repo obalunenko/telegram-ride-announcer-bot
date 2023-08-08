@@ -11,6 +11,7 @@ import (
 	log "github.com/obalunenko/logger"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
+	templates "github.com/obalunenko/telegram-ride-announcer-bot/internal/service/renderer"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/telegram"
 )
 
@@ -35,8 +36,9 @@ const (
 
 // Service is a Telegram bot service.
 type Service struct {
-	bot      *telegram.Bot
-	backends backends
+	bot       *telegram.Bot
+	backends  backends
+	templates templates.Renderer
 
 	stopFns []stopFunc
 }
@@ -47,10 +49,16 @@ func New(bot *telegram.Bot, b backends) (*Service, error) {
 		return nil, errors.New("bot is nil")
 	}
 
+	tpls, err := templates.New()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load templates: %w", err)
+	}
+
 	return &Service{
-		bot:      bot,
-		backends: b,
-		stopFns:  nil,
+		bot:       bot,
+		backends:  b,
+		templates: tpls,
+		stopFns:   nil,
 	}, nil
 }
 
