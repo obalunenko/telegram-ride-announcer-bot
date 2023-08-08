@@ -52,6 +52,9 @@ github.com/obalunenko/getenv/option
 # github.com/obalunenko/logger v0.6.0
 ## explicit; go 1.20
 github.com/obalunenko/logger
+# github.com/obalunenko/version v1.1.0
+## explicit; go 1.17
+github.com/obalunenko/version
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors

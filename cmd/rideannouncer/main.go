@@ -43,6 +43,8 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer stop()
 
+	printVersion(ctx)
+
 	log.Init(ctx, log.Params{
 		Writer:       nil,
 		Level:        "DEBUG",
