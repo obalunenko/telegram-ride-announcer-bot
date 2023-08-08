@@ -34,12 +34,6 @@ func (s *Service) unsupportedHandler(ctx context.Context, text string) th.Handle
 }
 
 func (s *Service) startHandler(ctx context.Context) th.Handler {
-	type startTplParams struct {
-		Firstname   string
-		BotUsername string
-		HelpCmd     string
-	}
-
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx = update.Context()
 
@@ -79,12 +73,6 @@ func (s *Service) startHandler(ctx context.Context) th.Handler {
 }
 
 func (s *Service) helpHandler() th.Handler {
-	type helpTplParams struct {
-		BotUsername string
-		Commands    string
-		HelpCmd     string
-	}
-
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
