@@ -25,7 +25,7 @@ type Trip struct {
 	Description string    `json:"description,omitempty"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
-	CreatedBy   UserID    `json:"created_by,omitempty"`
+	CreatedBy   *User     `json:"created_by,omitempty"`
 }
 
 func (t Trip) String() string {
