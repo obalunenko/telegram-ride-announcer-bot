@@ -17,6 +17,17 @@ export GO111MODULE=on
 rm -rf "${COVER_DIR}"
 mkdir -p "${COVER_DIR}"
 
-go test --count=1 -coverprofile "${COVER_DIR}/unit.cov" -covermode=atomic -json ./... >tests-report.json
+COVERPROFILE="${COVER_DIR}/unit.cov"
+GOEXPERIMENT=nocoverageredesign go test --count=1 -coverpkg=./... -coverprofile "${COVERPROFILE}" -covermode=atomic ./... >tests-report.json
+
+# Get total from coverage report
+go tool cover \
+    -func "${COVERPROFILE}"
+
+go tool cover \
+    -func "${COVERPROFILE}" \
+        | grep total \
+        | awk '{print "Code coverage: " $3}'
+
 
 echo "${SCRIPT_NAME} is done... "
