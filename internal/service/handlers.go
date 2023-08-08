@@ -265,12 +265,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 			return fmt.Errorf("user %d is not the creator of the trip %d", sess.User.ID, trip.ID)
 		}
 
-		tripfmt, err := s.templates.Trip(renderer.TripParams{
-			Title:       trip.Name,
-			Description: trip.Description,
-			Date:        trip.Date,
-			CreatedBy:   fmt.Sprintf("@%s", sess.User.Username),
-		})
+		tripfmt, err := s.renderTrip(trip)
 		if err != nil {
 			return fmt.Errorf("failed to render trip: %w", err)
 		}
@@ -320,12 +315,10 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 			return fmt.Errorf("user %d is not the creator of the trip %d", sess.User.ID, trip.ID)
 		}
 
-		tripfmt, err := s.templates.Trip(renderer.TripParams{
-			Title:       trip.Name,
-			Description: trip.Description,
-			Date:        trip.Date,
-			CreatedBy:   fmt.Sprintf("@%s", sess.User.Username),
-		})
+		tripfmt, err := s.renderTrip(trip)
+		if err != nil {
+			return fmt.Errorf("failed to render trip: %w", err)
+		}
 
 		msgtxt := fmt.Sprintf("Trip is published!\n\n%s", tripfmt)
 
