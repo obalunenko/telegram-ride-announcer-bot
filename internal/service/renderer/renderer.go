@@ -1,3 +1,4 @@
+// Package renderer provides a template renderer.
 package renderer
 
 import (
