@@ -13,7 +13,7 @@ func TestCommand(t *testing.T) {
 		description string
 		enabled     bool
 	}
-	
+
 	tests := []struct {
 		name string
 		args args
