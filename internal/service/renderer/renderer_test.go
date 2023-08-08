@@ -61,3 +61,17 @@ func (s *TemplatesSuite) TestTemplates_Welcome() {
 
 	s.Assert().Equal(s.loadGoldenFile("welcome.golden"), res)
 }
+
+func (s *TemplatesSuite) TestTemplates_Trip() {
+	params := renderer.TripParams{
+		Title:       "Title",
+		Description: "Description",
+		Date:        "Date",
+		CreatedBy:   "CreatedBy",
+	}
+
+	res, err := s.tpls.Trip(params)
+	s.Assert().NoError(err)
+
+	s.Assert().Equal(s.loadGoldenFile("trip.golden"), res)
+}

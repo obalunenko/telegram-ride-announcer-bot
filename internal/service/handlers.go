@@ -261,7 +261,16 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 			),
 		).WithResizeKeyboard().WithInputFieldPlaceholder("Confirm").WithOneTimeKeyboard()
 
-		msg := tu.Message(tu.ID(sess.ChatID), fmt.Sprintf("Your trip %s. Please confirm", trip.String()))
+		if sess.User.ID != trip.CreatedBy.ID {
+			return fmt.Errorf("user %d is not the creator of the trip %d", sess.User.ID, trip.ID)
+		}
+
+		tripfmt, err := s.renderTrip(trip)
+		if err != nil {
+			return fmt.Errorf("failed to render trip: %w", err)
+		}
+
+		msg := tu.Message(tu.ID(sess.ChatID), fmt.Sprintf("%s\n\nPlease confirm", tripfmt))
 
 		msg.WithReplyMarkup(keyboard)
 
@@ -302,9 +311,16 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 		sess.UserState.State = models.StateNewTripPublish
 
-		t := sess.UserState.Trip.String()
+		if sess.User.ID != trip.CreatedBy.ID {
+			return fmt.Errorf("user %d is not the creator of the trip %d", sess.User.ID, trip.ID)
+		}
 
-		msgtxt := fmt.Sprintf("Your trip %s published. Thank you!", t)
+		tripfmt, err := s.renderTrip(trip)
+		if err != nil {
+			return fmt.Errorf("failed to render trip: %w", err)
+		}
+
+		msgtxt := fmt.Sprintf("Trip is published!\n\n%s", tripfmt)
 
 		msg := tu.Message(tu.ID(sess.ChatID), msgtxt)
 

@@ -37,7 +37,12 @@ func CreateTrip(ctx context.Context, b backends, p CreateTripParams) (*models.Tr
 func GetTrip(ctx context.Context, b backends, id uuid.UUID) (*models.Trip, error) {
 	t, err := b.TripsRepository().GetTripByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get trip by ID: %w", err)
+	}
+
+	user, err := b.UsersRepository().GetBuID(ctx, t.CreatedBy)
+	if err != nil {
+		return nil, fmt.Errorf("get user by ID: %w", err)
 	}
 
 	return &models.Trip{
@@ -47,7 +52,12 @@ func GetTrip(ctx context.Context, b backends, id uuid.UUID) (*models.Trip, error
 		Description: t.Description,
 		CreatedAt:   t.CreatedAt,
 		UpdatedAt:   t.UpdatedAt,
-		CreatedBy:   t.CreatedBy,
+		CreatedBy: &models.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			Firstname: user.Firstname,
+			Lastname:  user.Lastname,
+		},
 	}, nil
 }
 
