@@ -35,7 +35,7 @@ var commands = telegram.Commands{
 	telegram.NewCommand(service.CmdTrips, "show all trips", false),
 	telegram.NewCommand(service.CmdSubscribe, "subscribe to a trip", false),
 	telegram.NewCommand(service.CmdUnsubscribe, "unsubscribe from a trip", false),
-	telegram.NewCommand(service.CmdMyTrips, "show trips you've created", false),
+	telegram.NewCommand(service.CmdMyTrips, "show trips you've created", true),
 	telegram.NewCommand(service.CmdSubscribed, "show trips you've subscribed to", false),
 }
 
