@@ -413,7 +413,56 @@ func (s *Service) unsubscribeHandler() th.Handler {
 }
 
 func (s *Service) myTripsHandler() th.Handler {
-	return s.notImplementedHandler(CmdMyTrips)
+	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+		ctx := update.Context()
+
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdMyTrips))
+
+		log.Debug(ctx, "Called my_trips handler")
+
+		sess := sessionFromContext(ctx)
+		if sess == nil {
+			log.Error(ctx, "Session is nil")
+
+			return
+		}
+
+		list, err := ops.ListTripsByUser(ctx, s.backends, sess.User)
+		if err != nil {
+			log.WithError(ctx, err).WithField("user_id", sess.User.ID).Error("Failed to list trips")
+
+			return
+		}
+
+		if len(list) == 0 {
+			msg := fmt.Sprintf("You have no trips yet. Use /%s command to create a new trip.", CmdNewTrip)
+
+			s.sendMessage(ctx, msg)
+
+			return
+		}
+
+		msgtxt := "Your trips:\n\n"
+
+		for i := range list {
+			if i > 0 {
+				msgtxt += "\n"
+			}
+
+			trip := list[i]
+
+			tripfmt, err := s.renderTrip(trip)
+			if err != nil {
+				log.WithError(ctx, err).WithField("trip_id", trip.ID).Error("Failed to render trip")
+
+				return
+			}
+
+			msgtxt += tripfmt
+		}
+
+		s.sendMessage(ctx, msgtxt)
+	}
 }
 
 func (s *Service) subscribedHandler() th.Handler {
@@ -424,7 +473,7 @@ func (s *Service) notImplementedHandler(cmd string) th.Handler {
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
-		log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmd))
+		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmd))
 
 		log.Debug(ctx, "Called not_implemented handler")
 

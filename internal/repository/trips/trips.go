@@ -19,6 +19,8 @@ type Repository interface {
 	CreateTrip(ctx context.Context, name, date, description string, createdBy int64) (*Trip, error)
 	// ListTrips returns all trips.
 	ListTrips(ctx context.Context) ([]*Trip, error)
+	// ListTripsByUser returns all trips created by a user.
+	ListTripsByUser(ctx context.Context, userID int64) ([]*Trip, error)
 	// GetTripByID returns a trip by ID.
 	GetTripByID(ctx context.Context, id uuid.UUID) (*Trip, error)
 	// UpdateTrip updates a trip.
@@ -147,6 +149,22 @@ func (i *inMemoryRepository) ListTrips(_ context.Context) ([]*Trip, error) {
 
 	for _, t := range i.trips {
 		if t.DeletedAt.IsZero() {
+			trips = append(trips, t)
+		}
+	}
+
+	return trips, nil
+}
+
+// ListTripsByUser returns all trips created by a user.
+func (i *inMemoryRepository) ListTripsByUser(_ context.Context, userID int64) ([]*Trip, error) {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+
+	var trips []*Trip
+
+	for _, t := range i.trips {
+		if t.CreatedBy == userID && t.DeletedAt.IsZero() {
 			trips = append(trips, t)
 		}
 	}
