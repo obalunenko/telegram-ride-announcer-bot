@@ -100,3 +100,27 @@ func DeleteTrip(ctx context.Context, b backends, id uuid.UUID) error {
 
 	return nil
 }
+
+// ListTripsByUser return list of trips by user.
+func ListTripsByUser(ctx context.Context, b backends, user *models.User) ([]*models.Trip, error) {
+	list, err := b.TripsRepository().ListTripsByUser(ctx, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("list trips by user: %w", err)
+	}
+
+	result := make([]*models.Trip, 0, len(list))
+
+	for _, t := range list {
+		result = append(result, &models.Trip{
+			ID:          t.ID,
+			Name:        t.Name,
+			Date:        t.Date,
+			Description: t.Description,
+			CreatedAt:   t.CreatedAt,
+			UpdatedAt:   t.UpdatedAt,
+			CreatedBy:   user,
+		})
+	}
+
+	return result, nil
+}
