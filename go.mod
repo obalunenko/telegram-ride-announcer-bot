@@ -7,6 +7,7 @@ require (
 	github.com/mymmrac/telego v0.26.0
 	github.com/obalunenko/getenv v1.11.0
 	github.com/obalunenko/logger v0.6.0
+	github.com/obalunenko/version v1.1.0
 	github.com/stretchr/testify v1.8.4
 )
 
