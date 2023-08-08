@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
-	"html/template"
 	"strings"
 
 	tgbotapi "github.com/mymmrac/telego"
@@ -14,6 +12,7 @@ import (
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service/templates"
 )
 
 func (s *Service) notFoundHandler(ctx context.Context) th.Handler {
@@ -35,23 +34,11 @@ func (s *Service) unsupportedHandler(ctx context.Context, text string) th.Handle
 }
 
 func (s *Service) startHandler(ctx context.Context) th.Handler {
-	msgFormat := `Hello, %s! 👋 Welcome to %s. 
-
-I'm here to assist you in scheduling, announcing, and joining exciting bike trips with your community. 
-
-Here are some of the things I can do:
-
-🔹 CreateState new bike trip announcements.
-🔹 Display a list of upcoming trips.
-🔹 Subscribe you to a bike trip.
-🔹 Provide outfit and SPF recommendations based on the weather.
-🔹 Show a list of bike trips you've subscribed to.
-
-
-To get started and see more detailed instructions, use /%s command.
-
-Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
-`
+	type startTplParams struct {
+		Firstname   string
+		BotUsername string
+		HelpCmd     string
+	}
 
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx = update.Context()
@@ -76,18 +63,22 @@ Happy cycling and let's embark on this journey together, %s! 🚴‍♂️
 
 		log.Debug(ctx, "Called start handler")
 
-		msg := fmt.Sprintf(msgFormat, sess.User.Firstname, s.bot.Username(), CmdHelp, sess.User.Firstname)
+		msg, err := s.templates.Welcome(templates.WelcomeParams{
+			Firstname:   sess.User.Firstname,
+			BotUsername: s.bot.Username(),
+			HelpCmd:     fmt.Sprintf("/%s", CmdHelp),
+		})
+		if err != nil {
+			log.WithError(ctx, err).Error("Failed to render template")
+
+			return
+		}
 
 		s.sendMessage(ctx, msg)
 	}
 }
 
-//go:embed templates/cmd_help.gotmpl
-var cmdHelpTemplate string
-
 func (s *Service) helpHandler() th.Handler {
-	msgTpl := template.Must(template.New(CmdHelp).Parse(cmdHelpTemplate))
-
 	type helpTplParams struct {
 		BotUsername string
 		Commands    string
@@ -123,24 +114,18 @@ func (s *Service) helpHandler() th.Handler {
 			cmdsStr += fmt.Sprintf("\t/%s - %s\n", cmd.Command, cmd.Description)
 		}
 
-		var buf strings.Builder
-
-		defer func() {
-			buf.Reset()
-		}()
-
-		err := msgTpl.Execute(&buf, helpTplParams{
+		msg, err := s.templates.Help(templates.HelpParams{
 			BotUsername: s.bot.Username(),
 			Commands:    cmdsStr,
 			HelpCmd:     fmt.Sprintf("/%s", CmdHelp),
 		})
 		if err != nil {
-			log.WithError(ctx, err).Error("Failed to execute template")
+			log.WithError(ctx, err).Error("Failed to render template")
 
 			return
 		}
 
-		s.sendMessage(ctx, buf.String())
+		s.sendMessage(ctx, msg)
 	}
 }
 
