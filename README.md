@@ -7,4 +7,4 @@
 [![License](https://img.shields.io/github/license/obalunenko/telegram-ride-announcer-bot)](/LICENSE)
 
 # telegram-ride-announcer-bot
-Telegram bot or scheduling and announcing planned bicycle trips in chat groups
+Telegram bot for scheduling and announcing planned bicycle trips in chat groups
