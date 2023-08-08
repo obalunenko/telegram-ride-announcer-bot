@@ -31,12 +31,16 @@ func New() (Renderer, error) {
 		errs = errors.Join(errs, err)
 	}
 
+	if errs != nil {
+		return nil, errs
+	}
+
 	t := templates{
 		help:    helpTpl,
 		welcome: welcomeTpl,
 	}
 
-	return &t, errs
+	return &t, nil
 }
 
 // templates is a template renderer.
