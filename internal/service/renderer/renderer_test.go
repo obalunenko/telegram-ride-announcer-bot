@@ -1,4 +1,4 @@
-package templates_test
+package renderer_test
 
 import (
 	"os"
@@ -7,12 +7,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service/templates"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service/renderer"
 )
 
 type TemplatesSuite struct {
 	suite.Suite
-	tpls templates.Renderer
+	tpls renderer.Renderer
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -31,13 +31,13 @@ func (s *TemplatesSuite) loadGoldenFile(name string) string {
 func (s *TemplatesSuite) SetupSuite() {
 	var err error
 
-	s.tpls, err = templates.New()
+	s.tpls, err = renderer.New()
 	s.Require().NoError(err)
 	s.Require().NotNil(s.tpls)
 }
 
 func (s *TemplatesSuite) TestTemplates_Help() {
-	params := templates.HelpParams{
+	params := renderer.HelpParams{
 		BotUsername: "BotName",
 		Commands:    "some commands",
 		HelpCmd:     "/help",
@@ -50,7 +50,7 @@ func (s *TemplatesSuite) TestTemplates_Help() {
 }
 
 func (s *TemplatesSuite) TestTemplates_Welcome() {
-	params := templates.WelcomeParams{
+	params := renderer.WelcomeParams{
 		Firstname:   "Firstname",
 		BotUsername: "BotName",
 		HelpCmd:     "/help",

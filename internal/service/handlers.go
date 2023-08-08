@@ -12,7 +12,7 @@ import (
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
-	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service/templates"
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service/renderer"
 )
 
 func (s *Service) notFoundHandler(ctx context.Context) th.Handler {
@@ -63,7 +63,7 @@ func (s *Service) startHandler(ctx context.Context) th.Handler {
 
 		log.Debug(ctx, "Called start handler")
 
-		msg, err := s.templates.Welcome(templates.WelcomeParams{
+		msg, err := s.templates.Welcome(renderer.WelcomeParams{
 			Firstname:   sess.User.Firstname,
 			BotUsername: s.bot.Username(),
 			HelpCmd:     fmt.Sprintf("/%s", CmdHelp),
@@ -114,7 +114,7 @@ func (s *Service) helpHandler() th.Handler {
 			cmdsStr += fmt.Sprintf("\t/%s - %s\n", cmd.Command, cmd.Description)
 		}
 
-		msg, err := s.templates.Help(templates.HelpParams{
+		msg, err := s.templates.Help(renderer.HelpParams{
 			BotUsername: s.bot.Username(),
 			Commands:    cmdsStr,
 			HelpCmd:     fmt.Sprintf("/%s", CmdHelp),

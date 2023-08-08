@@ -1,4 +1,4 @@
-package templates
+package renderer
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"text/template"
 )
 
-//go:embed *.gotmpl
+//go:embed templates/*.gotmpl
 var templatesFS embed.FS
 
 // Renderer is a template renderer.
@@ -21,12 +21,12 @@ type Renderer interface {
 func New() (Renderer, error) {
 	var errs error
 
-	helpTpl, err := parseTemplate("help", "help.gotmpl")
+	helpTpl, err := parseTemplate("help", "templates/help.gotmpl")
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	welcomeTpl, err := parseTemplate("welcome", "welcome.gotmpl")
+	welcomeTpl, err := parseTemplate("welcome", "templates/welcome.gotmpl")
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}

@@ -11,7 +11,7 @@ import (
 	log "github.com/obalunenko/logger"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
-	templates "github.com/obalunenko/telegram-ride-announcer-bot/internal/service/templates"
+	templates "github.com/obalunenko/telegram-ride-announcer-bot/internal/service/renderer"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/telegram"
 )
 
