@@ -16,6 +16,7 @@ func TestParseTemplate(t *testing.T) {
 		wantNil bool
 		wantErr assert.ErrorAssertionFunc
 	}
+
 	testCases := []struct {
 		name string
 		args args
