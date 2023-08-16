@@ -3,11 +3,11 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
@@ -40,7 +40,9 @@ var commands = telegram.Commands{
 }
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	signals := []os.Signal{syscall.SIGTERM, syscall.SIGINT}
+
+	ctx, stop := signal.NotifyContext(context.Background(), signals...)
 	defer stop()
 
 	printVersion(ctx)
