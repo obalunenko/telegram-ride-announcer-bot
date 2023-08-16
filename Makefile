@@ -32,7 +32,7 @@ help:
 	{ lastLine = $$0 }' $(MAKEFILE_LIST)
 
 ## Build project.
-build: sync-vendor generate compile-app
+build: generate compile-app
 .PHONY: build
 
 ## Compile app.
