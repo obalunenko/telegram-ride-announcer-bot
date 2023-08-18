@@ -8,7 +8,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/mymmrac/telego v0.26.0
 	github.com/obalunenko/getenv v1.12.0
-	github.com/obalunenko/logger v0.6.0
+	github.com/obalunenko/logger v0.7.1
 	github.com/obalunenko/version v1.1.0
 	github.com/stretchr/testify v1.8.4
 )
