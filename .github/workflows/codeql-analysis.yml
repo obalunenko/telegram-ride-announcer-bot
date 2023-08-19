@@ -42,6 +42,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up go
+        uses: actions/setup-go@v4.1.0
+        with:
+          go-version: ${{ matrix.go }}
+
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
