@@ -51,7 +51,7 @@ jobs:
             "rideannouncer",
           ]
     runs-on: "ubuntu-22.04"
-    name: Build ${{ matrix.target }} for ${{ matrix.platform }}
+    name: Build ${{ matrix.target }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
