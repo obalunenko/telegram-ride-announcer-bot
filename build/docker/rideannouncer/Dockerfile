@@ -35,10 +35,12 @@ RUN mkdir -p /app && \
 
 FROM alpine:3.18 AS final
 
+ARG APK_CA_CERTIFICATES_VERSION=~20230506
+
 # Install any runtime dependencies that are needed to run your application.
 # Leverage a cache mount to /var/cache/apk/ to speed up subsequent builds.
 RUN apk add --no-cache \
-        ca-certificates
+        "ca-certificates=${APK_CA_CERTIFICATES_VERSION}"
 
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
