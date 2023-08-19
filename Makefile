@@ -13,6 +13,13 @@ COMPOSE_TOOLS_CMD_PULL=$(COMPOSE_TOOLS_CMD_BASE) build
 
 TARGET_MAX_CHAR_NUM=20
 
+GOTOOLS_IMAGE?=go-tools-local
+SHELL := env GOTOOLS_IMAGE=$(GOTOOLS_IMAGE) $(SHELL)
+
+RIDE_ANNOUNCER_IMAGE?=rideannouncer
+SHELL := env RIDE_ANNOUNCER_IMAGE=$(RIDE_ANNOUNCER_IMAGE) $(SHELL)
+
+
 ## Show help
 help:
 	${call colored, help is running...}
@@ -37,7 +44,7 @@ build: generate compile-app
 
 ## Compile app.
 compile-app:
-	$(COMPOSE_TOOLS_CMD_UP) build build
+	./scripts/build/app.sh
 .PHONY: compile-app
 
 ## Test coverage report.
@@ -92,7 +99,7 @@ format-project: fmt imports
 
 ## Installs vendored tools.
 install-tools:
-	$(COMPOSE_TOOLS_CMD_PULL)
+	./scripts/install/vendored-tools.sh
 .PHONY: install-tools
 
 ## vet project
@@ -143,5 +150,16 @@ check-releaser:
 new-version: vet test-regression build
 	./scripts/release/new-version.sh
 .PHONY: new-release
+
+build-rideannouncer:
+	./scripts/build/docker.sh
+.PHONY: build-rideannouncer
+
+build-go-tools: install-tools
+.PHONY: build-go-tools
+
+run-local:
+	docker compose -f ./deployments/docker-compose/bot-compose.yaml up --build --remove-orphans
+.PHONY: run-local
 
 .DEFAULT_GOAL := help

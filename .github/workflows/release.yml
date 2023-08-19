@@ -15,6 +15,7 @@ jobs:
       matrix:
         os: [ 'ubuntu-22.04' ]
         go: [ '1.21' ]
+        platform: [ 'linux/amd64' ]
     runs-on: ${{ matrix.os }}
     name: Build
     steps:
@@ -23,6 +24,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install tools
+        run: |
+          make install-tools
+        shell: bash
+
       - name: Set up go
         uses: actions/setup-go@v4.1.0
         with:
@@ -30,24 +44,6 @@ jobs:
 
       - run: |
           go version
-        shell: bash
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-vendored-tools-${{ secrets.CACHE_VERSION }}
-        with:
-          path: |
-            ${{ env.GOBIN }}
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-
-      - name: Install tools
-        run: |
-          make install-tools
         shell: bash
 
       - name: Build
@@ -61,6 +57,7 @@ jobs:
       matrix:
         os: [ 'ubuntu-22.04' ]
         go: [ '1.21' ]
+        platform: [ 'linux/amd64' ]
     runs-on: ${{ matrix.os }}
     name: Regression tests
     steps:
@@ -69,6 +66,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install tools
+        run: |
+          make install-tools
+        shell: bash
+
       - name: Set up go
         uses: actions/setup-go@v4.1.0
         with:
@@ -76,24 +86,6 @@ jobs:
 
       - run: |
           go version
-        shell: bash
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-vendored-tools-${{ secrets.CACHE_VERSION }}
-        with:
-          path: |
-            ${{ env.GOBIN }}
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-
-      - name: Install tools
-        run: |
-          make install-tools
         shell: bash
 
       - name: Run regression tests
@@ -110,6 +102,7 @@ jobs:
       matrix:
         os: [ 'ubuntu-22.04' ]
         go: [ '1.21' ]
+        platform: [ 'linux/amd64' ]
     runs-on: ${{ matrix.os }}
     name: Lint
     steps:
@@ -118,6 +111,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install tools
+        run: |
+          make install-tools
+        shell: bash
+
       - name: Set up go
         uses: actions/setup-go@v4.1.0
         with:
@@ -125,24 +131,6 @@ jobs:
 
       - run: |
           go version
-        shell: bash
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-vendored-tools-${{ secrets.CACHE_VERSION }}
-        with:
-          path: |
-            ${{ env.GOBIN }}
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-
-      - name: Install tools
-        run: |
-          make install-tools
         shell: bash
 
       - name: Vet
@@ -163,6 +151,7 @@ jobs:
       matrix:
         os: [ 'ubuntu-22.04' ]
         go: [ '1.21' ]
+        platform: [ 'linux/amd64' ]
     runs-on: ${{ matrix.os }}
     name: Release
     steps:
@@ -170,6 +159,19 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install tools
+        run: |
+          make install-tools
+        shell: bash
 
       - name: Set up go
         uses: actions/setup-go@v4.1.0

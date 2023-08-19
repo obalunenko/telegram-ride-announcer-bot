@@ -2,9 +2,7 @@ version: '3'
 
 services:
   tools:
-    build:
-      context: .
-      dockerfile: ../../build/docker/go-tools/Dockerfile
+    image: ${GOTOOLS_IMAGE}
     working_dir: /app/
     volumes:
       - ../../:/app/
