@@ -33,7 +33,7 @@ RUN mkdir -p /app && \
     cp ./bin/rideannouncer /app/
 
 
-FROM alpine:latest AS final
+FROM alpine:3.18 AS final
 
 # Install any runtime dependencies that are needed to run your application.
 # Leverage a cache mount to /var/cache/apk/ to speed up subsequent builds.
