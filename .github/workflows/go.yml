@@ -44,7 +44,6 @@ jobs:
       matrix:
         os: [ 'ubuntu-22.04' ]
         go: [ '1.21' ]
-        platform: [ 'linux/amd64' ]
     runs-on: ${{ matrix.os }}
     name: Build
     steps:
@@ -56,7 +55,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
-          platforms: ${{ matrix.platform }}
+          platforms: 'linux/arm64,linux/amd64'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -92,7 +91,6 @@ jobs:
       matrix:
         os: [ 'ubuntu-22.04' ]
         go: [ '1.21' ]
-        platform: [ 'linux/amd64' ]
     runs-on: ${{ matrix.os }}
     name: Run Tests
     steps:
@@ -104,7 +102,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
-          platforms: ${{ matrix.platform }}
+          platforms: 'linux/arm64,linux/amd64'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -136,7 +134,6 @@ jobs:
       matrix:
         os: [ 'ubuntu-22.04' ]
         go: [ '1.21' ]
-        platform: [ 'linux/amd64' ]
     runs-on: ${{ matrix.os }}
     name: Run linters
     steps:
@@ -148,7 +145,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
-          platforms: ${{ matrix.platform }}
+          platforms: 'linux/arm64,linux/amd64'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -184,7 +181,6 @@ jobs:
       matrix:
         os: [ 'ubuntu-22.04' ]
         go: [ '1.21' ]
-        platform: [ 'linux/amd64' ]
     runs-on: ${{ matrix.os }}
     name: Quality reports
     steps:
@@ -196,7 +192,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
-          platforms: ${{ matrix.platform }}
+          platforms: 'linux/arm64,linux/amd64'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
