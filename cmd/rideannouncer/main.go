@@ -5,11 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/obalunenko/getenv"
-	log "github.com/obalunenko/logger"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/obalunenko/getenv"
+	log "github.com/obalunenko/logger"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
