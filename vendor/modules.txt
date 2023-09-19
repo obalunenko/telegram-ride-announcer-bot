@@ -44,7 +44,7 @@ github.com/mymmrac/telego
 github.com/mymmrac/telego/telegoapi
 github.com/mymmrac/telego/telegohandler
 github.com/mymmrac/telego/telegoutil
-# github.com/obalunenko/getenv v1.12.0
+# github.com/obalunenko/getenv v1.12.1
 ## explicit; go 1.21
 github.com/obalunenko/getenv
 github.com/obalunenko/getenv/internal
