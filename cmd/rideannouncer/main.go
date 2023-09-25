@@ -63,10 +63,9 @@ func main() {
 	printVersion(ctx)
 
 	log.Init(ctx, log.Params{
-		Writer:       nil,
-		Level:        "DEBUG",
-		Format:       "text",
-		SentryParams: log.SentryParams{},
+		Writer: os.Stdout,
+		Level:  "DEBUG",
+		Format: "text",
 	})
 
 	ctx = log.ContextWithLogger(ctx, log.FromContext(ctx))
