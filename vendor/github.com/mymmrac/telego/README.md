@@ -28,7 +28,7 @@ The goal of this library was to create API with the same types and methods as ac
 Every type and method have been represented in [`types.go`](types.go) and [`methods.go`](methods.go) files with mostly
 all documentation from Telegram.
 
-:warning: Telego is still in v0.x.x version, so do expect braking changes! :warning:
+:warning: Telego is still in v0.x.x version, so do expect breaking changes! :warning:
 
 For more detailed documentation, see docs at [telego.pixelbox.dev](https://telego.pixelbox.dev).
 
@@ -615,6 +615,6 @@ Telego is distributed under [MIT licence](LICENSE).
 
 [TelegramBotAPI]: https://core.telegram.org/bots/api
 
-[TelegramVersionBadge]: https://img.shields.io/static/v1?label=Supported%20Telegram%20Bot%20API&color=29a1d4&logo=telegram&message=v6.8
+[TelegramVersionBadge]: https://img.shields.io/static/v1?label=Supported%20Telegram%20Bot%20API&color=29a1d4&logo=telegram&message=v6.9
 
-[TelegramLastVersion]: https://core.telegram.org/bots/api#august-18-2023
+[TelegramLastVersion]: https://core.telegram.org/bots/api#september-22-2023
