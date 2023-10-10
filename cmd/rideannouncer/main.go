@@ -3,8 +3,11 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
@@ -40,8 +43,22 @@ var commands = telegram.Commands{
 }
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
-	defer stop()
+	signals := []os.Signal{syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGHUP}
+
+	notifyChan := make(chan os.Signal, 1)
+
+	signal.Notify(notifyChan, signals...)
+
+	ctx, stop := context.WithCancelCause(context.Background())
+	defer func() {
+		stop(errors.New("main: exit"))
+	}()
+
+	go func() {
+		s := <-notifyChan
+
+		stop(fmt.Errorf("received signal %q", s.String()))
+	}()
 
 	printVersion(ctx)
 
@@ -97,7 +114,7 @@ func main() {
 
 	<-ctx.Done()
 
-	log.Info(ctx, "Received stop signal")
+	log.WithField(ctx, "reason", context.Cause(ctx)).Info("Exiting...")
 
 	svc.Shutdown(ctx)
 

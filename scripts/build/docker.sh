@@ -10,11 +10,8 @@ source "${SCRIPTS_DIR}/helpers-source.sh"
 
 echo "${SCRIPT_NAME} is running... "
 
-export DOCKERFILE_PATH="${REPO_ROOT}/build/docker/go-tools/Dockerfile"
-
-export IMAGE_NAME="${GOTOOLS_IMAGE:-${DOCKER_REPO}go-tools:${VERSION}}"
-
-APP_NAME="go-tools"
+export DOCKERFILE_PATH="${REPO_ROOT}/build/docker/rideannouncer/Dockerfile"
+export IMAGE_NAME="${RIDE_ANNOUNCER_IMAGE:-${DOCKER_REPO}rideannouncer:${VERSION}}"
 
 echo "Building ${IMAGE_NAME} of ${APP_NAME} ..."
 

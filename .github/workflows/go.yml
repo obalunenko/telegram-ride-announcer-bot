@@ -52,6 +52,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: 'linux/arm64,linux/amd64'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install tools
+        run: |
+          make install-tools
+        shell: bash
+
       - name: Set up go
         uses: actions/setup-go@v4.1.0
         with:
@@ -60,19 +73,6 @@ jobs:
       - run: |
           go version
         shell: bash
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-vendored-tools-${{ secrets.CACHE_VERSION }}
-        with:
-          path: |
-            ${{ env.GOBIN }}
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
 
       - name: Build
         run: |
@@ -99,6 +99,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: 'linux/arm64,linux/amd64'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install tools
+        run: |
+          make install-tools
+        shell: bash
+
       - name: Set up go
         uses: actions/setup-go@v4.1.0
         with:
@@ -108,23 +121,6 @@ jobs:
           go version
         shell: bash
 
-      - name: Set up cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-vendored-tools-${{ secrets.CACHE_VERSION }}
-        with:
-          path: |
-            ${{ env.GOBIN }}
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-
-      - name: Install tools
-        run: |
-          make install-tools
-        shell: bash
 
       - name: Test
         run: |
@@ -146,6 +142,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: 'linux/arm64,linux/amd64'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install tools
+        run: |
+          make install-tools
+        shell: bash
+
       - name: Set up go
         uses: actions/setup-go@v4.1.0
         with:
@@ -157,24 +166,6 @@ jobs:
       - name: Vet
         run: |
           make vet
-        shell: bash
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-vendored-tools-${{ secrets.CACHE_VERSION }}
-        with:
-          path: |
-            ${{ env.GOBIN }}
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-
-      - name: Install tools
-        run: |
-          make install-tools
         shell: bash
 
       - name: Lint
@@ -198,30 +189,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: 'linux/arm64,linux/amd64'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install tools
+        run: |
+          make install-tools
+        shell: bash
+
       - name: Set up go
         uses: actions/setup-go@v4.1.0
         with:
           go-version: ${{ matrix.go }}
       - run: |
           go version
-        shell: bash
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-vendored-tools-${{ secrets.CACHE_VERSION }}
-        with:
-          path: |
-            ${{ env.GOBIN }}
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/tools/go.sum') }}
-
-      - name: Install tools
-        run: |
-          make install-tools
         shell: bash
 
       - name: Prepare test coverage and reports

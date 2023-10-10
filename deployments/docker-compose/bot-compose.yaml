@@ -1,0 +1,5 @@
+services:
+  server:
+    image: ${RIDE_ANNOUNCER_IMAGE}
+    environment:
+      RIDE_ANNOUNCER_TELEGRAM_TOKEN: ${RIDE_ANNOUNCER_TELEGRAM_TOKEN:-""}
