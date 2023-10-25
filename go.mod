@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/gofrs/uuid/v5 v5.0.0
-	github.com/mymmrac/telego v0.26.3
+	github.com/mymmrac/telego v0.27.0
 	github.com/obalunenko/getenv v1.12.1
 	github.com/obalunenko/logger v1.0.1
 	github.com/obalunenko/version v1.1.0
@@ -14,7 +14,7 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fasthttp/router v1.4.20 // indirect
+	github.com/fasthttp/router v1.4.21 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/kr/text v0.2.0 // indirect
