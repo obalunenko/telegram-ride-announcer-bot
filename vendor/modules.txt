@@ -22,14 +22,14 @@ github.com/goccy/go-json/internal/runtime
 # github.com/gofrs/uuid/v5 v5.0.0
 ## explicit; go 1.19
 github.com/gofrs/uuid/v5
-# github.com/klauspost/compress v1.16.7
+# github.com/klauspost/compress v1.17.0
 ## explicit; go 1.18
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip
 github.com/klauspost/compress/zlib
 # github.com/kr/text v0.2.0
 ## explicit
-# github.com/mymmrac/telego v0.27.1
+# github.com/mymmrac/telego v0.27.2
 ## explicit; go 1.20
 github.com/mymmrac/telego
 github.com/mymmrac/telego/telegoapi
@@ -64,7 +64,7 @@ github.com/stretchr/testify/suite
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.50.0
+# github.com/valyala/fasthttp v1.51.0
 ## explicit; go 1.20
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttputil
