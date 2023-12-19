@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/goccy/go-json"
-
+	"github.com/mymmrac/telego/internal/json"
 	"github.com/mymmrac/telego/telegoapi"
 )
 
@@ -330,6 +329,13 @@ type Chat struct {
 	// Location - Optional. For supergroups, the location to which the supergroup is connected. Returned only in
 	// getChat (https://core.telegram.org/bots/api#getchat).
 	Location *ChatLocation `json:"location,omitempty"`
+}
+
+// ChatID returns [ChatID] of this chat
+func (c Chat) ChatID() ChatID {
+	return ChatID{
+		ID: c.ID,
+	}
 }
 
 // Chat types

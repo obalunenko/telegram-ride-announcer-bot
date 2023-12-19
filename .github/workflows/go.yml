@@ -66,7 +66,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v4.1.0
+        uses: actions/setup-go@v5.0.0
         with:
           go-version: ${{ matrix.go }}
 
@@ -113,7 +113,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v4.1.0
+        uses: actions/setup-go@v5.0.0
         with:
           go-version: ${{ matrix.go }}
 
@@ -156,7 +156,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v4.1.0
+        uses: actions/setup-go@v5.0.0
         with:
           go-version: ${{ matrix.go }}
       - run: |
@@ -203,7 +203,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v4.1.0
+        uses: actions/setup-go@v5.0.0
         with:
           go-version: ${{ matrix.go }}
       - run: |
@@ -227,7 +227,7 @@ jobs:
         shell: bash
 
       - name: SonarCloud report upload
-        uses: sonarsource/sonarcloud-github-action@v2.0.2
+        uses: sonarsource/sonarcloud-github-action@v2.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
