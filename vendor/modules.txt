@@ -63,7 +63,7 @@ github.com/klauspost/compress/zlib
 github.com/klauspost/cpuid/v2
 # github.com/kr/text v0.2.0
 ## explicit
-# github.com/mymmrac/telego v0.29.0
+# github.com/mymmrac/telego v0.29.1
 ## explicit; go 1.21
 github.com/mymmrac/telego
 github.com/mymmrac/telego/internal/json
