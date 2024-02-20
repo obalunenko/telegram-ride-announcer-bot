@@ -160,7 +160,7 @@ build-rideannouncer:
 build-go-tools: install-tools
 .PHONY: build-go-tools
 
-run-local:
+run-local: build-rideannouncer
 	docker compose -f ./deployments/docker-compose/bot-compose.yaml up --build --remove-orphans
 .PHONY: run-local
 
