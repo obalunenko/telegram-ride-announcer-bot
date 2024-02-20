@@ -11,6 +11,8 @@ COMPOSE_TOOLS_CMD_BASE=docker compose -f $(COMPOSE_TOOLS_FILE)
 COMPOSE_TOOLS_CMD_UP=$(COMPOSE_TOOLS_CMD_BASE) up --remove-orphans --exit-code-from
 COMPOSE_TOOLS_CMD_PULL=$(COMPOSE_TOOLS_CMD_BASE) build
 
+GOVERSION:=1.22
+
 TARGET_MAX_CHAR_NUM=20
 
 GOTOOLS_IMAGE?=go-tools-local
@@ -158,8 +160,13 @@ build-rideannouncer:
 build-go-tools: install-tools
 .PHONY: build-go-tools
 
-run-local:
+run-local: build-rideannouncer
 	docker compose -f ./deployments/docker-compose/bot-compose.yaml up --build --remove-orphans
 .PHONY: run-local
+
+bump-go-version:
+	./scripts/bump-go.sh $(GOVERSION)
+.PHONY: bump-go-version
+
 
 .DEFAULT_GOAL := help
