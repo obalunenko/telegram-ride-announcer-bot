@@ -70,8 +70,8 @@ github.com/mymmrac/telego/internal/json
 github.com/mymmrac/telego/telegoapi
 github.com/mymmrac/telego/telegohandler
 github.com/mymmrac/telego/telegoutil
-# github.com/obalunenko/getenv v1.12.1
-## explicit; go 1.21
+# github.com/obalunenko/getenv v1.13.0
+## explicit; go 1.22
 github.com/obalunenko/getenv
 github.com/obalunenko/getenv/internal
 github.com/obalunenko/getenv/option
@@ -130,7 +130,7 @@ github.com/valyala/fastjson/fastfloat
 # golang.org/x/arch v0.6.0
 ## explicit; go 1.18
 golang.org/x/arch/x86/x86asm
-# golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819
+# golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 # golang.org/x/sys v0.17.0
