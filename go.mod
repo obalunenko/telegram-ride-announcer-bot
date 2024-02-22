@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/gofrs/uuid/v5 v5.0.0
 	github.com/mymmrac/telego v0.29.1
-	github.com/obalunenko/getenv v1.12.1
+	github.com/obalunenko/getenv v1.13.0
 	github.com/obalunenko/logger v1.1.0
 	github.com/obalunenko/version v1.1.0
 	github.com/stretchr/testify v1.8.4
@@ -30,7 +30,7 @@ require (
 	github.com/valyala/fasthttp v1.52.0 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	golang.org/x/arch v0.6.0 // indirect
-	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819 // indirect
+	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
