@@ -2,7 +2,7 @@
 ## explicit; go 1.13
 github.com/andybalholm/brotli
 github.com/andybalholm/brotli/matchfinder
-# github.com/bytedance/sonic v1.10.2
+# github.com/bytedance/sonic v1.11.3
 ## explicit; go 1.16
 github.com/bytedance/sonic
 github.com/bytedance/sonic/ast
@@ -17,6 +17,7 @@ github.com/bytedance/sonic/internal/jit
 github.com/bytedance/sonic/internal/native
 github.com/bytedance/sonic/internal/native/avx
 github.com/bytedance/sonic/internal/native/avx2
+github.com/bytedance/sonic/internal/native/neon
 github.com/bytedance/sonic/internal/native/sse
 github.com/bytedance/sonic/internal/native/types
 github.com/bytedance/sonic/internal/resolver
@@ -35,8 +36,8 @@ github.com/chenzhuoyu/iasm/x86_64
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/fasthttp/router v1.4.22
-## explicit; go 1.18
+# github.com/fasthttp/router v1.5.0
+## explicit; go 1.19
 github.com/fasthttp/router
 github.com/fasthttp/router/radix
 # github.com/gofrs/uuid/v5 v5.0.0
@@ -63,7 +64,7 @@ github.com/klauspost/compress/zlib
 github.com/klauspost/cpuid/v2
 # github.com/kr/text v0.2.0
 ## explicit
-# github.com/mymmrac/telego v0.29.1
+# github.com/mymmrac/telego v0.29.2
 ## explicit; go 1.21
 github.com/mymmrac/telego
 github.com/mymmrac/telego/internal/json
@@ -86,7 +87,7 @@ github.com/obalunenko/version
 github.com/pmezard/go-difflib/difflib
 # github.com/rogpeppe/go-internal v1.11.0
 ## explicit; go 1.19
-# github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee
+# github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511
 ## explicit; go 1.20
 github.com/savsgio/gotils/bytes
 github.com/savsgio/gotils/strconv
