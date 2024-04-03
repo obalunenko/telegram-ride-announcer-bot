@@ -35,7 +35,7 @@ RUN mkdir -p /app && \
 
 FROM alpine:3.19 AS final
 
-ARG APK_CA_CERTIFICATES_VERSION=~20230506
+ARG APK_CA_CERTIFICATES_VERSION=~20240226
 
 # Install any runtime dependencies that are needed to run your application.
 # Leverage a cache mount to /var/cache/apk/ to speed up subsequent builds.
