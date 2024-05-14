@@ -3,7 +3,7 @@ module github.com/obalunenko/telegram-ride-announcer-bot
 go 1.22
 
 require (
-	github.com/gofrs/uuid/v5 v5.1.0
+	github.com/gofrs/uuid/v5 v5.2.0
 	github.com/mymmrac/telego v0.29.2
 	github.com/obalunenko/getenv v1.13.0
 	github.com/obalunenko/logger v1.1.0
