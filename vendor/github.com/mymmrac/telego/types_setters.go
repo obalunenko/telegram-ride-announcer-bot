@@ -42,6 +42,24 @@ func (r *ReplyParameters) WithQuotePosition(quotePosition int) *ReplyParameters 
 	return r
 }
 
+// WithText adds text parameter
+func (i *InputPollOption) WithText(text string) *InputPollOption {
+	i.Text = text
+	return i
+}
+
+// WithTextParseMode adds text parse mode parameter
+func (i *InputPollOption) WithTextParseMode(textParseMode string) *InputPollOption {
+	i.TextParseMode = textParseMode
+	return i
+}
+
+// WithTextEntities adds text entities parameter
+func (i *InputPollOption) WithTextEntities(textEntities ...MessageEntity) *InputPollOption {
+	i.TextEntities = textEntities
+	return i
+}
+
 // WithKeyboard adds keyboard parameter
 func (r *ReplyKeyboardMarkup) WithKeyboard(keyboard ...[]KeyboardButton) *ReplyKeyboardMarkup {
 	r.Keyboard = keyboard
@@ -354,6 +372,12 @@ func (i *InputMediaPhoto) WithCaptionEntities(captionEntities ...MessageEntity) 
 	return i
 }
 
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InputMediaPhoto) WithShowCaptionAboveMedia() *InputMediaPhoto {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
 // WithHasSpoiler adds has spoiler parameter
 func (i *InputMediaPhoto) WithHasSpoiler() *InputMediaPhoto {
 	i.HasSpoiler = true
@@ -387,6 +411,12 @@ func (i *InputMediaVideo) WithParseMode(parseMode string) *InputMediaVideo {
 // WithCaptionEntities adds caption entities parameter
 func (i *InputMediaVideo) WithCaptionEntities(captionEntities ...MessageEntity) *InputMediaVideo {
 	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InputMediaVideo) WithShowCaptionAboveMedia() *InputMediaVideo {
+	i.ShowCaptionAboveMedia = true
 	return i
 }
 
@@ -447,6 +477,12 @@ func (i *InputMediaAnimation) WithParseMode(parseMode string) *InputMediaAnimati
 // WithCaptionEntities adds caption entities parameter
 func (i *InputMediaAnimation) WithCaptionEntities(captionEntities ...MessageEntity) *InputMediaAnimation {
 	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InputMediaAnimation) WithShowCaptionAboveMedia() *InputMediaAnimation {
+	i.ShowCaptionAboveMedia = true
 	return i
 }
 
@@ -709,6 +745,12 @@ func (i *InlineQueryResultPhoto) WithCaptionEntities(captionEntities ...MessageE
 	return i
 }
 
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InlineQueryResultPhoto) WithShowCaptionAboveMedia() *InlineQueryResultPhoto {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
 // WithReplyMarkup adds reply markup parameter
 func (i *InlineQueryResultPhoto) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup) *InlineQueryResultPhoto {
 	i.ReplyMarkup = replyMarkup
@@ -785,6 +827,12 @@ func (i *InlineQueryResultGif) WithParseMode(parseMode string) *InlineQueryResul
 // WithCaptionEntities adds caption entities parameter
 func (i *InlineQueryResultGif) WithCaptionEntities(captionEntities ...MessageEntity) *InlineQueryResultGif {
 	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InlineQueryResultGif) WithShowCaptionAboveMedia() *InlineQueryResultGif {
+	i.ShowCaptionAboveMedia = true
 	return i
 }
 
@@ -866,6 +914,12 @@ func (i *InlineQueryResultMpeg4Gif) WithCaptionEntities(captionEntities ...Messa
 	return i
 }
 
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InlineQueryResultMpeg4Gif) WithShowCaptionAboveMedia() *InlineQueryResultMpeg4Gif {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
 // WithReplyMarkup adds reply markup parameter
 func (i *InlineQueryResultMpeg4Gif) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup) *InlineQueryResultMpeg4Gif {
 	i.ReplyMarkup = replyMarkup
@@ -924,6 +978,12 @@ func (i *InlineQueryResultVideo) WithParseMode(parseMode string) *InlineQueryRes
 // WithCaptionEntities adds caption entities parameter
 func (i *InlineQueryResultVideo) WithCaptionEntities(captionEntities ...MessageEntity) *InlineQueryResultVideo {
 	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InlineQueryResultVideo) WithShowCaptionAboveMedia() *InlineQueryResultVideo {
+	i.ShowCaptionAboveMedia = true
 	return i
 }
 
@@ -1415,6 +1475,12 @@ func (i *InlineQueryResultCachedPhoto) WithCaptionEntities(captionEntities ...Me
 	return i
 }
 
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InlineQueryResultCachedPhoto) WithShowCaptionAboveMedia() *InlineQueryResultCachedPhoto {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
 // WithReplyMarkup adds reply markup parameter
 func (i *InlineQueryResultCachedPhoto) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup,
 ) *InlineQueryResultCachedPhoto {
@@ -1465,6 +1531,12 @@ func (i *InlineQueryResultCachedGif) WithCaptionEntities(captionEntities ...Mess
 	return i
 }
 
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InlineQueryResultCachedGif) WithShowCaptionAboveMedia() *InlineQueryResultCachedGif {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
 // WithReplyMarkup adds reply markup parameter
 func (i *InlineQueryResultCachedGif) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup) *InlineQueryResultCachedGif {
 	i.ReplyMarkup = replyMarkup
@@ -1512,6 +1584,12 @@ func (i *InlineQueryResultCachedMpeg4Gif) WithParseMode(parseMode string) *Inlin
 func (i *InlineQueryResultCachedMpeg4Gif) WithCaptionEntities(captionEntities ...MessageEntity,
 ) *InlineQueryResultCachedMpeg4Gif {
 	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InlineQueryResultCachedMpeg4Gif) WithShowCaptionAboveMedia() *InlineQueryResultCachedMpeg4Gif {
+	i.ShowCaptionAboveMedia = true
 	return i
 }
 
@@ -1652,6 +1730,12 @@ func (i *InlineQueryResultCachedVideo) WithParseMode(parseMode string) *InlineQu
 func (i *InlineQueryResultCachedVideo) WithCaptionEntities(captionEntities ...MessageEntity,
 ) *InlineQueryResultCachedVideo {
 	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InlineQueryResultCachedVideo) WithShowCaptionAboveMedia() *InlineQueryResultCachedVideo {
+	i.ShowCaptionAboveMedia = true
 	return i
 }
 
