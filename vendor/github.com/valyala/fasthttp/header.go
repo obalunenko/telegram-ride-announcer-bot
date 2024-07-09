@@ -548,7 +548,7 @@ func (h *ResponseHeader) AddTrailerBytes(trailer []byte) error {
 // validHeaderFieldByte returns true if c is a valid tchar as defined
 // by section 5.6.2 of [RFC9110].
 func validHeaderFieldByte(c byte) bool {
-	return c < 128 && tcharTable[c] == 1
+	return c < 128 && validHeaderFieldByteTable[c] == 1
 }
 
 // VisitHeaderParams calls f for each parameter in the given header bytes.
@@ -1430,7 +1430,7 @@ func (h *ResponseHeader) setSpecialHeader(key, value []byte) bool {
 }
 
 // setNonSpecial directly put into map i.e. not a basic header.
-func (h *ResponseHeader) setNonSpecial(key []byte, value []byte) {
+func (h *ResponseHeader) setNonSpecial(key, value []byte) {
 	h.h = setArgBytes(h.h, key, value, argsHasValue)
 }
 
@@ -1489,7 +1489,7 @@ func (h *RequestHeader) setSpecialHeader(key, value []byte) bool {
 }
 
 // setNonSpecial directly put into map i.e. not a basic header.
-func (h *RequestHeader) setNonSpecial(key []byte, value []byte) {
+func (h *RequestHeader) setNonSpecial(key, value []byte) {
 	h.h = setArgBytes(h.h, key, value, argsHasValue)
 }
 
@@ -2118,7 +2118,7 @@ func (h *ResponseHeader) tryRead(r *bufio.Reader, n int) error {
 		if err == bufio.ErrBufferFull {
 			if h.secureErrorLogMessage {
 				return &ErrSmallBuffer{
-					error: fmt.Errorf("error when reading response headers"),
+					error: errors.New("error when reading response headers"),
 				}
 			}
 			return &ErrSmallBuffer{
@@ -2170,7 +2170,7 @@ func (h *ResponseHeader) tryReadTrailer(r *bufio.Reader, n int) error {
 		if err == bufio.ErrBufferFull {
 			if h.secureErrorLogMessage {
 				return &ErrSmallBuffer{
-					error: fmt.Errorf("error when reading response trailer"),
+					error: errors.New("error when reading response trailer"),
 				}
 			}
 			return &ErrSmallBuffer{
@@ -2279,7 +2279,7 @@ func (h *RequestHeader) tryReadTrailer(r *bufio.Reader, n int) error {
 		if err == bufio.ErrBufferFull {
 			if h.secureErrorLogMessage {
 				return &ErrSmallBuffer{
-					error: fmt.Errorf("error when reading request trailer"),
+					error: errors.New("error when reading request trailer"),
 				}
 			}
 			return &ErrSmallBuffer{
@@ -2821,7 +2821,7 @@ func (h *ResponseHeader) parseFirstLine(buf []byte) (int, error) {
 	n := bytes.IndexByte(b, ' ')
 	if n < 0 {
 		if h.secureErrorLogMessage {
-			return 0, fmt.Errorf("cannot find whitespace in the first line of response")
+			return 0, errors.New("cannot find whitespace in the first line of response")
 		}
 		return 0, fmt.Errorf("cannot find whitespace in the first line of response %q", buf)
 	}
@@ -2838,7 +2838,7 @@ func (h *ResponseHeader) parseFirstLine(buf []byte) (int, error) {
 	}
 	if len(b) > n && b[n] != ' ' {
 		if h.secureErrorLogMessage {
-			return 0, fmt.Errorf("unexpected char at the end of status code")
+			return 0, errors.New("unexpected char at the end of status code")
 		}
 		return 0, fmt.Errorf("unexpected char at the end of status code. Response %q", buf)
 	}
@@ -2863,7 +2863,7 @@ func (h *RequestHeader) parseFirstLine(buf []byte) (int, error) {
 	n := bytes.IndexByte(b, ' ')
 	if n <= 0 {
 		if h.secureErrorLogMessage {
-			return 0, fmt.Errorf("cannot find http request method")
+			return 0, errors.New("cannot find http request method")
 		}
 		return 0, fmt.Errorf("cannot find http request method in %q", buf)
 	}
@@ -2876,7 +2876,7 @@ func (h *RequestHeader) parseFirstLine(buf []byte) (int, error) {
 		return 0, fmt.Errorf("cannot find whitespace in the first line of request %q", buf)
 	} else if n == 0 {
 		if h.secureErrorLogMessage {
-			return 0, fmt.Errorf("requestURI cannot be empty")
+			return 0, errors.New("requestURI cannot be empty")
 		}
 		return 0, fmt.Errorf("requestURI cannot be empty in %q", buf)
 	}
@@ -2947,8 +2947,17 @@ func (h *ResponseHeader) parseHeaders(buf []byte) (int, error) {
 	s.disableNormalizing = h.disableNormalizing
 	var err error
 	var kv *argsKV
+
+outer:
 	for s.next() {
 		if len(s.key) > 0 {
+			for _, ch := range s.key {
+				if !validHeaderFieldByte(ch) {
+					err = fmt.Errorf("invalid header key %q", s.key)
+					continue outer
+				}
+			}
+
 			switch s.key[0] | 0x20 {
 			case 'c':
 				if caseInsensitiveCompare(s.key, strContentType) {
@@ -3035,13 +3044,15 @@ func (h *RequestHeader) parseHeaders(buf []byte) (int, error) {
 	s.b = buf
 	s.disableNormalizing = h.disableNormalizing
 	var err error
+
+outer:
 	for s.next() {
 		if len(s.key) > 0 {
-			// Spaces between the header key and colon are not allowed.
-			// See RFC 7230, Section 3.2.4.
-			if bytes.IndexByte(s.key, ' ') != -1 || bytes.IndexByte(s.key, '\t') != -1 {
-				err = fmt.Errorf("invalid header key %q", s.key)
-				continue
+			for _, ch := range s.key {
+				if !validHeaderFieldByte(ch) {
+					err = fmt.Errorf("invalid header key %q", s.key)
+					continue outer
+				}
 			}
 
 			if h.disableSpecialHeader {
@@ -3067,7 +3078,7 @@ func (h *RequestHeader) parseHeaders(buf []byte) (int, error) {
 				}
 				if caseInsensitiveCompare(s.key, strContentLength) {
 					if contentLengthSeen {
-						return 0, fmt.Errorf("duplicate Content-Length header")
+						return 0, errors.New("duplicate Content-Length header")
 					}
 					contentLengthSeen = true
 
@@ -3100,7 +3111,7 @@ func (h *RequestHeader) parseHeaders(buf []byte) (int, error) {
 
 					if !isIdentity && !isChunked {
 						if h.secureErrorLogMessage {
-							return 0, fmt.Errorf("unsupported Transfer-Encoding")
+							return 0, errors.New("unsupported Transfer-Encoding")
 						}
 						return 0, fmt.Errorf("unsupported Transfer-Encoding: %q", s.value)
 					}

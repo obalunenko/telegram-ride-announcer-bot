@@ -160,7 +160,7 @@ func TextMatches(pattern *regexp.Regexp) Predicate {
 }
 
 // CommandRegexp matches to command and has match groups on command, bot username and arguments
-var CommandRegexp = regexp.MustCompile(`^/(\w+)(@\w+)?(?: (.+))?$`)
+var CommandRegexp = regexp.MustCompile(`(?s)^/(\w+)(@\w+)?(?:\s+(.+?)\s*)?$`)
 
 // Command match group indexes in the [CommandRegexp]
 const (
@@ -209,7 +209,7 @@ func CommandEqualArgc(command string, argc int) Predicate {
 
 		return strings.EqualFold(matches[CommandMatchCmdGroup], command) &&
 			(argc == 0 && matches[CommandMatchArgsGroup] == "" ||
-				len(strings.Split(matches[CommandMatchArgsGroup], " ")) == argc)
+				len(strings.Fields(matches[CommandMatchArgsGroup])) == argc)
 	}
 }
 
@@ -695,7 +695,7 @@ func CaptionCommandEqualArgc(command string, argc int) Predicate {
 
 		return strings.EqualFold(matches[CommandMatchCmdGroup], command) &&
 			(argc == 0 && matches[CommandMatchArgsGroup] == "" ||
-				len(strings.Split(matches[CommandMatchArgsGroup], " ")) == argc)
+				len(strings.Fields(matches[CommandMatchArgsGroup])) == argc)
 	}
 }
 
