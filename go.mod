@@ -1,11 +1,11 @@
 module github.com/obalunenko/telegram-ride-announcer-bot
 
 go 1.22
-toolchain go1.22.4
+toolchain go1.22.5
 
 require (
 	github.com/gofrs/uuid/v5 v5.2.0
-	github.com/mymmrac/telego v0.31.0
+	github.com/mymmrac/telego v0.31.1
 	github.com/obalunenko/getenv v1.13.0
 	github.com/obalunenko/logger v1.1.0
 	github.com/obalunenko/version v1.2.0
@@ -14,8 +14,8 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
-	github.com/bytedance/sonic v1.11.9 // indirect
-	github.com/bytedance/sonic/loader v0.1.1 // indirect
+	github.com/bytedance/sonic v1.12.1 // indirect
+	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
