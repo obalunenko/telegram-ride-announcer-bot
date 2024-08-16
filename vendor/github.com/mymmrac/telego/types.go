@@ -247,6 +247,10 @@ type User struct {
 	// CanConnectToBusiness - Optional. True, if the bot can be connected to a Telegram Business account to
 	// receive its messages. Returned only in getMe (https://core.telegram.org/bots/api#getme).
 	CanConnectToBusiness bool `json:"can_connect_to_business,omitempty"`
+
+	// HasMainWebApp - Optional. True, if the bot has a main Web App. Returned only in getMe
+	// (https://core.telegram.org/bots/api#getme).
+	HasMainWebApp bool `json:"has_main_web_app,omitempty"`
 }
 
 // Chat - This object represents a chat.

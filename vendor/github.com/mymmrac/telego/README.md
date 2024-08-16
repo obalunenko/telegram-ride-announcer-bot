@@ -78,6 +78,7 @@ More examples can be seen here:
 - [Echo bot](examples/echo_bot/main.go)
 - [Echo bot (with handlers)](examples/echo_bot_with_handlers/main.go)
 - [Echo bot (handlers + webhook + graceful shutdown + docker)](https://github.com/mymmrac/echo-bot)
+- [Conversation bot (state machine)](examples/conversation_bot/main.go)
 - [Sending files (documents, photos, media groups)](examples/sending_files/main.go)
 - [Downloading files](examples/download_file/main.go)
 - [Inline keyboard](examples/inline_keyboard/main.go)
@@ -630,6 +631,6 @@ Telego is distributed under [MIT licence](LICENSE).
 
 [TelegramBotAPI]: https://core.telegram.org/bots/api
 
-[TelegramVersionBadge]: https://img.shields.io/static/v1?label=Supported%20Telegram%20Bot%20API&color=29a1d4&logo=telegram&message=v7.7
+[TelegramVersionBadge]: https://img.shields.io/static/v1?label=Supported%20Telegram%20Bot%20API&color=29a1d4&logo=telegram&message=v7.8
 
-[TelegramLastVersion]: https://core.telegram.org/bots/api#july-7-2024
+[TelegramLastVersion]: https://core.telegram.org/bots/api#july-31-2024
