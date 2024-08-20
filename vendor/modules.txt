@@ -85,7 +85,7 @@ github.com/klauspost/compress/zstd/internal/xxhash
 github.com/klauspost/cpuid/v2
 # github.com/kr/text v0.2.0
 ## explicit
-# github.com/mymmrac/telego v0.31.1
+# github.com/mymmrac/telego v0.31.2
 ## explicit; go 1.22.3
 github.com/mymmrac/telego
 github.com/mymmrac/telego/internal/json
