@@ -43,7 +43,7 @@ jobs:
       max-parallel: 3
       matrix:
         os: [ 'ubuntu-22.04' ]
-        go-version: [1.22.x]
+        go-version: [1.23.x]
     runs-on: ${{ matrix.os }}
     name: Build
     steps:
@@ -66,7 +66,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v5.0.0
+        uses: actions/setup-go@v5.0.2
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -90,7 +90,7 @@ jobs:
       max-parallel: 2
       matrix:
         os: [ 'ubuntu-22.04' ]
-        go-version: [1.22.x]
+        go-version: [1.23.x]
     runs-on: ${{ matrix.os }}
     name: Run Tests
     steps:
@@ -113,7 +113,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v5.0.0
+        uses: actions/setup-go@v5.0.2
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -133,7 +133,7 @@ jobs:
       max-parallel: 2
       matrix:
         os: [ 'ubuntu-22.04' ]
-        go-version: [1.22.x]
+        go-version: [1.23.x]
     runs-on: ${{ matrix.os }}
     name: Run linters
     steps:
@@ -156,7 +156,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v5.0.0
+        uses: actions/setup-go@v5.0.2
         with:
           go-version: ${{ matrix.go-version }}
       - run: |
@@ -180,7 +180,7 @@ jobs:
       max-parallel: 1
       matrix:
         os: [ 'ubuntu-22.04' ]
-        go-version: [1.22.x]
+        go-version: [1.23.x]
     runs-on: ${{ matrix.os }}
     name: Quality reports
     steps:
@@ -203,7 +203,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v5.0.0
+        uses: actions/setup-go@v5.0.2
         with:
           go-version: ${{ matrix.go-version }}
       - run: |
@@ -227,7 +227,7 @@ jobs:
         shell: bash
 
       - name: SonarCloud report upload
-        uses: sonarsource/sonarcloud-github-action@v2.1.1
+        uses: sonarsource/sonarcloud-github-action@v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

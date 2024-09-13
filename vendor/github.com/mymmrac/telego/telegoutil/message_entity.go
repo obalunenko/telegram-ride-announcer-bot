@@ -161,6 +161,15 @@ func (c MessageEntityCollection) Blockquote() MessageEntityCollection {
 	return c
 }
 
+// ExpandableBlockquote assigns expandable blockquote entity and returns new collection
+func (c MessageEntityCollection) ExpandableBlockquote() MessageEntityCollection {
+	c.entities = append(c.entities, telego.MessageEntity{
+		Type:   telego.EntityTypeExpandableBlockquote,
+		Length: UTF16TextLen(c.text),
+	})
+	return c
+}
+
 // Code assigns code entity and returns new collection
 func (c MessageEntityCollection) Code() MessageEntityCollection {
 	c.entities = append(c.entities, telego.MessageEntity{
@@ -220,7 +229,7 @@ func (c MessageEntityCollection) CustomEmoji(emojiID string) MessageEntityCollec
 	return c
 }
 
-// MessageEntities coverts entity collections into the text and slice of [telego.MessageEntity] associated with text
+// MessageEntities converts entity collections into the text and slice of [telego.MessageEntity] associated with text
 // Note: Entity length is not trimmed as described in docs on purpose, Telegram still handles all entities perfectly
 // fine, but trimming their length actually limits what can be sent
 func MessageEntities(entityCollections ...MessageEntityCollection) (string, []telego.MessageEntity) {
@@ -240,7 +249,7 @@ func MessageEntities(entityCollections ...MessageEntityCollection) (string, []te
 // UTF16TextLen returns length of a UTF-16 text
 // Credit: https://core.telegram.org/api/entities#computing-entity-length
 //
-//nolint:gomnd
+//nolint:mnd
 func UTF16TextLen(text string) int {
 	length := 0
 	for _, b := range []byte(text) {
