@@ -1,8 +1,8 @@
-# github.com/andybalholm/brotli v1.1.0
+# github.com/andybalholm/brotli v1.1.1
 ## explicit; go 1.13
 github.com/andybalholm/brotli
 github.com/andybalholm/brotli/matchfinder
-# github.com/bytedance/sonic v1.12.2
+# github.com/bytedance/sonic v1.12.3
 ## explicit; go 1.17
 github.com/bytedance/sonic
 github.com/bytedance/sonic/ast
@@ -68,8 +68,8 @@ github.com/grbit/go-json/internal/encoder/vm_color_indent
 github.com/grbit/go-json/internal/encoder/vm_indent
 github.com/grbit/go-json/internal/errors
 github.com/grbit/go-json/internal/runtime
-# github.com/klauspost/compress v1.17.9
-## explicit; go 1.20
+# github.com/klauspost/compress v1.17.11
+## explicit; go 1.21
 github.com/klauspost/compress
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/fse
@@ -85,7 +85,7 @@ github.com/klauspost/compress/zstd/internal/xxhash
 github.com/klauspost/cpuid/v2
 # github.com/kr/text v0.2.0
 ## explicit
-# github.com/mymmrac/telego v0.31.3
+# github.com/mymmrac/telego v0.31.4
 ## explicit; go 1.22.3
 github.com/mymmrac/telego
 github.com/mymmrac/telego/internal/json
@@ -140,8 +140,8 @@ github.com/twitchyliquid64/golang-asm/unsafeheader
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.55.0
-## explicit; go 1.20
+# github.com/valyala/fasthttp v1.57.0
+## explicit; go 1.21
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttputil
 github.com/valyala/fasthttp/stackless
@@ -155,7 +155,7 @@ golang.org/x/arch/x86/x86asm
 # golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
 ## explicit; go 1.20
 golang.org/x/exp/constraints
-# golang.org/x/sys v0.21.0
+# golang.org/x/sys v0.26.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
 # gopkg.in/yaml.v3 v3.0.1
