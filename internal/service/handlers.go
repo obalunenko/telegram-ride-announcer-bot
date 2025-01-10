@@ -22,7 +22,7 @@ func (s *Service) notFoundHandler(ctx context.Context) th.Handler {
 func (s *Service) unsupportedHandler(ctx context.Context, text string) th.Handler {
 	msg := fmt.Sprintf("%s Use /%s command to see all available commands.", text, CmdHelp)
 
-	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+	return func(_ *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx = update.Context()
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", "unsupported"))
@@ -34,7 +34,7 @@ func (s *Service) unsupportedHandler(ctx context.Context, text string) th.Handle
 }
 
 func (s *Service) startHandler(ctx context.Context) th.Handler {
-	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+	return func(_ *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx = update.Context()
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdStart))
@@ -73,7 +73,7 @@ func (s *Service) startHandler(ctx context.Context) th.Handler {
 }
 
 func (s *Service) helpHandler() th.Handler {
-	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+	return func(_ *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdHelp))
@@ -343,7 +343,6 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		sess.UserState.Trip = nil
 
 		return nil
-
 	default:
 		log.WithField(ctx, "UserState", sess.UserState.State.String()).Error("Unexpected UserState")
 
@@ -371,6 +370,7 @@ func (s *Service) textHandler() th.Handler {
 		if update.Message != nil {
 			if strings.HasPrefix(update.Message.Text, "/") {
 				// TODO: Handle commands.
+				log.WithField(ctx, "command", update.Message.Text).Debug("Command detected")
 			}
 		}
 
@@ -413,7 +413,7 @@ func (s *Service) unsubscribeHandler() th.Handler {
 }
 
 func (s *Service) myTripsHandler() th.Handler {
-	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+	return func(_ *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdMyTrips))
@@ -470,7 +470,7 @@ func (s *Service) subscribedHandler() th.Handler {
 }
 
 func (s *Service) notImplementedHandler(cmd string) th.Handler {
-	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+	return func(_ *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", cmd))

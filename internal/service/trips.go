@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Service) newTripHandler() th.Handler {
-	return func(bot *tgbotapi.Bot, update tgbotapi.Update) {
+	return func(_ *tgbotapi.Bot, update tgbotapi.Update) {
 		ctx := update.Context()
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdNewTrip))
