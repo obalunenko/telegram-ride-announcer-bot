@@ -25,7 +25,7 @@ jobs:
             "./build/docker/go-tools/Dockerfile",
             "./build/docker/rideannouncer/Dockerfile",
           ]
-    runs-on: "ubuntu-22.04"
+    runs-on: "ubuntu-24.04"
     name: Lint ${{ matrix.dockerfile }}
     steps:
       - name: Checkout
@@ -50,7 +50,7 @@ jobs:
             "go-tools",
             "rideannouncer",
           ]
-    runs-on: "ubuntu-22.04"
+    runs-on: "ubuntu-24.04"
     name: Build ${{ matrix.target }}
     steps:
       - name: Checkout
