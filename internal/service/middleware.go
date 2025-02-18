@@ -108,7 +108,7 @@ func (s *Service) panicRecovery() th.Middleware {
 			if err := recover(); err != nil {
 				fmt.Println(string(debug.Stack()))
 
-				log.WithError(update.Context(), err.(error)).Error("Panic recovered")
+				log.WithField(update.Context(), "error", err).Error("Panic recovered")
 			}
 		}()
 
