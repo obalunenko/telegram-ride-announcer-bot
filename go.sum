@@ -15,8 +15,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fasthttp/router v1.5.3 h1:BFWXqa3e4thRI3MgPKTNtz0Oiq6UYN2OsEtb+YQ5TMI=
 github.com/fasthttp/router v1.5.3/go.mod h1:b864KkDIapOYh77AVG/SNkwfRZ6k6ecWvD+ZRXmP5pw=
-github.com/gofrs/uuid/v5 v5.3.0 h1:m0mUMr+oVYUdxpMLgSYCZiXe7PuVPnI94+OMeVBNedk=
-github.com/gofrs/uuid/v5 v5.3.0/go.mod h1:CDOjlDMVAtN56jqyRUZh58JT31Tiw7/oQyEXZV+9bD8=
+github.com/gofrs/uuid/v5 v5.3.1 h1:aPx49MwJbekCzOyhZDjJVb0hx3A0KLjlbLx6p2gY0p0=
+github.com/gofrs/uuid/v5 v5.3.1/go.mod h1:CDOjlDMVAtN56jqyRUZh58JT31Tiw7/oQyEXZV+9bD8=
 github.com/grbit/go-json v0.11.0 h1:bAbyMdYrYl/OjYsSqLH99N2DyQ291mHy726Mx+sYrnc=
 github.com/grbit/go-json v0.11.0/go.mod h1:IYpHsdybQ386+6g3VE6AXQ3uTGa5mquBme5/ZWmtzek=
 github.com/klauspost/compress v1.17.11 h1:In6xLpyWOi1+C7tXUUWv2ot1QvBjxevKAaI6IXrJmUc=
@@ -35,8 +35,8 @@ github.com/obalunenko/getenv v1.14.0 h1:Q8ClxnNMr5a6N0xNg7nHbdhZI4UUfhZMCjabGruq
 github.com/obalunenko/getenv v1.14.0/go.mod h1:PsuPvyLaE71FF7ikdCvPGqILTAWuXq7/+dtlOhab5K4=
 github.com/obalunenko/logger v1.2.0 h1:MwsqJWtaxaHFQK7Cjkqk1NnlNPHH+tR1ergdnpST7Kg=
 github.com/obalunenko/logger v1.2.0/go.mod h1:XaU3GhUJWda3ow3hhRjlItpIVgQRKa2KDsEeprSzBvg=
-github.com/obalunenko/version v1.3.0 h1:WM1uoZ3e3n/y1RVHaCMFAPeRcrq8ihQQgrSkilB3uLo=
-github.com/obalunenko/version v1.3.0/go.mod h1:56ydLXefFem3sEJ2iyguuZ7dwJ25VoIRTev/JfxFIa4=
+github.com/obalunenko/version v1.3.1 h1:NN+YSOrti8mEyJSnu+7//YSvGrOhLivh60hJXhIrNTI=
+github.com/obalunenko/version v1.3.1/go.mod h1:56ydLXefFem3sEJ2iyguuZ7dwJ25VoIRTev/JfxFIa4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.11.0 h1:cWPaGQEPrBb5/AsnsZesgZZ9yb1OQ+GOISoDNXVBh4M=

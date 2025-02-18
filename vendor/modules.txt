@@ -55,7 +55,7 @@ github.com/davecgh/go-spew/spew
 ## explicit; go 1.21
 github.com/fasthttp/router
 github.com/fasthttp/router/radix
-# github.com/gofrs/uuid/v5 v5.3.0
+# github.com/gofrs/uuid/v5 v5.3.1
 ## explicit; go 1.19
 github.com/gofrs/uuid/v5
 # github.com/grbit/go-json v0.11.0
@@ -101,7 +101,7 @@ github.com/obalunenko/getenv/option
 # github.com/obalunenko/logger v1.2.0
 ## explicit; go 1.23
 github.com/obalunenko/logger
-# github.com/obalunenko/version v1.3.0
+# github.com/obalunenko/version v1.3.1
 ## explicit; go 1.24
 github.com/obalunenko/version
 # github.com/pmezard/go-difflib v1.0.0

@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM ghcr.io/obalunenko/go-tools:v1.6.10 AS builder
+FROM --platform=$BUILDPLATFORM ghcr.io/obalunenko/go-tools:v1.7.0 AS builder
 
 LABEL maintainer="oleg.balunenko@gmail.com"
 LABEL org.opencontainers.image.source="https://github.com/obalunenko/scrum-report"
