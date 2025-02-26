@@ -7,7 +7,7 @@ toolchain go1.24.0
 require (
 	github.com/gofrs/uuid/v5 v5.3.1
 	github.com/mymmrac/telego v0.32.0
-	github.com/obalunenko/getenv v1.14.0
+	github.com/obalunenko/getenv v1.14.1
 	github.com/obalunenko/logger v1.2.0
 	github.com/obalunenko/version v1.3.1
 	github.com/stretchr/testify v1.10.0
@@ -32,7 +32,7 @@ require (
 	github.com/valyala/fasthttp v1.59.0 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	golang.org/x/arch v0.14.0 // indirect
-	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a // indirect
+	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
