@@ -2,7 +2,7 @@
 ## explicit; go 1.13
 github.com/andybalholm/brotli
 github.com/andybalholm/brotli/matchfinder
-# github.com/bytedance/sonic v1.12.8
+# github.com/bytedance/sonic v1.12.10
 ## explicit; go 1.17
 github.com/bytedance/sonic
 github.com/bytedance/sonic/ast
@@ -53,10 +53,6 @@ github.com/cloudwego/base64x/internal/rt
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/fasthttp/router v1.5.4
-## explicit; go 1.21
-github.com/fasthttp/router
-github.com/fasthttp/router/radix
 # github.com/gofrs/uuid/v5 v5.3.1
 ## explicit; go 1.19
 github.com/gofrs/uuid/v5
@@ -86,10 +82,8 @@ github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/klauspost/cpuid/v2 v2.2.9
 ## explicit; go 1.20
 github.com/klauspost/cpuid/v2
-# github.com/kr/text v0.2.0
-## explicit
-# github.com/mymmrac/telego v0.32.0
-## explicit; go 1.22.3
+# github.com/mymmrac/telego v1.0.0
+## explicit; go 1.23.4
 github.com/mymmrac/telego
 github.com/mymmrac/telego/internal/json
 github.com/mymmrac/telego/telegoapi
@@ -109,13 +103,6 @@ github.com/obalunenko/version
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/rogpeppe/go-internal v1.11.0
-## explicit; go 1.19
-# github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38
-## explicit; go 1.20
-github.com/savsgio/gotils/bytes
-github.com/savsgio/gotils/strconv
-github.com/savsgio/gotils/strings
 # github.com/stretchr/testify v1.10.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
