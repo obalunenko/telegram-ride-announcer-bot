@@ -138,15 +138,21 @@ func (k KeyboardButton) WithWebApp(webApp *WebAppInfo) KeyboardButton {
 	return k
 }
 
+// WithRequestID adds request ID parameter
+func (k *KeyboardButtonRequestUsers) WithRequestID(requestID int32) *KeyboardButtonRequestUsers {
+	k.RequestID = requestID
+	return k
+}
+
 // WithUserIsBot adds user is bot parameter
 func (k *KeyboardButtonRequestUsers) WithUserIsBot(userIsBot bool) *KeyboardButtonRequestUsers {
-	k.UserIsBot = ToPtr(userIsBot)
+	k.UserIsBot = &userIsBot
 	return k
 }
 
 // WithUserIsPremium adds user is premium parameter
 func (k *KeyboardButtonRequestUsers) WithUserIsPremium(userIsPremium bool) *KeyboardButtonRequestUsers {
-	k.UserIsPremium = ToPtr(userIsPremium)
+	k.UserIsPremium = &userIsPremium
 	return k
 }
 
@@ -158,19 +164,25 @@ func (k *KeyboardButtonRequestUsers) WithMaxQuantity(maxQuantity int) *KeyboardB
 
 // WithRequestName adds request name parameter
 func (k *KeyboardButtonRequestUsers) WithRequestName(requestName bool) *KeyboardButtonRequestUsers {
-	k.RequestName = ToPtr(requestName)
+	k.RequestName = &requestName
 	return k
 }
 
 // WithRequestUsername adds request username parameter
 func (k *KeyboardButtonRequestUsers) WithRequestUsername(requestUsername bool) *KeyboardButtonRequestUsers {
-	k.RequestUsername = ToPtr(requestUsername)
+	k.RequestUsername = &requestUsername
 	return k
 }
 
 // WithRequestPhoto adds request photo parameter
 func (k *KeyboardButtonRequestUsers) WithRequestPhoto(requestPhoto bool) *KeyboardButtonRequestUsers {
-	k.RequestPhoto = ToPtr(requestPhoto)
+	k.RequestPhoto = &requestPhoto
+	return k
+}
+
+// WithRequestID adds request ID parameter
+func (k *KeyboardButtonRequestChat) WithRequestID(requestID int32) *KeyboardButtonRequestChat {
+	k.RequestID = requestID
 	return k
 }
 
@@ -182,19 +194,19 @@ func (k *KeyboardButtonRequestChat) WithChatIsChannel() *KeyboardButtonRequestCh
 
 // WithChatIsForum adds chat is forum parameter
 func (k *KeyboardButtonRequestChat) WithChatIsForum(chatIsForum bool) *KeyboardButtonRequestChat {
-	k.ChatIsForum = ToPtr(chatIsForum)
+	k.ChatIsForum = &chatIsForum
 	return k
 }
 
 // WithChatHasUsername adds chat has username parameter
 func (k *KeyboardButtonRequestChat) WithChatHasUsername(chatHasUsername bool) *KeyboardButtonRequestChat {
-	k.ChatHasUsername = ToPtr(chatHasUsername)
+	k.ChatHasUsername = &chatHasUsername
 	return k
 }
 
 // WithChatIsCreated adds chat is created parameter
 func (k *KeyboardButtonRequestChat) WithChatIsCreated(chatIsCreated bool) *KeyboardButtonRequestChat {
-	k.ChatIsCreated = ToPtr(chatIsCreated)
+	k.ChatIsCreated = &chatIsCreated
 	return k
 }
 
@@ -214,25 +226,25 @@ func (k *KeyboardButtonRequestChat) WithBotAdministratorRights(botAdministratorR
 
 // WithBotIsMember adds bot is member parameter
 func (k *KeyboardButtonRequestChat) WithBotIsMember(botIsMember bool) *KeyboardButtonRequestChat {
-	k.BotIsMember = ToPtr(botIsMember)
+	k.BotIsMember = &botIsMember
 	return k
 }
 
 // WithRequestTitle adds request title parameter
 func (k *KeyboardButtonRequestChat) WithRequestTitle(requestTitle bool) *KeyboardButtonRequestChat {
-	k.RequestTitle = ToPtr(requestTitle)
+	k.RequestTitle = &requestTitle
 	return k
 }
 
 // WithRequestUsername adds request username parameter
 func (k *KeyboardButtonRequestChat) WithRequestUsername(requestUsername bool) *KeyboardButtonRequestChat {
-	k.RequestUsername = ToPtr(requestUsername)
+	k.RequestUsername = &requestUsername
 	return k
 }
 
 // WithRequestPhoto adds request photo parameter
 func (k *KeyboardButtonRequestChat) WithRequestPhoto(requestPhoto bool) *KeyboardButtonRequestChat {
-	k.RequestPhoto = ToPtr(requestPhoto)
+	k.RequestPhoto = &requestPhoto
 	return k
 }
 
@@ -286,7 +298,7 @@ func (i InlineKeyboardButton) WithLoginURL(loginURL *LoginURL) InlineKeyboardBut
 
 // WithSwitchInlineQuery adds switch inline query parameter
 func (i InlineKeyboardButton) WithSwitchInlineQuery(switchInlineQuery string) InlineKeyboardButton {
-	i.SwitchInlineQuery = ToPtr(switchInlineQuery)
+	i.SwitchInlineQuery = &switchInlineQuery
 	return i
 }
 
@@ -294,7 +306,7 @@ func (i InlineKeyboardButton) WithSwitchInlineQuery(switchInlineQuery string) In
 func (i InlineKeyboardButton) WithSwitchInlineQueryCurrentChat(
 	switchInlineQueryCurrentChat string,
 ) InlineKeyboardButton {
-	i.SwitchInlineQueryCurrentChat = ToPtr(switchInlineQueryCurrentChat)
+	i.SwitchInlineQueryCurrentChat = &switchInlineQueryCurrentChat
 	return i
 }
 
@@ -399,6 +411,18 @@ func (i *InputMediaVideo) WithMedia(media InputFile) *InputMediaVideo {
 // WithThumbnail adds thumbnail parameter
 func (i *InputMediaVideo) WithThumbnail(thumbnail *InputFile) *InputMediaVideo {
 	i.Thumbnail = thumbnail
+	return i
+}
+
+// WithCover adds cover parameter
+func (i *InputMediaVideo) WithCover(cover *InputFile) *InputMediaVideo {
+	i.Cover = cover
+	return i
+}
+
+// WithStartTimestamp adds start timestamp parameter
+func (i *InputMediaVideo) WithStartTimestamp(startTimestamp int) *InputMediaVideo {
+	i.StartTimestamp = startTimestamp
 	return i
 }
 
@@ -597,6 +621,108 @@ func (i *InputMediaDocument) WithCaptionEntities(captionEntities ...MessageEntit
 // WithDisableContentTypeDetection adds disable content type detection parameter
 func (i *InputMediaDocument) WithDisableContentTypeDetection() *InputMediaDocument {
 	i.DisableContentTypeDetection = true
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputPaidMediaPhoto) WithMedia(media InputFile) *InputPaidMediaPhoto {
+	i.Media = media
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputPaidMediaVideo) WithMedia(media InputFile) *InputPaidMediaVideo {
+	i.Media = media
+	return i
+}
+
+// WithThumbnail adds thumbnail parameter
+func (i *InputPaidMediaVideo) WithThumbnail(thumbnail *InputFile) *InputPaidMediaVideo {
+	i.Thumbnail = thumbnail
+	return i
+}
+
+// WithCover adds cover parameter
+func (i *InputPaidMediaVideo) WithCover(cover *InputFile) *InputPaidMediaVideo {
+	i.Cover = cover
+	return i
+}
+
+// WithStartTimestamp adds start timestamp parameter
+func (i *InputPaidMediaVideo) WithStartTimestamp(startTimestamp int) *InputPaidMediaVideo {
+	i.StartTimestamp = startTimestamp
+	return i
+}
+
+// WithWidth adds width parameter
+func (i *InputPaidMediaVideo) WithWidth(width int) *InputPaidMediaVideo {
+	i.Width = width
+	return i
+}
+
+// WithHeight adds height parameter
+func (i *InputPaidMediaVideo) WithHeight(height int) *InputPaidMediaVideo {
+	i.Height = height
+	return i
+}
+
+// WithDuration adds duration parameter
+func (i *InputPaidMediaVideo) WithDuration(duration int) *InputPaidMediaVideo {
+	i.Duration = duration
+	return i
+}
+
+// WithSupportsStreaming adds supports streaming parameter
+func (i *InputPaidMediaVideo) WithSupportsStreaming() *InputPaidMediaVideo {
+	i.SupportsStreaming = true
+	return i
+}
+
+// WithPhoto adds photo parameter
+func (i *InputProfilePhotoStatic) WithPhoto(photo InputFile) *InputProfilePhotoStatic {
+	i.Photo = photo
+	return i
+}
+
+// WithAnimation adds animation parameter
+func (i *InputProfilePhotoAnimated) WithAnimation(animation InputFile) *InputProfilePhotoAnimated {
+	i.Animation = animation
+	return i
+}
+
+// WithMainFrameTimestamp adds main frame timestamp parameter
+func (i *InputProfilePhotoAnimated) WithMainFrameTimestamp(mainFrameTimestamp float64) *InputProfilePhotoAnimated {
+	i.MainFrameTimestamp = mainFrameTimestamp
+	return i
+}
+
+// WithPhoto adds photo parameter
+func (i *InputStoryContentPhoto) WithPhoto(photo InputFile) *InputStoryContentPhoto {
+	i.Photo = photo
+	return i
+}
+
+// WithVideo adds video parameter
+func (i *InputStoryContentVideo) WithVideo(video InputFile) *InputStoryContentVideo {
+	i.Video = video
+	return i
+}
+
+// WithDuration adds duration parameter
+func (i *InputStoryContentVideo) WithDuration(duration float64) *InputStoryContentVideo {
+	i.Duration = duration
+	return i
+}
+
+// WithCoverFrameTimestamp adds cover frame timestamp parameter
+func (i *InputStoryContentVideo) WithCoverFrameTimestamp(coverFrameTimestamp float64) *InputStoryContentVideo {
+	i.CoverFrameTimestamp = coverFrameTimestamp
+	return i
+}
+
+// WithIsAnimation adds is animation parameter
+func (i *InputStoryContentVideo) WithIsAnimation() *InputStoryContentVideo {
+	i.IsAnimation = true
 	return i
 }
 
@@ -1225,9 +1351,27 @@ func (i *InlineQueryResultLocation) WithID(iD string) *InlineQueryResultLocation
 	return i
 }
 
+// WithLatitude adds latitude parameter
+func (i *InlineQueryResultLocation) WithLatitude(latitude float64) *InlineQueryResultLocation {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InlineQueryResultLocation) WithLongitude(longitude float64) *InlineQueryResultLocation {
+	i.Longitude = longitude
+	return i
+}
+
 // WithTitle adds title parameter
 func (i *InlineQueryResultLocation) WithTitle(title string) *InlineQueryResultLocation {
 	i.Title = title
+	return i
+}
+
+// WithHorizontalAccuracy adds horizontal accuracy parameter
+func (i *InlineQueryResultLocation) WithHorizontalAccuracy(horizontalAccuracy float64) *InlineQueryResultLocation {
+	i.HorizontalAccuracy = horizontalAccuracy
 	return i
 }
 
@@ -1283,6 +1427,18 @@ func (i *InlineQueryResultLocation) WithThumbnailHeight(thumbnailHeight int) *In
 // WithID adds ID parameter
 func (i *InlineQueryResultVenue) WithID(iD string) *InlineQueryResultVenue {
 	i.ID = iD
+	return i
+}
+
+// WithLatitude adds latitude parameter
+func (i *InlineQueryResultVenue) WithLatitude(latitude float64) *InlineQueryResultVenue {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InlineQueryResultVenue) WithLongitude(longitude float64) *InlineQueryResultVenue {
+	i.Longitude = longitude
 	return i
 }
 
@@ -1875,6 +2031,24 @@ func (i *InputTextMessageContent) WithLinkPreviewOptions(
 	return i
 }
 
+// WithLatitude adds latitude parameter
+func (i *InputLocationMessageContent) WithLatitude(latitude float64) *InputLocationMessageContent {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InputLocationMessageContent) WithLongitude(longitude float64) *InputLocationMessageContent {
+	i.Longitude = longitude
+	return i
+}
+
+// WithHorizontalAccuracy adds horizontal accuracy parameter
+func (i *InputLocationMessageContent) WithHorizontalAccuracy(horizontalAccuracy float64) *InputLocationMessageContent {
+	i.HorizontalAccuracy = horizontalAccuracy
+	return i
+}
+
 // WithLivePeriod adds live period parameter
 func (i *InputLocationMessageContent) WithLivePeriod(livePeriod int) *InputLocationMessageContent {
 	i.LivePeriod = livePeriod
@@ -1890,6 +2064,18 @@ func (i *InputLocationMessageContent) WithHeading(heading int) *InputLocationMes
 // WithProximityAlertRadius adds proximity alert radius parameter
 func (i *InputLocationMessageContent) WithProximityAlertRadius(proximityAlertRadius int) *InputLocationMessageContent {
 	i.ProximityAlertRadius = proximityAlertRadius
+	return i
+}
+
+// WithLatitude adds latitude parameter
+func (i *InputVenueMessageContent) WithLatitude(latitude float64) *InputVenueMessageContent {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InputVenueMessageContent) WithLongitude(longitude float64) *InputVenueMessageContent {
+	i.Longitude = longitude
 	return i
 }
 
