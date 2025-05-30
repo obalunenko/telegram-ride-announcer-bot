@@ -168,6 +168,12 @@ func (p *ForwardMessageParams) WithFromChatID(fromChatID ChatID) *ForwardMessage
 	return p
 }
 
+// WithVideoStartTimestamp adds video start timestamp parameter
+func (p *ForwardMessageParams) WithVideoStartTimestamp(videoStartTimestamp int) *ForwardMessageParams {
+	p.VideoStartTimestamp = videoStartTimestamp
+	return p
+}
+
 // WithDisableNotification adds disable notification parameter
 func (p *ForwardMessageParams) WithDisableNotification() *ForwardMessageParams {
 	p.DisableNotification = true
@@ -243,6 +249,12 @@ func (p *CopyMessageParams) WithFromChatID(fromChatID ChatID) *CopyMessageParams
 // WithMessageID adds message ID parameter
 func (p *CopyMessageParams) WithMessageID(messageID int) *CopyMessageParams {
 	p.MessageID = messageID
+	return p
+}
+
+// WithVideoStartTimestamp adds video start timestamp parameter
+func (p *CopyMessageParams) WithVideoStartTimestamp(videoStartTimestamp int) *CopyMessageParams {
+	p.VideoStartTimestamp = videoStartTimestamp
 	return p
 }
 
@@ -669,6 +681,18 @@ func (p *SendVideoParams) WithHeight(height int) *SendVideoParams {
 // WithThumbnail adds thumbnail parameter
 func (p *SendVideoParams) WithThumbnail(thumbnail *InputFile) *SendVideoParams {
 	p.Thumbnail = thumbnail
+	return p
+}
+
+// WithCover adds cover parameter
+func (p *SendVideoParams) WithCover(cover *InputFile) *SendVideoParams {
+	p.Cover = cover
+	return p
+}
+
+// WithStartTimestamp adds start timestamp parameter
+func (p *SendVideoParams) WithStartTimestamp(startTimestamp int) *SendVideoParams {
+	p.StartTimestamp = startTimestamp
 	return p
 }
 
@@ -1176,6 +1200,24 @@ func (p *SendLocationParams) WithMessageThreadID(messageThreadID int) *SendLocat
 	return p
 }
 
+// WithLatitude adds latitude parameter
+func (p *SendLocationParams) WithLatitude(latitude float64) *SendLocationParams {
+	p.Latitude = latitude
+	return p
+}
+
+// WithLongitude adds longitude parameter
+func (p *SendLocationParams) WithLongitude(longitude float64) *SendLocationParams {
+	p.Longitude = longitude
+	return p
+}
+
+// WithHorizontalAccuracy adds horizontal accuracy parameter
+func (p *SendLocationParams) WithHorizontalAccuracy(horizontalAccuracy float64) *SendLocationParams {
+	p.HorizontalAccuracy = horizontalAccuracy
+	return p
+}
+
 // WithLivePeriod adds live period parameter
 func (p *SendLocationParams) WithLivePeriod(livePeriod int) *SendLocationParams {
 	p.LivePeriod = livePeriod
@@ -1245,6 +1287,18 @@ func (p *SendVenueParams) WithChatID(chatID ChatID) *SendVenueParams {
 // WithMessageThreadID adds message thread ID parameter
 func (p *SendVenueParams) WithMessageThreadID(messageThreadID int) *SendVenueParams {
 	p.MessageThreadID = messageThreadID
+	return p
+}
+
+// WithLatitude adds latitude parameter
+func (p *SendVenueParams) WithLatitude(latitude float64) *SendVenueParams {
+	p.Latitude = latitude
+	return p
+}
+
+// WithLongitude adds longitude parameter
+func (p *SendVenueParams) WithLongitude(longitude float64) *SendVenueParams {
+	p.Longitude = longitude
 	return p
 }
 
@@ -1442,7 +1496,7 @@ func (p *SendPollParams) WithOptions(options ...InputPollOption) *SendPollParams
 
 // WithIsAnonymous adds is anonymous parameter
 func (p *SendPollParams) WithIsAnonymous(isAnonymous bool) *SendPollParams {
-	p.IsAnonymous = ToPtr(isAnonymous)
+	p.IsAnonymous = &isAnonymous
 	return p
 }
 
@@ -1460,7 +1514,7 @@ func (p *SendPollParams) WithAllowsMultipleAnswers() *SendPollParams {
 
 // WithCorrectOptionID adds correct option ID parameter
 func (p *SendPollParams) WithCorrectOptionID(correctOptionID int) *SendPollParams {
-	p.CorrectOptionID = ToPtr(correctOptionID)
+	p.CorrectOptionID = &correctOptionID
 	return p
 }
 
@@ -1485,6 +1539,12 @@ func (p *SendPollParams) WithExplanationEntities(explanationEntities ...MessageE
 // WithOpenPeriod adds open period parameter
 func (p *SendPollParams) WithOpenPeriod(openPeriod int) *SendPollParams {
 	p.OpenPeriod = openPeriod
+	return p
+}
+
+// WithCloseDate adds close date parameter
+func (p *SendPollParams) WithCloseDate(closeDate int64) *SendPollParams {
+	p.CloseDate = closeDate
 	return p
 }
 
@@ -1638,6 +1698,12 @@ func (p *SetMessageReactionParams) WithIsBig() *SetMessageReactionParams {
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *GetUserProfilePhotosParams) WithUserID(userID int64) *GetUserProfilePhotosParams {
+	p.UserID = userID
+	return p
+}
+
 // WithOffset adds offset parameter
 func (p *GetUserProfilePhotosParams) WithOffset(offset int) *GetUserProfilePhotosParams {
 	p.Offset = offset
@@ -1650,10 +1716,23 @@ func (p *GetUserProfilePhotosParams) WithLimit(limit int) *GetUserProfilePhotosP
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *SetUserEmojiStatusParams) WithUserID(userID int64) *SetUserEmojiStatusParams {
+	p.UserID = userID
+	return p
+}
+
 // WithEmojiStatusCustomEmojiID adds emoji status custom emoji ID parameter
 func (p *SetUserEmojiStatusParams) WithEmojiStatusCustomEmojiID(emojiStatusCustomEmojiID string,
 ) *SetUserEmojiStatusParams {
 	p.EmojiStatusCustomEmojiID = emojiStatusCustomEmojiID
+	return p
+}
+
+// WithEmojiStatusExpirationDate adds emoji status expiration date parameter
+func (p *SetUserEmojiStatusParams) WithEmojiStatusExpirationDate(emojiStatusExpirationDate int64,
+) *SetUserEmojiStatusParams {
+	p.EmojiStatusExpirationDate = emojiStatusExpirationDate
 	return p
 }
 
@@ -1669,6 +1748,18 @@ func (p *BanChatMemberParams) WithChatID(chatID ChatID) *BanChatMemberParams {
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *BanChatMemberParams) WithUserID(userID int64) *BanChatMemberParams {
+	p.UserID = userID
+	return p
+}
+
+// WithUntilDate adds until date parameter
+func (p *BanChatMemberParams) WithUntilDate(untilDate int64) *BanChatMemberParams {
+	p.UntilDate = untilDate
+	return p
+}
+
 // WithRevokeMessages adds revoke messages parameter
 func (p *BanChatMemberParams) WithRevokeMessages() *BanChatMemberParams {
 	p.RevokeMessages = true
@@ -1678,6 +1769,12 @@ func (p *BanChatMemberParams) WithRevokeMessages() *BanChatMemberParams {
 // WithChatID adds chat ID parameter
 func (p *UnbanChatMemberParams) WithChatID(chatID ChatID) *UnbanChatMemberParams {
 	p.ChatID = chatID
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *UnbanChatMemberParams) WithUserID(userID int64) *UnbanChatMemberParams {
+	p.UserID = userID
 	return p
 }
 
@@ -1693,6 +1790,12 @@ func (p *RestrictChatMemberParams) WithChatID(chatID ChatID) *RestrictChatMember
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *RestrictChatMemberParams) WithUserID(userID int64) *RestrictChatMemberParams {
+	p.UserID = userID
+	return p
+}
+
 // WithPermissions adds permissions parameter
 func (p *RestrictChatMemberParams) WithPermissions(permissions ChatPermissions) *RestrictChatMemberParams {
 	p.Permissions = permissions
@@ -1705,105 +1808,123 @@ func (p *RestrictChatMemberParams) WithUseIndependentChatPermissions() *Restrict
 	return p
 }
 
+// WithUntilDate adds until date parameter
+func (p *RestrictChatMemberParams) WithUntilDate(untilDate int64) *RestrictChatMemberParams {
+	p.UntilDate = untilDate
+	return p
+}
+
 // WithChatID adds chat ID parameter
 func (p *PromoteChatMemberParams) WithChatID(chatID ChatID) *PromoteChatMemberParams {
 	p.ChatID = chatID
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *PromoteChatMemberParams) WithUserID(userID int64) *PromoteChatMemberParams {
+	p.UserID = userID
+	return p
+}
+
 // WithIsAnonymous adds is anonymous parameter
 func (p *PromoteChatMemberParams) WithIsAnonymous(isAnonymous bool) *PromoteChatMemberParams {
-	p.IsAnonymous = ToPtr(isAnonymous)
+	p.IsAnonymous = &isAnonymous
 	return p
 }
 
 // WithCanManageChat adds can manage chat parameter
 func (p *PromoteChatMemberParams) WithCanManageChat(canManageChat bool) *PromoteChatMemberParams {
-	p.CanManageChat = ToPtr(canManageChat)
+	p.CanManageChat = &canManageChat
 	return p
 }
 
 // WithCanDeleteMessages adds can delete messages parameter
 func (p *PromoteChatMemberParams) WithCanDeleteMessages(canDeleteMessages bool) *PromoteChatMemberParams {
-	p.CanDeleteMessages = ToPtr(canDeleteMessages)
+	p.CanDeleteMessages = &canDeleteMessages
 	return p
 }
 
 // WithCanManageVideoChats adds can manage video chats parameter
 func (p *PromoteChatMemberParams) WithCanManageVideoChats(canManageVideoChats bool) *PromoteChatMemberParams {
-	p.CanManageVideoChats = ToPtr(canManageVideoChats)
+	p.CanManageVideoChats = &canManageVideoChats
 	return p
 }
 
 // WithCanRestrictMembers adds can restrict members parameter
 func (p *PromoteChatMemberParams) WithCanRestrictMembers(canRestrictMembers bool) *PromoteChatMemberParams {
-	p.CanRestrictMembers = ToPtr(canRestrictMembers)
+	p.CanRestrictMembers = &canRestrictMembers
 	return p
 }
 
 // WithCanPromoteMembers adds can promote members parameter
 func (p *PromoteChatMemberParams) WithCanPromoteMembers(canPromoteMembers bool) *PromoteChatMemberParams {
-	p.CanPromoteMembers = ToPtr(canPromoteMembers)
+	p.CanPromoteMembers = &canPromoteMembers
 	return p
 }
 
 // WithCanChangeInfo adds can change info parameter
 func (p *PromoteChatMemberParams) WithCanChangeInfo(canChangeInfo bool) *PromoteChatMemberParams {
-	p.CanChangeInfo = ToPtr(canChangeInfo)
+	p.CanChangeInfo = &canChangeInfo
 	return p
 }
 
 // WithCanInviteUsers adds can invite users parameter
 func (p *PromoteChatMemberParams) WithCanInviteUsers(canInviteUsers bool) *PromoteChatMemberParams {
-	p.CanInviteUsers = ToPtr(canInviteUsers)
+	p.CanInviteUsers = &canInviteUsers
 	return p
 }
 
 // WithCanPostStories adds can post stories parameter
 func (p *PromoteChatMemberParams) WithCanPostStories(canPostStories bool) *PromoteChatMemberParams {
-	p.CanPostStories = ToPtr(canPostStories)
+	p.CanPostStories = &canPostStories
 	return p
 }
 
 // WithCanEditStories adds can edit stories parameter
 func (p *PromoteChatMemberParams) WithCanEditStories(canEditStories bool) *PromoteChatMemberParams {
-	p.CanEditStories = ToPtr(canEditStories)
+	p.CanEditStories = &canEditStories
 	return p
 }
 
 // WithCanDeleteStories adds can delete stories parameter
 func (p *PromoteChatMemberParams) WithCanDeleteStories(canDeleteStories bool) *PromoteChatMemberParams {
-	p.CanDeleteStories = ToPtr(canDeleteStories)
+	p.CanDeleteStories = &canDeleteStories
 	return p
 }
 
 // WithCanPostMessages adds can post messages parameter
 func (p *PromoteChatMemberParams) WithCanPostMessages(canPostMessages bool) *PromoteChatMemberParams {
-	p.CanPostMessages = ToPtr(canPostMessages)
+	p.CanPostMessages = &canPostMessages
 	return p
 }
 
 // WithCanEditMessages adds can edit messages parameter
 func (p *PromoteChatMemberParams) WithCanEditMessages(canEditMessages bool) *PromoteChatMemberParams {
-	p.CanEditMessages = ToPtr(canEditMessages)
+	p.CanEditMessages = &canEditMessages
 	return p
 }
 
 // WithCanPinMessages adds can pin messages parameter
 func (p *PromoteChatMemberParams) WithCanPinMessages(canPinMessages bool) *PromoteChatMemberParams {
-	p.CanPinMessages = ToPtr(canPinMessages)
+	p.CanPinMessages = &canPinMessages
 	return p
 }
 
 // WithCanManageTopics adds can manage topics parameter
 func (p *PromoteChatMemberParams) WithCanManageTopics(canManageTopics bool) *PromoteChatMemberParams {
-	p.CanManageTopics = ToPtr(canManageTopics)
+	p.CanManageTopics = &canManageTopics
 	return p
 }
 
 // WithChatID adds chat ID parameter
 func (p *SetChatAdministratorCustomTitleParams) WithChatID(chatID ChatID) *SetChatAdministratorCustomTitleParams {
 	p.ChatID = chatID
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *SetChatAdministratorCustomTitleParams) WithUserID(userID int64) *SetChatAdministratorCustomTitleParams {
+	p.UserID = userID
 	return p
 }
 
@@ -1820,9 +1941,21 @@ func (p *BanChatSenderChatParams) WithChatID(chatID ChatID) *BanChatSenderChatPa
 	return p
 }
 
+// WithSenderChatID adds sender chat ID parameter
+func (p *BanChatSenderChatParams) WithSenderChatID(senderChatID int64) *BanChatSenderChatParams {
+	p.SenderChatID = senderChatID
+	return p
+}
+
 // WithChatID adds chat ID parameter
 func (p *UnbanChatSenderChatParams) WithChatID(chatID ChatID) *UnbanChatSenderChatParams {
 	p.ChatID = chatID
+	return p
+}
+
+// WithSenderChatID adds sender chat ID parameter
+func (p *UnbanChatSenderChatParams) WithSenderChatID(senderChatID int64) *UnbanChatSenderChatParams {
+	p.SenderChatID = senderChatID
 	return p
 }
 
@@ -1862,6 +1995,12 @@ func (p *CreateChatInviteLinkParams) WithName(name string) *CreateChatInviteLink
 	return p
 }
 
+// WithExpireDate adds expire date parameter
+func (p *CreateChatInviteLinkParams) WithExpireDate(expireDate int64) *CreateChatInviteLinkParams {
+	p.ExpireDate = expireDate
+	return p
+}
+
 // WithMemberLimit adds member limit parameter
 func (p *CreateChatInviteLinkParams) WithMemberLimit(memberLimit int) *CreateChatInviteLinkParams {
 	p.MemberLimit = memberLimit
@@ -1892,6 +2031,12 @@ func (p *EditChatInviteLinkParams) WithName(name string) *EditChatInviteLinkPara
 	return p
 }
 
+// WithExpireDate adds expire date parameter
+func (p *EditChatInviteLinkParams) WithExpireDate(expireDate int64) *EditChatInviteLinkParams {
+	p.ExpireDate = expireDate
+	return p
+}
+
 // WithMemberLimit adds member limit parameter
 func (p *EditChatInviteLinkParams) WithMemberLimit(memberLimit int) *EditChatInviteLinkParams {
 	p.MemberLimit = memberLimit
@@ -1913,6 +2058,13 @@ func (p *CreateChatSubscriptionInviteLinkParams) WithChatID(chatID ChatID) *Crea
 // WithName adds name parameter
 func (p *CreateChatSubscriptionInviteLinkParams) WithName(name string) *CreateChatSubscriptionInviteLinkParams {
 	p.Name = name
+	return p
+}
+
+// WithSubscriptionPeriod adds subscription period parameter
+func (p *CreateChatSubscriptionInviteLinkParams) WithSubscriptionPeriod(subscriptionPeriod int64,
+) *CreateChatSubscriptionInviteLinkParams {
+	p.SubscriptionPeriod = subscriptionPeriod
 	return p
 }
 
@@ -1959,9 +2111,21 @@ func (p *ApproveChatJoinRequestParams) WithChatID(chatID ChatID) *ApproveChatJoi
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *ApproveChatJoinRequestParams) WithUserID(userID int64) *ApproveChatJoinRequestParams {
+	p.UserID = userID
+	return p
+}
+
 // WithChatID adds chat ID parameter
 func (p *DeclineChatJoinRequestParams) WithChatID(chatID ChatID) *DeclineChatJoinRequestParams {
 	p.ChatID = chatID
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *DeclineChatJoinRequestParams) WithUserID(userID int64) *DeclineChatJoinRequestParams {
+	p.UserID = userID
 	return p
 }
 
@@ -2085,6 +2249,12 @@ func (p *GetChatMemberParams) WithChatID(chatID ChatID) *GetChatMemberParams {
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *GetChatMemberParams) WithUserID(userID int64) *GetChatMemberParams {
+	p.UserID = userID
+	return p
+}
+
 // WithChatID adds chat ID parameter
 func (p *SetChatStickerSetParams) WithChatID(chatID ChatID) *SetChatStickerSetParams {
 	p.ChatID = chatID
@@ -2147,7 +2317,7 @@ func (p *EditForumTopicParams) WithName(name string) *EditForumTopicParams {
 
 // WithIconCustomEmojiID adds icon custom emoji ID parameter
 func (p *EditForumTopicParams) WithIconCustomEmojiID(iconCustomEmojiID string) *EditForumTopicParams {
-	p.IconCustomEmojiID = ToPtr(iconCustomEmojiID)
+	p.IconCustomEmojiID = &iconCustomEmojiID
 	return p
 }
 
@@ -2277,6 +2447,12 @@ func (p *GetUserChatBoostsParams) WithChatID(chatID ChatID) *GetUserChatBoostsPa
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *GetUserChatBoostsParams) WithUserID(userID int64) *GetUserChatBoostsParams {
+	p.UserID = userID
+	return p
+}
+
 // WithBusinessConnectionID adds business connection ID parameter
 func (p *GetBusinessConnectionParams) WithBusinessConnectionID(businessConnectionID string,
 ) *GetBusinessConnectionParams {
@@ -2380,9 +2556,21 @@ func (p *GetMyShortDescriptionParams) WithLanguageCode(languageCode string) *Get
 	return p
 }
 
+// WithChatID adds chat ID parameter
+func (p *SetChatMenuButtonParams) WithChatID(chatID int64) *SetChatMenuButtonParams {
+	p.ChatID = chatID
+	return p
+}
+
 // WithMenuButton adds menu button parameter
 func (p *SetChatMenuButtonParams) WithMenuButton(menuButton MenuButton) *SetChatMenuButtonParams {
 	p.MenuButton = menuButton
+	return p
+}
+
+// WithChatID adds chat ID parameter
+func (p *GetChatMenuButtonParams) WithChatID(chatID int64) *GetChatMenuButtonParams {
+	p.ChatID = chatID
 	return p
 }
 
@@ -2574,9 +2762,28 @@ func (p *EditMessageLiveLocationParams) WithInlineMessageID(inlineMessageID stri
 	return p
 }
 
+// WithLatitude adds latitude parameter
+func (p *EditMessageLiveLocationParams) WithLatitude(latitude float64) *EditMessageLiveLocationParams {
+	p.Latitude = latitude
+	return p
+}
+
+// WithLongitude adds longitude parameter
+func (p *EditMessageLiveLocationParams) WithLongitude(longitude float64) *EditMessageLiveLocationParams {
+	p.Longitude = longitude
+	return p
+}
+
 // WithLivePeriod adds live period parameter
 func (p *EditMessageLiveLocationParams) WithLivePeriod(livePeriod int) *EditMessageLiveLocationParams {
 	p.LivePeriod = livePeriod
+	return p
+}
+
+// WithHorizontalAccuracy adds horizontal accuracy parameter
+func (p *EditMessageLiveLocationParams) WithHorizontalAccuracy(horizontalAccuracy float64,
+) *EditMessageLiveLocationParams {
+	p.HorizontalAccuracy = horizontalAccuracy
 	return p
 }
 
@@ -2712,6 +2919,492 @@ func (p *DeleteMessagesParams) WithMessageIDs(messageIDs ...int) *DeleteMessages
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *SendGiftParams) WithUserID(userID int64) *SendGiftParams {
+	p.UserID = userID
+	return p
+}
+
+// WithChatID adds chat ID parameter
+func (p *SendGiftParams) WithChatID(chatID ChatID) *SendGiftParams {
+	p.ChatID = chatID
+	return p
+}
+
+// WithGiftID adds gift ID parameter
+func (p *SendGiftParams) WithGiftID(giftID string) *SendGiftParams {
+	p.GiftID = giftID
+	return p
+}
+
+// WithPayForUpgrade adds pay for upgrade parameter
+func (p *SendGiftParams) WithPayForUpgrade() *SendGiftParams {
+	p.PayForUpgrade = true
+	return p
+}
+
+// WithText adds text parameter
+func (p *SendGiftParams) WithText(text string) *SendGiftParams {
+	p.Text = text
+	return p
+}
+
+// WithTextParseMode adds text parse mode parameter
+func (p *SendGiftParams) WithTextParseMode(textParseMode string) *SendGiftParams {
+	p.TextParseMode = textParseMode
+	return p
+}
+
+// WithTextEntities adds text entities parameter
+func (p *SendGiftParams) WithTextEntities(textEntities ...MessageEntity) *SendGiftParams {
+	p.TextEntities = textEntities
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *GiftPremiumSubscriptionParams) WithUserID(userID int64) *GiftPremiumSubscriptionParams {
+	p.UserID = userID
+	return p
+}
+
+// WithMonthCount adds month count parameter
+func (p *GiftPremiumSubscriptionParams) WithMonthCount(monthCount int) *GiftPremiumSubscriptionParams {
+	p.MonthCount = monthCount
+	return p
+}
+
+// WithStarCount adds star count parameter
+func (p *GiftPremiumSubscriptionParams) WithStarCount(starCount int) *GiftPremiumSubscriptionParams {
+	p.StarCount = starCount
+	return p
+}
+
+// WithText adds text parameter
+func (p *GiftPremiumSubscriptionParams) WithText(text string) *GiftPremiumSubscriptionParams {
+	p.Text = text
+	return p
+}
+
+// WithTextParseMode adds text parse mode parameter
+func (p *GiftPremiumSubscriptionParams) WithTextParseMode(textParseMode string) *GiftPremiumSubscriptionParams {
+	p.TextParseMode = textParseMode
+	return p
+}
+
+// WithTextEntities adds text entities parameter
+func (p *GiftPremiumSubscriptionParams) WithTextEntities(textEntities ...MessageEntity) *GiftPremiumSubscriptionParams {
+	p.TextEntities = textEntities
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *VerifyUserParams) WithUserID(userID int64) *VerifyUserParams {
+	p.UserID = userID
+	return p
+}
+
+// WithCustomDescription adds custom description parameter
+func (p *VerifyUserParams) WithCustomDescription(customDescription string) *VerifyUserParams {
+	p.CustomDescription = customDescription
+	return p
+}
+
+// WithChatID adds chat ID parameter
+func (p *VerifyChatParams) WithChatID(chatID ChatID) *VerifyChatParams {
+	p.ChatID = chatID
+	return p
+}
+
+// WithCustomDescription adds custom description parameter
+func (p *VerifyChatParams) WithCustomDescription(customDescription string) *VerifyChatParams {
+	p.CustomDescription = customDescription
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *RemoveUserVerificationParams) WithUserID(userID int64) *RemoveUserVerificationParams {
+	p.UserID = userID
+	return p
+}
+
+// WithChatID adds chat ID parameter
+func (p *RemoveChatVerificationParams) WithChatID(chatID ChatID) *RemoveChatVerificationParams {
+	p.ChatID = chatID
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *ReadBusinessMessageParams) WithBusinessConnectionID(businessConnectionID string) *ReadBusinessMessageParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithChatID adds chat ID parameter
+func (p *ReadBusinessMessageParams) WithChatID(chatID int64) *ReadBusinessMessageParams {
+	p.ChatID = chatID
+	return p
+}
+
+// WithMessageID adds message ID parameter
+func (p *ReadBusinessMessageParams) WithMessageID(messageID int) *ReadBusinessMessageParams {
+	p.MessageID = messageID
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *DeleteBusinessMessagesParams) WithBusinessConnectionID(businessConnectionID string,
+) *DeleteBusinessMessagesParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithMessageIDs adds message ids parameter
+func (p *DeleteBusinessMessagesParams) WithMessageIDs(messageIDs ...int) *DeleteBusinessMessagesParams {
+	p.MessageIDs = messageIDs
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *SetBusinessAccountNameParams) WithBusinessConnectionID(businessConnectionID string,
+) *SetBusinessAccountNameParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithFirstName adds first name parameter
+func (p *SetBusinessAccountNameParams) WithFirstName(firstName string) *SetBusinessAccountNameParams {
+	p.FirstName = firstName
+	return p
+}
+
+// WithLastName adds last name parameter
+func (p *SetBusinessAccountNameParams) WithLastName(lastName string) *SetBusinessAccountNameParams {
+	p.LastName = lastName
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *SetBusinessAccountUsernameParams) WithBusinessConnectionID(businessConnectionID string,
+) *SetBusinessAccountUsernameParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithUsername adds username parameter
+func (p *SetBusinessAccountUsernameParams) WithUsername(username string) *SetBusinessAccountUsernameParams {
+	p.Username = username
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *SetBusinessAccountBioParams) WithBusinessConnectionID(businessConnectionID string,
+) *SetBusinessAccountBioParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithBio adds bio parameter
+func (p *SetBusinessAccountBioParams) WithBio(bio string) *SetBusinessAccountBioParams {
+	p.Bio = bio
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *SetBusinessAccountProfilePhotoParams) WithBusinessConnectionID(businessConnectionID string,
+) *SetBusinessAccountProfilePhotoParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithPhoto adds photo parameter
+func (p *SetBusinessAccountProfilePhotoParams) WithPhoto(photo InputProfilePhoto,
+) *SetBusinessAccountProfilePhotoParams {
+	p.Photo = photo
+	return p
+}
+
+// WithIsPublic adds is public parameter
+func (p *SetBusinessAccountProfilePhotoParams) WithIsPublic() *SetBusinessAccountProfilePhotoParams {
+	p.IsPublic = true
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *RemoveBusinessAccountProfilePhotoParams) WithBusinessConnectionID(businessConnectionID string,
+) *RemoveBusinessAccountProfilePhotoParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithIsPublic adds is public parameter
+func (p *RemoveBusinessAccountProfilePhotoParams) WithIsPublic() *RemoveBusinessAccountProfilePhotoParams {
+	p.IsPublic = true
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *SetBusinessAccountGiftSettingsParams) WithBusinessConnectionID(businessConnectionID string,
+) *SetBusinessAccountGiftSettingsParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithShowGiftButton adds show gift button parameter
+func (p *SetBusinessAccountGiftSettingsParams) WithShowGiftButton() *SetBusinessAccountGiftSettingsParams {
+	p.ShowGiftButton = true
+	return p
+}
+
+// WithAcceptedGiftTypes adds accepted gift types parameter
+func (p *SetBusinessAccountGiftSettingsParams) WithAcceptedGiftTypes(acceptedGiftTypes AcceptedGiftTypes,
+) *SetBusinessAccountGiftSettingsParams {
+	p.AcceptedGiftTypes = acceptedGiftTypes
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *GetBusinessAccountStarBalanceParams) WithBusinessConnectionID(businessConnectionID string,
+) *GetBusinessAccountStarBalanceParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *TransferBusinessAccountStarsParams) WithBusinessConnectionID(businessConnectionID string,
+) *TransferBusinessAccountStarsParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithStarCount adds star count parameter
+func (p *TransferBusinessAccountStarsParams) WithStarCount(starCount int) *TransferBusinessAccountStarsParams {
+	p.StarCount = starCount
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *GetBusinessAccountGiftsParams) WithBusinessConnectionID(businessConnectionID string,
+) *GetBusinessAccountGiftsParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithExcludeUnsaved adds exclude unsaved parameter
+func (p *GetBusinessAccountGiftsParams) WithExcludeUnsaved() *GetBusinessAccountGiftsParams {
+	p.ExcludeUnsaved = true
+	return p
+}
+
+// WithExcludeSaved adds exclude saved parameter
+func (p *GetBusinessAccountGiftsParams) WithExcludeSaved() *GetBusinessAccountGiftsParams {
+	p.ExcludeSaved = true
+	return p
+}
+
+// WithExcludeUnlimited adds exclude unlimited parameter
+func (p *GetBusinessAccountGiftsParams) WithExcludeUnlimited() *GetBusinessAccountGiftsParams {
+	p.ExcludeUnlimited = true
+	return p
+}
+
+// WithExcludeLimited adds exclude limited parameter
+func (p *GetBusinessAccountGiftsParams) WithExcludeLimited() *GetBusinessAccountGiftsParams {
+	p.ExcludeLimited = true
+	return p
+}
+
+// WithExcludeUnique adds exclude unique parameter
+func (p *GetBusinessAccountGiftsParams) WithExcludeUnique() *GetBusinessAccountGiftsParams {
+	p.ExcludeUnique = true
+	return p
+}
+
+// WithSortByPrice adds sort by price parameter
+func (p *GetBusinessAccountGiftsParams) WithSortByPrice() *GetBusinessAccountGiftsParams {
+	p.SortByPrice = true
+	return p
+}
+
+// WithOffset adds offset parameter
+func (p *GetBusinessAccountGiftsParams) WithOffset(offset string) *GetBusinessAccountGiftsParams {
+	p.Offset = offset
+	return p
+}
+
+// WithLimit adds limit parameter
+func (p *GetBusinessAccountGiftsParams) WithLimit(limit int) *GetBusinessAccountGiftsParams {
+	p.Limit = limit
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *ConvertGiftToStarsParams) WithBusinessConnectionID(businessConnectionID string) *ConvertGiftToStarsParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithOwnedGiftID adds owned gift ID parameter
+func (p *ConvertGiftToStarsParams) WithOwnedGiftID(ownedGiftID string) *ConvertGiftToStarsParams {
+	p.OwnedGiftID = ownedGiftID
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *UpgradeGiftParams) WithBusinessConnectionID(businessConnectionID string) *UpgradeGiftParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithOwnedGiftID adds owned gift ID parameter
+func (p *UpgradeGiftParams) WithOwnedGiftID(ownedGiftID string) *UpgradeGiftParams {
+	p.OwnedGiftID = ownedGiftID
+	return p
+}
+
+// WithKeepOriginalDetails adds keep original details parameter
+func (p *UpgradeGiftParams) WithKeepOriginalDetails() *UpgradeGiftParams {
+	p.KeepOriginalDetails = true
+	return p
+}
+
+// WithStarCount adds star count parameter
+func (p *UpgradeGiftParams) WithStarCount(starCount int) *UpgradeGiftParams {
+	p.StarCount = starCount
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *TransferGiftParams) WithBusinessConnectionID(businessConnectionID string) *TransferGiftParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithOwnedGiftID adds owned gift ID parameter
+func (p *TransferGiftParams) WithOwnedGiftID(ownedGiftID string) *TransferGiftParams {
+	p.OwnedGiftID = ownedGiftID
+	return p
+}
+
+// WithNewOwnerChatID adds new owner chat ID parameter
+func (p *TransferGiftParams) WithNewOwnerChatID(newOwnerChatID int64) *TransferGiftParams {
+	p.NewOwnerChatID = newOwnerChatID
+	return p
+}
+
+// WithStarCount adds star count parameter
+func (p *TransferGiftParams) WithStarCount(starCount int) *TransferGiftParams {
+	p.StarCount = starCount
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *PostStoryParams) WithBusinessConnectionID(businessConnectionID string) *PostStoryParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithContent adds content parameter
+func (p *PostStoryParams) WithContent(content InputStoryContent) *PostStoryParams {
+	p.Content = content
+	return p
+}
+
+// WithActivePeriod adds active period parameter
+func (p *PostStoryParams) WithActivePeriod(activePeriod int) *PostStoryParams {
+	p.ActivePeriod = activePeriod
+	return p
+}
+
+// WithCaption adds caption parameter
+func (p *PostStoryParams) WithCaption(caption string) *PostStoryParams {
+	p.Caption = caption
+	return p
+}
+
+// WithParseMode adds parse mode parameter
+func (p *PostStoryParams) WithParseMode(parseMode string) *PostStoryParams {
+	p.ParseMode = parseMode
+	return p
+}
+
+// WithCaptionEntities adds caption entities parameter
+func (p *PostStoryParams) WithCaptionEntities(captionEntities ...MessageEntity) *PostStoryParams {
+	p.CaptionEntities = captionEntities
+	return p
+}
+
+// WithAreas adds areas parameter
+func (p *PostStoryParams) WithAreas(areas ...StoryArea) *PostStoryParams {
+	p.Areas = areas
+	return p
+}
+
+// WithPostToChatPage adds post to chat page parameter
+func (p *PostStoryParams) WithPostToChatPage() *PostStoryParams {
+	p.PostToChatPage = true
+	return p
+}
+
+// WithProtectContent adds protect content parameter
+func (p *PostStoryParams) WithProtectContent() *PostStoryParams {
+	p.ProtectContent = true
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *EditStoryParams) WithBusinessConnectionID(businessConnectionID string) *EditStoryParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithStoryID adds story ID parameter
+func (p *EditStoryParams) WithStoryID(storyID int) *EditStoryParams {
+	p.StoryID = storyID
+	return p
+}
+
+// WithContent adds content parameter
+func (p *EditStoryParams) WithContent(content InputStoryContent) *EditStoryParams {
+	p.Content = content
+	return p
+}
+
+// WithCaption adds caption parameter
+func (p *EditStoryParams) WithCaption(caption string) *EditStoryParams {
+	p.Caption = caption
+	return p
+}
+
+// WithParseMode adds parse mode parameter
+func (p *EditStoryParams) WithParseMode(parseMode string) *EditStoryParams {
+	p.ParseMode = parseMode
+	return p
+}
+
+// WithCaptionEntities adds caption entities parameter
+func (p *EditStoryParams) WithCaptionEntities(captionEntities ...MessageEntity) *EditStoryParams {
+	p.CaptionEntities = captionEntities
+	return p
+}
+
+// WithAreas adds areas parameter
+func (p *EditStoryParams) WithAreas(areas ...StoryArea) *EditStoryParams {
+	p.Areas = areas
+	return p
+}
+
+// WithBusinessConnectionID adds business connection ID parameter
+func (p *DeleteStoryParams) WithBusinessConnectionID(businessConnectionID string) *DeleteStoryParams {
+	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithStoryID adds story ID parameter
+func (p *DeleteStoryParams) WithStoryID(storyID int) *DeleteStoryParams {
+	p.StoryID = storyID
+	return p
+}
+
 // WithBusinessConnectionID adds business connection ID parameter
 func (p *SendStickerParams) WithBusinessConnectionID(businessConnectionID string) *SendStickerParams {
 	p.BusinessConnectionID = businessConnectionID
@@ -2790,6 +3483,12 @@ func (p *GetCustomEmojiStickersParams) WithCustomEmojiIDs(customEmojiIDs ...stri
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *UploadStickerFileParams) WithUserID(userID int64) *UploadStickerFileParams {
+	p.UserID = userID
+	return p
+}
+
 // WithSticker adds sticker parameter
 func (p *UploadStickerFileParams) WithSticker(sticker InputFile) *UploadStickerFileParams {
 	p.Sticker = sticker
@@ -2799,6 +3498,12 @@ func (p *UploadStickerFileParams) WithSticker(sticker InputFile) *UploadStickerF
 // WithStickerFormat adds sticker format parameter
 func (p *UploadStickerFileParams) WithStickerFormat(stickerFormat string) *UploadStickerFileParams {
 	p.StickerFormat = stickerFormat
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *CreateNewStickerSetParams) WithUserID(userID int64) *CreateNewStickerSetParams {
+	p.UserID = userID
 	return p
 }
 
@@ -2832,6 +3537,12 @@ func (p *CreateNewStickerSetParams) WithNeedsRepainting() *CreateNewStickerSetPa
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *AddStickerToSetParams) WithUserID(userID int64) *AddStickerToSetParams {
+	p.UserID = userID
+	return p
+}
+
 // WithName adds name parameter
 func (p *AddStickerToSetParams) WithName(name string) *AddStickerToSetParams {
 	p.Name = name
@@ -2859,6 +3570,12 @@ func (p *SetStickerPositionInSetParams) WithPosition(position int) *SetStickerPo
 // WithSticker adds sticker parameter
 func (p *DeleteStickerFromSetParams) WithSticker(sticker string) *DeleteStickerFromSetParams {
 	p.Sticker = sticker
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *ReplaceStickerInSetParams) WithUserID(userID int64) *ReplaceStickerInSetParams {
+	p.UserID = userID
 	return p
 }
 
@@ -2934,6 +3651,12 @@ func (p *SetStickerSetThumbnailParams) WithName(name string) *SetStickerSetThumb
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *SetStickerSetThumbnailParams) WithUserID(userID int64) *SetStickerSetThumbnailParams {
+	p.UserID = userID
+	return p
+}
+
 // WithThumbnail adds thumbnail parameter
 func (p *SetStickerSetThumbnailParams) WithThumbnail(thumbnail *InputFile) *SetStickerSetThumbnailParams {
 	p.Thumbnail = thumbnail
@@ -2962,60 +3685,6 @@ func (p *SetCustomEmojiStickerSetThumbnailParams) WithCustomEmojiID(customEmojiI
 // WithName adds name parameter
 func (p *DeleteStickerSetParams) WithName(name string) *DeleteStickerSetParams {
 	p.Name = name
-	return p
-}
-
-// WithGiftID adds gift ID parameter
-func (p *SendGiftParams) WithGiftID(giftID string) *SendGiftParams {
-	p.GiftID = giftID
-	return p
-}
-
-// WithPayForUpgrade adds pay for upgrade parameter
-func (p *SendGiftParams) WithPayForUpgrade() *SendGiftParams {
-	p.PayForUpgrade = true
-	return p
-}
-
-// WithText adds text parameter
-func (p *SendGiftParams) WithText(text string) *SendGiftParams {
-	p.Text = text
-	return p
-}
-
-// WithTextParseMode adds text parse mode parameter
-func (p *SendGiftParams) WithTextParseMode(textParseMode string) *SendGiftParams {
-	p.TextParseMode = textParseMode
-	return p
-}
-
-// WithTextEntities adds text entities parameter
-func (p *SendGiftParams) WithTextEntities(textEntities ...MessageEntity) *SendGiftParams {
-	p.TextEntities = textEntities
-	return p
-}
-
-// WithCustomDescription adds custom description parameter
-func (p *VerifyUserParams) WithCustomDescription(customDescription string) *VerifyUserParams {
-	p.CustomDescription = customDescription
-	return p
-}
-
-// WithChatID adds chat ID parameter
-func (p *VerifyChatParams) WithChatID(chatID ChatID) *VerifyChatParams {
-	p.ChatID = chatID
-	return p
-}
-
-// WithCustomDescription adds custom description parameter
-func (p *VerifyChatParams) WithCustomDescription(customDescription string) *VerifyChatParams {
-	p.CustomDescription = customDescription
-	return p
-}
-
-// WithChatID adds chat ID parameter
-func (p *RemoveChatVerificationParams) WithChatID(chatID ChatID) *RemoveChatVerificationParams {
-	p.ChatID = chatID
 	return p
 }
 
@@ -3064,6 +3733,12 @@ func (p *AnswerWebAppQueryParams) WithWebAppQueryID(webAppQueryID string) *Answe
 // WithResult adds result parameter
 func (p *AnswerWebAppQueryParams) WithResult(result InlineQueryResult) *AnswerWebAppQueryParams {
 	p.Result = result
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *SavePreparedInlineMessageParams) WithUserID(userID int64) *SavePreparedInlineMessageParams {
+	p.UserID = userID
 	return p
 }
 
@@ -3313,6 +3988,12 @@ func (p *CreateInvoiceLinkParams) WithPrices(prices ...LabeledPrice) *CreateInvo
 	return p
 }
 
+// WithSubscriptionPeriod adds subscription period parameter
+func (p *CreateInvoiceLinkParams) WithSubscriptionPeriod(subscriptionPeriod int64) *CreateInvoiceLinkParams {
+	p.SubscriptionPeriod = subscriptionPeriod
+	return p
+}
+
 // WithMaxTipAmount adds max tip amount parameter
 func (p *CreateInvoiceLinkParams) WithMaxTipAmount(maxTipAmount int) *CreateInvoiceLinkParams {
 	p.MaxTipAmount = maxTipAmount
@@ -3451,9 +4132,21 @@ func (p *GetStarTransactionsParams) WithLimit(limit int) *GetStarTransactionsPar
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *RefundStarPaymentParams) WithUserID(userID int64) *RefundStarPaymentParams {
+	p.UserID = userID
+	return p
+}
+
 // WithTelegramPaymentChargeID adds telegram payment charge ID parameter
 func (p *RefundStarPaymentParams) WithTelegramPaymentChargeID(telegramPaymentChargeID string) *RefundStarPaymentParams {
 	p.TelegramPaymentChargeID = telegramPaymentChargeID
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *EditUserStarSubscriptionParams) WithUserID(userID int64) *EditUserStarSubscriptionParams {
+	p.UserID = userID
 	return p
 }
 
@@ -3470,6 +4163,12 @@ func (p *EditUserStarSubscriptionParams) WithIsCanceled() *EditUserStarSubscript
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *SetPassportDataErrorsParams) WithUserID(userID int64) *SetPassportDataErrorsParams {
+	p.UserID = userID
+	return p
+}
+
 // WithErrors adds errors parameter
 func (p *SetPassportDataErrorsParams) WithErrors(errors ...PassportElementError) *SetPassportDataErrorsParams {
 	p.Errors = errors
@@ -3479,6 +4178,12 @@ func (p *SetPassportDataErrorsParams) WithErrors(errors ...PassportElementError)
 // WithBusinessConnectionID adds business connection ID parameter
 func (p *SendGameParams) WithBusinessConnectionID(businessConnectionID string) *SendGameParams {
 	p.BusinessConnectionID = businessConnectionID
+	return p
+}
+
+// WithChatID adds chat ID parameter
+func (p *SendGameParams) WithChatID(chatID int64) *SendGameParams {
+	p.ChatID = chatID
 	return p
 }
 
@@ -3530,6 +4235,12 @@ func (p *SendGameParams) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup) *Sen
 	return p
 }
 
+// WithUserID adds user ID parameter
+func (p *SetGameScoreParams) WithUserID(userID int64) *SetGameScoreParams {
+	p.UserID = userID
+	return p
+}
+
 // WithScore adds score parameter
 func (p *SetGameScoreParams) WithScore(score int) *SetGameScoreParams {
 	p.Score = score
@@ -3548,6 +4259,12 @@ func (p *SetGameScoreParams) WithDisableEditMessage() *SetGameScoreParams {
 	return p
 }
 
+// WithChatID adds chat ID parameter
+func (p *SetGameScoreParams) WithChatID(chatID int64) *SetGameScoreParams {
+	p.ChatID = chatID
+	return p
+}
+
 // WithMessageID adds message ID parameter
 func (p *SetGameScoreParams) WithMessageID(messageID int) *SetGameScoreParams {
 	p.MessageID = messageID
@@ -3557,6 +4274,18 @@ func (p *SetGameScoreParams) WithMessageID(messageID int) *SetGameScoreParams {
 // WithInlineMessageID adds inline message ID parameter
 func (p *SetGameScoreParams) WithInlineMessageID(inlineMessageID string) *SetGameScoreParams {
 	p.InlineMessageID = inlineMessageID
+	return p
+}
+
+// WithUserID adds user ID parameter
+func (p *GetGameHighScoresParams) WithUserID(userID int64) *GetGameHighScoresParams {
+	p.UserID = userID
+	return p
+}
+
+// WithChatID adds chat ID parameter
+func (p *GetGameHighScoresParams) WithChatID(chatID int64) *GetGameHighScoresParams {
+	p.ChatID = chatID
 	return p
 }
 
