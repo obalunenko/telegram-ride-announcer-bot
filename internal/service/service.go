@@ -92,7 +92,6 @@ func (s *Service) Shutdown(ctx context.Context) {
 	}
 
 	log.Info(ctx, "Stop receiving updates")
-	s.bot.Client().StopLongPolling()
 
 	for _, fn := range s.stopFns {
 		fn(ctx)
@@ -102,8 +101,7 @@ func (s *Service) Shutdown(ctx context.Context) {
 type stopFunc func(ctx context.Context)
 
 func (s *Service) initHandlers(ctx context.Context) stopFunc {
-	pollChan, err := s.bot.Client().UpdatesViaLongPolling(&tgbotapi.GetUpdatesParams{},
-		tgbotapi.WithLongPollingContext(ctx))
+	pollChan, err := s.bot.Client().UpdatesViaLongPolling(ctx, &tgbotapi.GetUpdatesParams{})
 	if err != nil {
 		log.WithError(ctx, err).Fatal("Failed to get updates via long polling")
 	}
@@ -129,12 +127,18 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 	handler.Handle(s.notFoundHandler(ctx), th.AnyCommand())
 	handler.Handle(s.textHandler(), th.AnyMessageWithText())
 
-	go handler.Start()
+	go func() {
+		if err := handler.Start(); err != nil {
+			log.WithError(ctx, err).Fatal("Failed to start bot handler")
+		}
+	}()
 
 	return func(ctx context.Context) {
 		log.Info(ctx, "Stopping bot handler")
 
-		handler.Stop()
+		if err := handler.Stop(); err != nil {
+			log.WithError(ctx, err).Error("Failed to stop bot handler")
+		}
 
 		log.Info(ctx, "Bot handler stopped")
 	}

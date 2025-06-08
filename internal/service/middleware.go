@@ -15,7 +15,7 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
 
-func (s *Service) setContextMiddleware(ctx context.Context) th.Middleware {
+func (s *Service) setContextMiddleware(ctx context.Context) th.Handler {
 	return func(bot *tgbotapi.Bot, update tgbotapi.Update, next th.Handler) {
 		update = update.WithContext(ctx)
 

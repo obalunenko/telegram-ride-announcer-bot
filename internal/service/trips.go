@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
@@ -9,8 +11,8 @@ import (
 )
 
 func (s *Service) newTripHandler() th.Handler {
-	return func(_ *tgbotapi.Bot, update tgbotapi.Update) {
-		ctx := update.Context()
+	return func(tctx *th.Context, update tgbotapi.Update) error {
+		ctx := tctx.Context()
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdNewTrip))
 
@@ -18,9 +20,7 @@ func (s *Service) newTripHandler() th.Handler {
 
 		sess := sessionFromContext(ctx)
 		if sess == nil {
-			log.Error(ctx, "Session is nil")
-
-			return
+			return fmt.Errorf("session is nil")
 		}
 
 		tripStates := []models.State{
@@ -37,14 +37,14 @@ func (s *Service) newTripHandler() th.Handler {
 			sess.UserState.Trip = nil
 
 			if err := s.saveSession(ctx, sess); err != nil {
-				log.WithError(ctx, err).Error("Failed to save session")
-
-				return
+				return fmt.Errorf("failed to save session: %w", err)
 			}
 		}
 
 		if err := s.createTrip(ctx, update); err != nil {
-			log.WithError(ctx, err).Error("Failed to create trip")
+			return fmt.Errorf("failed to create trip: %w", err)
 		}
+
+		return nil
 	}
 }
