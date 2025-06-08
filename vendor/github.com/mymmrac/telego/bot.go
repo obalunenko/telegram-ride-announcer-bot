@@ -2,6 +2,8 @@ package telego
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"reflect"
@@ -115,6 +117,13 @@ func NewBot(token string, options ...BotOption) (*Bot, error) {
 // Token returns bot token
 func (b *Bot) Token() string {
 	return b.token
+}
+
+// SecretToken returns a secret token that is HEX encoded SHA-256 hash of your bot's token (this is useful for
+// webhooks as using bot's token directly is a security risk and will not work as it contains forbidden symbols)
+func (b *Bot) SecretToken() string {
+	hash := sha256.Sum256([]byte(b.token))
+	return hex.EncodeToString(hash[:])
 }
 
 // Logger returns bot logger
@@ -343,7 +352,7 @@ func logRequestWithFiles(debug *strings.Builder, parameters map[string]string, f
 	}
 	//nolint:errcheck
 	debugJSON, _ := json.Marshal(parameters)
-	_, _ = debug.WriteString(fmt.Sprintf("parameters: %s, files: {%s}", debugJSON, strings.Join(debugFiles, ", ")))
+	_, _ = fmt.Fprintf(debug, "parameters: %s, files: {%s}", debugJSON, strings.Join(debugFiles, ", "))
 }
 
 // ToPtr converts value into a pointer to value

@@ -93,10 +93,10 @@ More examples can be seen here:
 - [Custom predicates for handlers](examples/handler_custom/main.go)
 - [Handler ordering](examples/handler_ordering/main.go)
 - [Specific handlers](examples/handler_specific/main.go)
-- [Predicate as middleware](examples/middleware_with_predicates/main.go)
 - [Update processor](examples/update_processor/main.go)
 - [Message entities](examples/message_entity/main.go)
 - [Multi bot webhook](examples/multi_bot_webhook/main.go)
+- [Multi bot webhook (using Fiber)](examples/multi_bot_webhook_fiber/main.go)
 - [Retry caller](examples/retry_caller/main.go)
 - [Menu bot](examples/menu_bot/main.go)
 - [Test server](examples/test_server/main.go)
@@ -240,7 +240,8 @@ func main() {
 
 	// Set up a webhook on Telegram side
 	_ = bot.SetWebhook(ctx, &telego.SetWebhookParams{
-		URL: "https://example.com/bot" + bot.Token(),
+		URL:         "https://example.com/bot",
+		SecretToken: bot.SecretToken(),
 	})
 
 	// Receive information about webhook
@@ -252,7 +253,7 @@ func main() {
 
 	// Get an update channel from webhook.
 	// (more on configuration in examples/updates_webhook/main.go)
-	updates, _ := bot.UpdatesViaWebhook(ctx, telego.WebhookHTTPServeMux(mux, "/bot", bot.Token()))
+	updates, _ := bot.UpdatesViaWebhook(ctx, telego.WebhookHTTPServeMux(mux, "/bot", bot.SecretToken()))
 
 	// Start server for receiving requests from the Telegram
 	go func() {
@@ -264,6 +265,7 @@ func main() {
 		fmt.Printf("Update: %+v\n", update)
 	}
 }
+
 ```
 
 For running multiple bots from a single server, see [this](examples/multi_bot_webhook/main.go) example.
@@ -639,6 +641,6 @@ Telego is distributed under [MIT licence](LICENSE).
 
 [TelegramBotAPI]: https://core.telegram.org/bots/api
 
-[TelegramVersionBadge]: https://img.shields.io/static/v1?label=Supported%20Telegram%20Bot%20API&color=29a1d4&logo=telegram&message=v8.2
+[TelegramVersionBadge]: https://img.shields.io/static/v1?label=Supported%20Telegram%20Bot%20API&color=29a1d4&logo=telegram&message=v9.0
 
-[TelegramLastVersion]: https://core.telegram.org/bots/api#january-1-2025
+[TelegramLastVersion]: https://core.telegram.org/bots/api#april-11-2025
