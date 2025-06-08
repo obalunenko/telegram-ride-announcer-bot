@@ -66,7 +66,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v5.3.0
+        uses: actions/setup-go@v5.4.0
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -113,7 +113,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v5.3.0
+        uses: actions/setup-go@v5.4.0
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -156,7 +156,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v5.3.0
+        uses: actions/setup-go@v5.4.0
         with:
           go-version: ${{ matrix.go-version }}
       - run: |
@@ -203,7 +203,7 @@ jobs:
         shell: bash
 
       - name: Set up go
-        uses: actions/setup-go@v5.3.0
+        uses: actions/setup-go@v5.4.0
         with:
           go-version: ${{ matrix.go-version }}
       - run: |
