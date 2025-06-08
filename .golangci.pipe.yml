@@ -108,9 +108,14 @@ run:
 
 # output configuration options
 output:
+# output configuration options
   # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
   # default is "colored-line-number"
-  formats: colored-line-number
+  formats:
+    - format: colored-line-number
+      path: stderr
+    - format: checkstyle
+      path: linters-report.xml
 
   # print lines of code with issue, default is true
   print-issued-lines: true
