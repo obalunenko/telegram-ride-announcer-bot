@@ -8,7 +8,7 @@ require (
 	github.com/obalunenko/getenv v1.14.1
 	github.com/obalunenko/logger v1.2.0
 	github.com/obalunenko/version v1.3.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
