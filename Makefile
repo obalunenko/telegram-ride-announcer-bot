@@ -18,7 +18,7 @@ TARGET_MAX_CHAR_NUM=20
 GOTOOLS_IMAGE?=go-tools-local
 SHELL := env GOTOOLS_IMAGE=$(GOTOOLS_IMAGE) $(SHELL)
 
-RIDE_ANNOUNCER_IMAGE?=rideannouncer
+RIDE_ANNOUNCER_IMAGE?=$(APP_NAME)
 SHELL := env RIDE_ANNOUNCER_IMAGE=$(RIDE_ANNOUNCER_IMAGE) $(SHELL)
 
 
@@ -41,7 +41,7 @@ help:
 	{ lastLine = $$0 }' $(MAKEFILE_LIST)
 
 ## Build project.
-build: generate compile-app
+build: sync-vendor generate compile-app
 .PHONY: build
 
 ## Compile app.
