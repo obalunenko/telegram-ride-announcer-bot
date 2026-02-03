@@ -3,7 +3,6 @@
 package telegoapi
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -12,7 +11,7 @@ import (
 	"github.com/mymmrac/telego/internal/json"
 )
 
-// DefaultConstructor default implementation of RequestConstructor
+// DefaultConstructor default implementation of [RequestConstructor]
 type DefaultConstructor struct{}
 
 // JSONRequest is default implementation
@@ -24,57 +23,62 @@ func (d DefaultConstructor) JSONRequest(parameters any) (*RequestData, error) {
 
 	return &RequestData{
 		ContentType: ContentTypeJSON,
-		Buffer:      bytes.NewBuffer(data),
+		BodyRaw:     data,
 	}, nil
 }
 
 // MultipartRequest is default implementation
-func (d DefaultConstructor) MultipartRequest(parameters map[string]string, filesParameters map[string]NamedReader) (
-	*RequestData, error,
-) {
+func (d DefaultConstructor) MultipartRequest(
+	parameters map[string]string, filesParameters map[string]NamedReader,
+) (*RequestData, error) {
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
+
 	data := &RequestData{
-		Buffer: &bytes.Buffer{},
-	}
-	writer := multipart.NewWriter(data.Buffer)
-
-	for field, file := range filesParameters {
-		if isNil(file) {
-			continue
-		}
-
-		wr, err := writer.CreateFormFile(field, file.Name())
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = io.Copy(wr, file)
-		if err != nil {
-			return nil, err
-		}
+		ContentType: writer.FormDataContentType(),
+		BodyStream:  pr,
 	}
 
-	for field, value := range parameters {
-		if err := writer.WriteField(field, value); err != nil {
-			return nil, err
+	go func() {
+		defer func() { _ = pw.CloseWithError(writer.Close()) }()
+
+		for field, value := range parameters {
+			if err := writer.WriteField(field, value); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("write field: %w", err))
+				return
+			}
 		}
-	}
 
-	if err := writer.Close(); err != nil {
-		return nil, fmt.Errorf("closing writer: %w", err)
-	}
+		for field, file := range filesParameters {
+			if isNil(file) {
+				continue
+			}
 
-	data.ContentType = writer.FormDataContentType()
+			wr, err := writer.CreateFormFile(field, file.Name())
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("write file header: %w", err))
+				return
+			}
+
+			if _, err = io.Copy(wr, file); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("write file: %w", err))
+				return
+			}
+		}
+	}()
+
 	return data, nil
 }
 
-func isNil(i any) bool {
-	if i == nil {
+// isNil checks if the value, or it's underlying interface is nil
+func isNil(v any) bool {
+	if v == nil {
 		return true
 	}
 
-	switch reflect.TypeOf(i).Kind() {
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
-		return reflect.ValueOf(i).IsNil()
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Interface, reflect.Ptr, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
+		return reflect.ValueOf(v).IsNil()
 	default:
 		return false
 	}
