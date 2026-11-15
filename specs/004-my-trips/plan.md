@@ -8,6 +8,8 @@
 
 **Note**: Reverse-engineered from existing code by `/speckit-brownfield-migrate`; it describes what was built, not a proposal.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
 ## Summary
 
 `myTripsHandler` asks `ops.ListTripsByUser` for the requesting user's trips;
@@ -91,6 +93,8 @@ list-specific template.
    user as the creator of every listed trip instead of loading it.
 3. **One message**: all cards are concatenated into one reply; a render
    failure aborts the whole reply.
+4. **Published only** (BUG-001): `publishedTrips` in `mytrips.go` drops trips
+   that are not completed, so drafts of unfinished dialogs are not listed.
 
 ## Complexity Tracking
 

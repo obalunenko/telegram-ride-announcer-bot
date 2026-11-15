@@ -54,6 +54,19 @@ func newTrip(t *testing.T, repos *testRepos, createdBy int64) *models.Trip {
 	return trip
 }
 
+// newPublishedTrip creates a published trip of the user.
+func newPublishedTrip(t *testing.T, repos *testRepos, createdBy int64) *models.Trip {
+	t.Helper()
+
+	trip := newTrip(t, repos, createdBy)
+	completed := true
+
+	trip, err := ops.UpdateTrip(context.Background(), repos, trip.ID, ops.UpdateTripParams{Completed: &completed})
+	require.NoError(t, err)
+
+	return trip
+}
+
 // sessionUpdate returns a text message update that carries the session in its context.
 func sessionUpdate(sess *models.Session, text string) tgbotapi.Update {
 	return textUpdate(testUserID, text).WithContext(contextWithSession(context.Background(), sess))
@@ -163,7 +176,7 @@ func TestHandlers_Failure(t *testing.T) {
 				return svc.myTripsHandler()
 			},
 			setup: func(t *testing.T, svc *Service, repos *testRepos, _ *models.Session) {
-				newTrip(t, repos, testUserID)
+				newPublishedTrip(t, repos, testUserID)
 
 				svc.templates = failingRenderer{}
 			},

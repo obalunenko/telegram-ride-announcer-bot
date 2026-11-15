@@ -11,6 +11,8 @@ description: "Migrated task list for My Trips"
 
 **Status**: migrated. All tasks describe code that already exists, so they are marked complete. Gaps are listed at the end as notes, not as open tasks.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -32,11 +34,16 @@ description: "Migrated task list for My Trips"
 - [x] T006 [US2] Empty-list hint pointing to `/newtrip` in `myTripsHandler`
 - [x] T007 [P] [US2] Empty list after cancel in `TestService_CancelTrip`
 
+## Phase 4: Bugfixes
+
+- [x] T008 [US1] `publishedTrips` in `internal/service/mytrips.go`; `myTripsHandler` lists only published trips (BUG-001)
+- [x] T009 [P] [US1] `TestPublishedTrips` in `internal/service/mytrips_internal_test.go`; `TestService_MyTripsHidesDrafts`; `newPublishedTrip` for `TestHandlers_Failure` (BUG-001)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
-- Drafts are listed with published trips (003 Gap 1).
+- ~~Drafts are listed with published trips (003 Gap 1).~~ Fixed by BUG-001.
 - Random order from map iteration.
 - Long lists can exceed the Telegram message limit.
 - List and render failures give the user no reply.

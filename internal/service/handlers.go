@@ -594,6 +594,8 @@ func (s *Service) myTripsHandler() th.Handler {
 			return nil
 		}
 
+		list = publishedTrips(list)
+
 		if len(list) == 0 {
 			msg := fmt.Sprintf("You have no trips yet. Use /%s command to create a new trip.", CmdNewTrip)
 

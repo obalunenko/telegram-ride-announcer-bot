@@ -500,6 +500,31 @@ func TestService_TripTextLimits(t *testing.T) {
 	assert.Equal(t, msgFarewell, nextMessage(t, api))
 }
 
+func TestService_MyTripsHidesDrafts(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	toConfirmation(t, api, repos)
+	assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), msgPublished))
+	assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+
+	// Start another trip and look at the list in the middle of the dialog.
+	replyTo(t, api, "/newtrip")
+	replyTo(t, api, "Evening ride")
+
+	myTrips := replyTo(t, api, "/mytrips")
+	assert.Contains(t, myTrips, "Title: Morning ride")
+	assert.NotContains(t, myTrips, "Evening ride", "the draft is not listed")
+	assertState(t, repos, models.StateNewTripDate)
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
 func TestService_NewTripRestarts(t *testing.T) {
 	ctx := context.Background()
 

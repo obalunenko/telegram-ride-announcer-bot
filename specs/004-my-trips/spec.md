@@ -10,6 +10,8 @@
 
 **Input**: Reverse-engineered by `/speckit-brownfield-migrate` from `internal/service/handlers.go` (`myTripsHandler`), `internal/ops/trips.go` (`ListTripsByUser`), `internal/repository/trips/` (`ListTripsByUser`), and `internal/service/helper.go` (`renderTrip`).
 
+**Bugfix**: 2026-11-15 — BUG-001 Only published trips are listed.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (handler), `internal/ops/`
@@ -47,7 +49,7 @@ card.
    **Then** each trip appears as a card, separated by a blank line.
 3. **Given** a user in the middle of `/newtrip`, **When** they send
    `/mytrips`, **Then** the dialog state is unchanged and the next answer
-   continues the dialog.
+   continues the dialog; the draft of that dialog is not listed (BUG-001).
 
 ---
 
@@ -70,8 +72,9 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 
 ### Edge Cases
 
-- **Drafts**: the draft of the current dialog and abandoned drafts are
-  listed like published trips, possibly with an empty name. (Gap 1.)
+- **Drafts**: ~~the draft of the current dialog and abandoned drafts are
+  listed like published trips, possibly with an empty name. (Gap 1.)~~ not
+  listed (BUG-001).
 - **Order**: trips come in no fixed order and can change between calls.
   (Gap 2.)
 - **Many trips**: the reply can exceed Telegram's message length limit; the
@@ -85,7 +88,7 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 ### Functional Requirements
 
 - **FR-001**: `/mytrips` MUST list the trips created by the requesting user
-  that are not deleted.
+  that are not deleted and are published (BUG-001).
 - **FR-002**: Each trip MUST be shown with the `trip` card (title,
   description, date, creator), after the header `Your trips:`.
 - **FR-003**: When the user has no trips, the bot MUST reply with the hint to
@@ -121,8 +124,9 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 
 Found during migration; none of them is fixed by this spec.
 
-1. Drafts, including the current dialog's draft and abandoned ones, are
-   listed with published trips and cannot be told apart (003 Gap 1).
+1. ~~Drafts, including the current dialog's draft and abandoned ones, are
+   listed with published trips and cannot be told apart (003 Gap 1).~~ Fixed
+   by BUG-001.
 2. The order comes from map iteration and is random.
 3. Long lists can exceed Telegram's 4096-character message limit, so the
    reply fails.
