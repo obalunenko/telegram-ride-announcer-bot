@@ -45,7 +45,7 @@ func newTrip(t *testing.T, repos *testRepos, createdBy int64) *models.Trip {
 
 	trip, err := ops.CreateTrip(context.Background(), repos, ops.CreateTripParams{
 		Name:        "Morning ride",
-		Date:        "today",
+		Date:        testNow,
 		Description: "Easy pace",
 		CreatedBy:   createdBy,
 	})
@@ -272,6 +272,26 @@ func TestService_CreateTrip(t *testing.T) {
 				repos.trips = failingTrips{Repository: repos.trips, method: "UpdateTrip"}
 			},
 			wantErr: "failed to update trip",
+		},
+		{
+			name:   "time: update trip",
+			state:  models.StateNewTripTime,
+			text:   "09:30",
+			tripBy: testUserID,
+			setup: func(_ *Service, repos *testRepos, _ *telegramtest.Server) {
+				repos.trips = failingTrips{Repository: repos.trips, method: "UpdateTrip"}
+			},
+			wantErr: "failed to update trip",
+		},
+		{
+			name:   "time: send reply",
+			state:  models.StateNewTripTime,
+			text:   "09:30",
+			tripBy: testUserID,
+			setup: func(_ *Service, _ *testRepos, api *telegramtest.Server) {
+				api.Fail("sendMessage")
+			},
+			wantErr: "failed to send message",
 		},
 		{
 			name:   "description: update trip",

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
@@ -40,12 +41,28 @@ type Service struct {
 	bot       *telegram.Bot
 	backends  backends
 	templates templates.Renderer
+	// location is the time zone of trip dates and times.
+	location *time.Location
+	// now returns the current time; tests replace it.
+	now func() time.Time
 
 	stopFns []stopFunc
 }
 
+// Option configures the Service.
+type Option func(*Service)
+
+// WithLocation sets the time zone of trip dates and times. The default is UTC.
+func WithLocation(loc *time.Location) Option {
+	return func(s *Service) {
+		if loc != nil {
+			s.location = loc
+		}
+	}
+}
+
 // New creates a new Service.
-func New(bot *telegram.Bot, b backends) (*Service, error) {
+func New(bot *telegram.Bot, b backends, opts ...Option) (*Service, error) {
 	if bot == nil {
 		return nil, errors.New("bot is nil")
 	}
@@ -55,12 +72,20 @@ func New(bot *telegram.Bot, b backends) (*Service, error) {
 		return nil, fmt.Errorf("failed to load templates: %w", err)
 	}
 
-	return &Service{
+	s := &Service{
 		bot:       bot,
 		backends:  b,
 		templates: tpls,
+		location:  time.UTC,
+		now:       time.Now,
 		stopFns:   nil,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s, nil
 }
 
 // Start is a helper function that will be called when the program starts.

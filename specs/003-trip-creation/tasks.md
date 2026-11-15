@@ -17,6 +17,8 @@ description: "Migrated task list for Trip Creation and Publication"
 
 **Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -34,7 +36,7 @@ description: "Migrated task list for Trip Creation and Publication"
 - [x] T005 [US1] ⚠️ Reopened `/newtrip` handler that resets to `StateNewTrip` and calls `createTrip` in `internal/service/trips.go` (reopened — BUG-003; closed by T022)
 - [x] T006 [US1] `createTrip` state switch and `replyInTrip` (save, then send) in `internal/service/handlers.go`
 - [x] T007 [US1] `startTrip` creates the draft and asks for the name in `internal/service/handlers.go`
-- [x] T008 [US1] `setTripName` with the `today`/`tomorrow` keyboard, `setTripDate`, and `setTripDescription` with the card and the `yes`/`no` keyboard in `internal/service/handlers.go`
+- [x] T008 [US1] ⚠️ Reopened `setTripName` with the `today`/`tomorrow` keyboard, `setTripDate`, and `setTripDescription` with the card and the `yes`/`no` keyboard in `internal/service/handlers.go` (reopened — BUG-004; closed by T026)
 - [x] T009 [US1] Route trip states from `textHandler` to `newTripHandler` in `internal/service/handlers.go`
 - [x] T010 [US1] Register `/newtrip` in `initHandlers` in `internal/service/service.go` and enable it in `commands` in `cmd/rideannouncer/main.go`
 - [x] T011 [P] [US1] Step-by-step prompts and saved states in `TestService_PublishTrip` in `internal/service/service_internal_test.go`
@@ -63,6 +65,11 @@ description: "Migrated task list for Trip Creation and Publication"
 - [x] T023 [US3] `CmdCancel` and its registration in `internal/service/service.go`, `cancelHandler` in `internal/service/trips.go`, the menu entry in `cmd/rideannouncer/main.go`, and the line in `README.md` (BUG-003)
 - [x] T024 [P] [US3] `TestService_NewTripRestarts` and `TestService_CancelCommand` in `internal/service/service_internal_test.go` (BUG-003)
 
+- [x] T025 [P] [US1] `time.Time` trip dates in `internal/models/models.go`, `internal/repository/trips/trips.go`, `internal/ops/trips.go` (BUG-004)
+- [x] T026 [US1] `parseTripDate`, `parseTripTime`, `formatTripDate` in `internal/service/dates.go`; `setTripDate`, new `setTripTime`, `dateKeyboard`, and the `StateNewTripTime` branch in `internal/service/handlers.go`; dates in the card in `internal/service/helper.go` (depends on T025; BUG-004)
+- [x] T027 [US1] `Option`, `WithLocation`, and `Service.now` in `internal/service/service.go`; `RIDE_ANNOUNCER_TIMEZONE` and `time/tzdata` in `cmd/rideannouncer/main.go`; README and Docker Compose (depends on T026; BUG-004)
+- [x] T028 [P] [US1] `TestParseTripDate`, `TestParseTripTime`, `TestFormatTripDate` in `internal/service/dates_internal_test.go`; `TestService_TripDateAndTime`, `TestService_TripInTimeZone`, the time-step cases in `TestService_CreateTrip`, and updated dialogs (BUG-004)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -70,7 +77,7 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Bug: `ops.UpdateTrip` drops `Completed`, so published trips are never marked completed; `models.Trip` has no completed field.~~ Fixed by BUG-001.
 - ~~Any confirmation answer except exactly `no` publishes.~~ Fixed by BUG-002.
 - ~~`/newtrip` during the dialog becomes the answer to the current step.~~ Fixed by BUG-003.
-- Free-text date without validation or time.
+- ~~Free-text date without validation or time.~~ Fixed by BUG-004.
 - Failed steps give the user no reply; pin failure after the announcement.
 - Free text after cancel starts a new dialog.
 - Announcement goes to the session's chat (001 Gap 1).

@@ -43,7 +43,7 @@ func (s *Service) renderTrip(trip *models.Trip) (string, error) {
 	r, err := s.templates.Trip(renderer.TripParams{
 		Title:       trip.Name,
 		Description: trip.Description,
-		Date:        trip.Date,
+		Date:        formatTripDate(trip.Date, s.location),
 		CreatedBy:   fmt.Sprintf("@%s", trip.CreatedBy.Username),
 	})
 	if err != nil {

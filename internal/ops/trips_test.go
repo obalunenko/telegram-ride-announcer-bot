@@ -3,6 +3,7 @@ package ops_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,9 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
 )
 
+// start is the start of the test trips.
+var start = time.Date(2026, time.November, 16, 9, 30, 0, 0, time.UTC)
+
 func TestCreateTrip(t *testing.T) {
 	ctx := context.Background()
 	b := newBackends(t)
@@ -20,13 +24,13 @@ func TestCreateTrip(t *testing.T) {
 
 	trip, err := ops.CreateTrip(ctx, b, ops.CreateTripParams{
 		Name:        "Morning ride",
-		Date:        "today",
+		Date:        start,
 		Description: "Easy pace",
 		CreatedBy:   userID,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Morning ride", trip.Name)
-	assert.Equal(t, "today", trip.Date)
+	assert.Equal(t, start, trip.Date)
 	assert.Equal(t, "Easy pace", trip.Description)
 	assert.Equal(t, user, trip.CreatedBy)
 	assert.False(t, trip.Completed)
@@ -40,7 +44,7 @@ func TestGetTrip_Errors(t *testing.T) {
 	require.ErrorIs(t, err, trips.ErrNotFound)
 
 	// The creator of the trip is not stored.
-	trip, err := b.TripsRepository().CreateTrip(ctx, "Morning ride", "today", "", userID)
+	trip, err := b.TripsRepository().CreateTrip(ctx, "Morning ride", start, "", userID)
 	require.NoError(t, err)
 
 	_, err = ops.GetTrip(ctx, b, trip.ID)

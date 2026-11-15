@@ -3,6 +3,7 @@ package ops
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	log "github.com/obalunenko/logger"
@@ -14,7 +15,7 @@ import (
 // CreateTripParams is a params for CreateTrip function.
 type CreateTripParams struct {
 	Name        string
-	Date        string
+	Date        time.Time
 	Description string
 	CreatedBy   int64
 }
@@ -65,7 +66,7 @@ func GetTrip(ctx context.Context, b backends, id uuid.UUID) (*models.Trip, error
 // UpdateTripParams is a params for UpdateTrip function.
 type UpdateTripParams struct {
 	Name        *string
-	Date        *string
+	Date        *time.Time
 	Description *string
 	Completed   *bool
 }

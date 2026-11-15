@@ -14,6 +14,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -49,7 +51,9 @@ and `TestHandlers_NoSession`, and `TestTemplates_Trip` with `trip.golden`.
 **Performance Goals**: N/A; none established.
 
 **Constraints**: Save the session before each prompt; only the creator can
-finish their draft trip.
+finish their draft trip. Dates and times use the time zone from
+`service.WithLocation` (`RIDE_ANNOUNCER_TIMEZONE`, default `UTC`); the
+service clock (`Service.now`) is replaced in tests (BUG-004).
 
 **Scale/Scope**: About 700 lines; one command, five dialog states, three
 outcomes (publish, cancel, failure).
@@ -64,8 +68,9 @@ outcomes (publish, cancel, failure).
       implementation guarded by `sync.RWMutex`; the spec states that nothing
       survives a restart.
 - [ ] III. Each step sets a state that `createTrip` handles and saves the
-      session before the prompt (`replyInTrip`), but `StateNewTripTime` and
-      `StateNewTripPublish` are routed without a branch (Known Deviation).
+      session before the prompt (`replyInTrip`), but ~~`StateNewTripTime` and~~
+      `StateNewTripPublish` is routed without a branch (Known Deviation;
+      `StateNewTripTime` is handled since BUG-004).
 - [x] IV. `/newtrip` has its `Cmd*` constant, handler, and enabled menu
       entry; the `trip` template has a golden test.
 - [x] V. Every step is tested against `telegramtest`; ~~`internal/ops/trips.go`
@@ -98,6 +103,7 @@ internal/
 │   │                   # tripAnswerHandler and cancelHandler (BUG-003)
 │   ├── handlers.go     # createTrip, replyInTrip, startTrip, setTripName/Date/Description,
 │   │                   # confirmTrip, cancelTrip, publishTrip, textHandler routing
+│   ├── dates.go        # parseTripDate, parseTripTime, formatTripDate (BUG-004)
 │   ├── helper.go       # renderTrip
 │   └── renderer/       # templates/trip.gotmpl, testdata/trip.golden
 ├── ops/trips.go        # CreateTrip, GetTrip, UpdateTrip, DeleteTrip
@@ -129,7 +135,11 @@ through the dialog state.
 5. **Publish order**: update the trip (completed; stored since BUG-001), check the creator, render
    the card, reset the state, save the session and send the announcement,
    then pin it.
-6. **Cancel**: soft-delete the draft (`DeletedAt`), so lookups and lists skip
+6. **Date and time** (BUG-004): the date step stores the start of the day,
+   the time step replaces it with the start; both use the service time zone
+   and reject the past. `main` embeds `time/tzdata` because the Docker image
+   has no zone database.
+7. **Cancel**: soft-delete the draft (`DeletedAt`), so lookups and lists skip
    it.
 
 ## Complexity Tracking

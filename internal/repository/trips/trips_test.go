@@ -3,6 +3,7 @@ package trips_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,9 @@ const (
 	otherID int64 = 43
 )
 
+// start is the start of the test trips.
+var start = time.Date(2026, time.November, 16, 9, 30, 0, 0, time.UTC)
+
 func ptr[T any](v T) *T {
 	return &v
 }
@@ -24,10 +28,10 @@ func TestInMemory_CreateTrip(t *testing.T) {
 	ctx := context.Background()
 	repo := trips.NewInMemory()
 
-	trip, err := repo.CreateTrip(ctx, "Morning ride", "today", "Easy pace", userID)
+	trip, err := repo.CreateTrip(ctx, "Morning ride", start, "Easy pace", userID)
 	require.NoError(t, err)
 	assert.Equal(t, "Morning ride", trip.Name)
-	assert.Equal(t, "today", trip.Date)
+	assert.Equal(t, start, trip.Date)
 	assert.Equal(t, "Easy pace", trip.Description)
 	assert.Equal(t, userID, trip.CreatedBy)
 	assert.False(t, trip.Completed)
@@ -55,9 +59,9 @@ func TestInMemory_UpdateTrip(t *testing.T) {
 		},
 		{
 			name:   "date",
-			params: trips.UpdateTripParams{Date: ptr("tomorrow")},
+			params: trips.UpdateTripParams{Date: ptr(start.AddDate(0, 0, 1))},
 			check: func(t *testing.T, trip *trips.Trip) {
-				assert.Equal(t, "tomorrow", trip.Date)
+				assert.Equal(t, start.AddDate(0, 0, 1), trip.Date)
 			},
 		},
 		{
@@ -80,7 +84,7 @@ func TestInMemory_UpdateTrip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := trips.NewInMemory()
 
-			trip, err := repo.CreateTrip(ctx, "Morning ride", "today", "Easy pace", userID)
+			trip, err := repo.CreateTrip(ctx, "Morning ride", start, "Easy pace", userID)
 			require.NoError(t, err)
 
 			require.NoError(t, repo.UpdateTrip(ctx, trip.ID, tt.params))
@@ -96,7 +100,7 @@ func TestInMemory_DeleteTrip(t *testing.T) {
 	ctx := context.Background()
 	repo := trips.NewInMemory()
 
-	trip, err := repo.CreateTrip(ctx, "Morning ride", "today", "Easy pace", userID)
+	trip, err := repo.CreateTrip(ctx, "Morning ride", start, "Easy pace", userID)
 	require.NoError(t, err)
 
 	require.NoError(t, repo.DeleteTrip(ctx, trip.ID))
@@ -122,14 +126,14 @@ func TestInMemory_ListTrips(t *testing.T) {
 	ctx := context.Background()
 	repo := trips.NewInMemory()
 
-	mine, err := repo.CreateTrip(ctx, "Morning ride", "today", "", userID)
+	mine, err := repo.CreateTrip(ctx, "Morning ride", start, "", userID)
 	require.NoError(t, err)
 
-	deleted, err := repo.CreateTrip(ctx, "Canceled ride", "today", "", userID)
+	deleted, err := repo.CreateTrip(ctx, "Canceled ride", start, "", userID)
 	require.NoError(t, err)
 	require.NoError(t, repo.DeleteTrip(ctx, deleted.ID))
 
-	other, err := repo.CreateTrip(ctx, "Other ride", "today", "", otherID)
+	other, err := repo.CreateTrip(ctx, "Other ride", start, "", otherID)
 	require.NoError(t, err)
 
 	all, err := repo.ListTrips(ctx)

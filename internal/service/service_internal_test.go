@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	tgbotapi "github.com/mymmrac/telego"
@@ -34,6 +35,9 @@ const (
 )
 
 var errTest = errors.New("test error")
+
+// testNow is the current time of the test services: Sunday, 15 November 2026, 08:00 UTC.
+var testNow = time.Date(2026, time.November, 15, 8, 0, 0, 0, time.UTC)
 
 // testRepos are in-memory repositories. A test replaces any of them to inject failures.
 type testRepos struct {
@@ -146,7 +150,13 @@ type failingTrips struct {
 	method string
 }
 
-func (f failingTrips) CreateTrip(ctx context.Context, name, date, description string, createdBy int64) (*trips.Trip, error) {
+func (f failingTrips) CreateTrip(
+	ctx context.Context,
+	name string,
+	date time.Time,
+	description string,
+	createdBy int64,
+) (*trips.Trip, error) {
 	if f.method == "CreateTrip" {
 		return nil, errTest
 	}
@@ -225,6 +235,8 @@ func newTestServiceWithAPI(
 
 	svc, err := New(bot, repos)
 	require.NoError(t, err)
+
+	svc.now = func() time.Time { return testNow }
 
 	return svc, api
 }
@@ -326,14 +338,19 @@ func TestService_PublishTrip(t *testing.T) {
 	assert.Equal(t, msgEnterTripName, replyTo(t, api, "/newtrip"))
 	assertState(t, repos, models.StateNewTripName)
 
-	assert.Equal(t, `Your trip name "Morning ride". Please select date and time`, replyTo(t, api, "Morning ride"))
+	assert.Equal(t, `Your trip name "Morning ride". Please select the date or enter it as DD.MM.YYYY.`,
+		replyTo(t, api, "Morning ride"))
 	assertState(t, repos, models.StateNewTripDate)
 
-	assert.Equal(t, "Please enter trip description", replyTo(t, api, "today"))
+	assert.Equal(t, msgEnterTripTime, replyTo(t, api, "today"))
+	assertState(t, repos, models.StateNewTripTime)
+
+	assert.Equal(t, msgEnterTripDesc, replyTo(t, api, "09:30"))
 	assertState(t, repos, models.StateNewTripDescription)
 
 	confirm := replyTo(t, api, "Easy pace")
-	assert.Contains(t, confirm, "Title: Morning ride\nDescription: Easy pace\nDate: today\nCreated By: @john")
+	assert.Contains(t, confirm,
+		"Title: Morning ride\nDescription: Easy pace\nDate: Sun, 15 Nov 2026 09:30 UTC\nCreated By: @john")
 	assert.True(t, strings.HasSuffix(confirm, "Please confirm"), confirm)
 	assertState(t, repos, models.StateNewTripConfirm)
 
@@ -364,8 +381,78 @@ func toConfirmation(t *testing.T, api *telegramtest.Server, repos *testRepos) {
 	replyTo(t, api, "/newtrip")
 	replyTo(t, api, "Morning ride")
 	replyTo(t, api, "today")
+	replyTo(t, api, "09:30")
 	replyTo(t, api, "Easy pace")
 	assertState(t, repos, models.StateNewTripConfirm)
+}
+
+func TestService_TripDateAndTime(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	replyTo(t, api, "/newtrip")
+	replyTo(t, api, "Morning ride")
+
+	steps := []struct {
+		text  string
+		want  string
+		state models.State
+	}{
+		{text: "next week", want: msgInvalidDate, state: models.StateNewTripDate},
+		{text: "14.11.2026", want: msgDateInPast, state: models.StateNewTripDate},
+		{text: "15.11.2026", want: msgEnterTripTime, state: models.StateNewTripTime},
+		{text: "7 pm", want: msgInvalidTime, state: models.StateNewTripTime},
+		{text: "07:00", want: msgTimeInPast, state: models.StateNewTripTime},
+		{text: "19:00", want: msgEnterTripDesc, state: models.StateNewTripDescription},
+	}
+
+	for _, step := range steps {
+		assert.Equal(t, step.want, replyTo(t, api, step.text), step.text)
+		assertState(t, repos, step.state)
+	}
+
+	sess, err := ops.GetSession(ctx, repos, &models.User{ID: testUserID}, testChatID)
+	require.NoError(t, err)
+	assert.True(t, time.Date(2026, time.November, 15, 19, 0, 0, 0, time.UTC).Equal(sess.UserState.Trip.Date))
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_TripInTimeZone(t *testing.T) {
+	ctx := context.Background()
+
+	tbilisi, err := time.LoadLocation("Asia/Tbilisi")
+	require.NoError(t, err)
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+	WithLocation(tbilisi)(svc)
+
+	svc.Start(ctx)
+
+	// testNow is 12:00 in Tbilisi (UTC+4).
+	for _, text := range []string{"/newtrip", "Morning ride", "today", "13:30"} {
+		replyTo(t, api, text)
+	}
+
+	assert.Contains(t, replyTo(t, api, "Easy pace"), "Date: Sun, 15 Nov 2026 13:30 +04")
+
+	assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), "Trip is published!"))
+	assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+
+	list, err := ops.ListTripsByUser(ctx, repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	// 13:30 in Tbilisi is 09:30 UTC.
+	assert.True(t, time.Date(2026, time.November, 15, 9, 30, 0, 0, time.UTC).Equal(list[0].Date), list[0].Date)
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
 }
 
 func TestService_NewTripRestarts(t *testing.T) {
@@ -408,7 +495,7 @@ func TestService_CancelCommand(t *testing.T) {
 		},
 		{
 			name:      "at the confirmation",
-			steps:     []string{"/newtrip", "Morning ride", "today", "Easy pace"},
+			steps:     []string{"/newtrip", "Morning ride", "today", "09:30", "Easy pace"},
 			want:      msgDraftDiscarded,
 			wantState: models.StateStart,
 		},
@@ -520,7 +607,8 @@ func TestService_CancelTrip(t *testing.T) {
 	}{
 		{text: "/newtrip", state: models.StateNewTripName},
 		{text: "Evening ride", state: models.StateNewTripDate},
-		{text: "tomorrow", state: models.StateNewTripDescription},
+		{text: "tomorrow", state: models.StateNewTripTime},
+		{text: "18:00", state: models.StateNewTripDescription},
 		{text: "Fast pace", state: models.StateNewTripConfirm},
 	}
 

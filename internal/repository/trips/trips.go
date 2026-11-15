@@ -16,7 +16,7 @@ var ErrNotFound = errors.New("trip not found")
 // Repository provides access to the trip storage.
 type Repository interface {
 	// CreateTrip creates a new trip.
-	CreateTrip(ctx context.Context, name, date, description string, createdBy int64) (*Trip, error)
+	CreateTrip(ctx context.Context, name string, date time.Time, description string, createdBy int64) (*Trip, error)
 	// ListTrips returns all trips.
 	ListTrips(ctx context.Context) ([]*Trip, error)
 	// ListTripsByUser returns all trips created by a user.
@@ -32,16 +32,17 @@ type Repository interface {
 // UpdateTripParams contains the parameters for UpdateTrip.
 type UpdateTripParams struct {
 	Name        *string
-	Date        *string
+	Date        *time.Time
 	Description *string
 	Completed   *bool
 }
 
 // Trip represents a trip.
 type Trip struct {
-	ID          uuid.UUID
-	Name        string
-	Date        string
+	ID   uuid.UUID
+	Name string
+	// Date is the start of the trip; zero until the user enters it.
+	Date        time.Time
 	Description string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -120,7 +121,13 @@ func (i *inMemoryRepository) UpdateTrip(_ context.Context, id uuid.UUID, params 
 	return nil
 }
 
-func (i *inMemoryRepository) CreateTrip(_ context.Context, name, date, description string, createdBy int64) (*Trip, error) {
+func (i *inMemoryRepository) CreateTrip(
+	_ context.Context,
+	name string,
+	date time.Time,
+	description string,
+	createdBy int64,
+) (*Trip, error) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 

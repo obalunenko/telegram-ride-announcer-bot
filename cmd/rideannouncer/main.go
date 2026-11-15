@@ -10,6 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	// Embed the time zone database: the Docker image has none.
+	_ "time/tzdata"
+
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
 
@@ -26,11 +29,13 @@ const (
 	envTGAPIToken = "RIDE_ANNOUNCER_TELEGRAM_TOKEN"
 	envLogLevel   = "RIDE_ANNOUNCER_LOG_LEVEL"
 	envLogFormat  = "RIDE_ANNOUNCER_LOG_FORMAT"
+	envTimezone   = "RIDE_ANNOUNCER_TIMEZONE"
 )
 
 const (
 	defaultLogLevel  = "DEBUG"
 	defaultLogFormat = "text"
+	defaultTimezone  = "UTC"
 )
 
 // shutdownTimeout limits the time the bot has to say bye and finish the updates in flight.
@@ -119,7 +124,12 @@ func main() {
 		log.WithError(ctx, err).Fatal("failed to create backends for service")
 	}
 
-	svc, err := service.New(bot, b)
+	loc, err := time.LoadLocation(getenv.EnvOrDefault(envTimezone, defaultTimezone))
+	if err != nil {
+		log.WithError(ctx, err).Fatal("failed to load time zone")
+	}
+
+	svc, err := service.New(bot, b, service.WithLocation(loc))
 	if err != nil {
 		log.WithError(ctx, err).Fatal("failed to create service")
 	}

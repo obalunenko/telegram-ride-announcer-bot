@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -200,6 +202,8 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 		return s.setTripName(ctx, sess, update.Message.Text)
 	case models.StateNewTripDate:
 		return s.setTripDate(ctx, sess, update.Message.Text)
+	case models.StateNewTripTime:
+		return s.setTripTime(ctx, sess, update.Message.Text)
 	case models.StateNewTripDescription:
 		return s.setTripDescription(ctx, sess, update.Message.Text)
 	case models.StateNewTripConfirm:
@@ -240,7 +244,7 @@ func (s *Service) startTrip(ctx context.Context, sess *models.Session) error {
 	if sess.UserState.Trip == nil {
 		t, err := ops.CreateTrip(ctx, s.backends, ops.CreateTripParams{
 			Name:        "",
-			Date:        "",
+			Date:        time.Time{},
 			Description: "",
 			CreatedBy:   sess.User.ID,
 		})
@@ -277,29 +281,84 @@ func (s *Service) setTripName(ctx context.Context, sess *models.Session, name st
 
 	sess.UserState.State = models.StateNewTripDate
 
-	// 1. Ask for date and time
-	keyboard := tu.Keyboard(
-		tu.KeyboardRow(
-			tu.KeyboardButton("today"),
-		),
-		tu.KeyboardRow(
-			tu.KeyboardButton("tomorrow"),
-		),
-	).WithResizeKeyboard().WithInputFieldPlaceholder("Enter date").WithOneTimeKeyboard()
-
-	msg := tu.Message(tu.ID(sess.ChatID), fmt.Sprintf("Your trip name %q. Please select date and time", name))
-
-	msg.WithReplyMarkup(keyboard)
+	msg := tu.Message(tu.ID(sess.ChatID), fmt.Sprintf(msgEnterTripDate, name)).WithReplyMarkup(dateKeyboard())
 
 	_, err = s.replyInTrip(ctx, sess, msg)
 
 	return err
 }
 
-// setTripDate saves the trip date and asks for the trip description.
-func (s *Service) setTripDate(ctx context.Context, sess *models.Session, date string) error {
+const (
+	// msgEnterTripDate asks for the trip date after the name.
+	msgEnterTripDate = "Your trip name %q. Please select the date or enter it as DD.MM.YYYY."
+	msgInvalidDate   = "I can't read this date. Please select today or tomorrow, or enter the date as DD.MM.YYYY."
+	msgDateInPast    = "This date has already passed. Please enter today or a later date."
+	msgEnterTripTime = "Please enter the start time as HH:MM, for example 09:30."
+	msgInvalidTime   = "I can't read this time. Please enter it as HH:MM, for example 09:30."
+	msgTimeInPast    = "This time has already passed. Please enter a later time."
+	msgEnterTripDesc = "Please enter trip description"
+)
+
+// dateKeyboard offers the nearest trip dates.
+func dateKeyboard() *tgbotapi.ReplyKeyboardMarkup {
+	return tu.Keyboard(
+		tu.KeyboardRow(
+			tu.KeyboardButton(dateToday),
+		),
+		tu.KeyboardRow(
+			tu.KeyboardButton(dateTomorrow),
+		),
+	).WithResizeKeyboard().WithInputFieldPlaceholder("DD.MM.YYYY").WithOneTimeKeyboard()
+}
+
+// setTripDate saves the trip day and asks for the start time.
+// It asks again when the date can't be read or is in the past.
+func (s *Service) setTripDate(ctx context.Context, sess *models.Session, text string) error {
+	day, err := parseTripDate(text, s.now(), s.location)
+	if err != nil {
+		reply := msgInvalidDate
+		if errors.Is(err, errDateInPast) {
+			reply = msgDateInPast
+		}
+
+		_, err = s.replyInTrip(ctx, sess, tu.Message(tu.ID(sess.ChatID), reply).WithReplyMarkup(dateKeyboard()))
+
+		return err
+	}
+
 	trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
-		Date: &date,
+		Date: &day,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update trip: %w", err)
+	}
+
+	sess.UserState.Trip = trip
+
+	sess.UserState.State = models.StateNewTripTime
+
+	_, err = s.replyInTrip(ctx, sess, tu.Message(tu.ID(sess.ChatID), msgEnterTripTime))
+
+	return err
+}
+
+// setTripTime saves the trip start and asks for the trip description.
+// It asks again when the time can't be read or has passed.
+func (s *Service) setTripTime(ctx context.Context, sess *models.Session, text string) error {
+	start, err := parseTripTime(text, sess.UserState.Trip.Date, s.now(), s.location)
+	if err != nil {
+		reply := msgInvalidTime
+		if errors.Is(err, errTimeInPast) {
+			reply = msgTimeInPast
+		}
+
+		_, err = s.replyInTrip(ctx, sess, tu.Message(tu.ID(sess.ChatID), reply))
+
+		return err
+	}
+
+	trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
+		Date: &start,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update trip: %w", err)
@@ -309,9 +368,7 @@ func (s *Service) setTripDate(ctx context.Context, sess *models.Session, date st
 
 	sess.UserState.State = models.StateNewTripDescription
 
-	msg := tu.Message(tu.ID(sess.ChatID), "Please enter trip description")
-
-	_, err = s.replyInTrip(ctx, sess, msg)
+	_, err = s.replyInTrip(ctx, sess, tu.Message(tu.ID(sess.ChatID), msgEnterTripDesc))
 
 	return err
 }

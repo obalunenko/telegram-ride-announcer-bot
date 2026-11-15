@@ -19,9 +19,10 @@ type (
 
 // Trip represents a trip.
 type Trip struct {
-	ID          TripID    `json:"ID,omitempty"`
-	Name        string    `json:"name,omitempty"`
-	Date        string    `json:"date,omitempty"`
+	ID   TripID `json:"ID,omitempty"`
+	Name string `json:"name,omitempty"`
+	// Date is the start of the trip; zero until the user enters it.
+	Date        time.Time `json:"date,omitempty"`
 	Description string    `json:"description,omitempty"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`

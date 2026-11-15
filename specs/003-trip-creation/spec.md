@@ -16,6 +16,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-003 `/newtrip` during the dialog starts over; `/cancel` ends the dialog on any step.
 
+**Bugfix**: 2026-11-15 — BUG-004 The dialog asks for a real date and a start time in the bot's time zone.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -25,20 +27,25 @@
 - **Bot commands and menu**: `/newtrip` ("create new trip", enabled);
   `/cancel` ("cancel the trip you are creating", enabled, BUG-003).
 - **Dialog states**: `StateNewTrip` → `StateNewTripName` →
-  `StateNewTripDate` → `StateNewTripDescription` → `StateNewTripConfirm` →
-  `StateStart` on publish, or `StateNewTrip` on cancel.
+  `StateNewTripDate` → `StateNewTripTime` (BUG-004) →
+  `StateNewTripDescription` → `StateNewTripConfirm` → `StateStart` on
+  publish, or `StateNewTrip` on cancel.
 - **Messages**: ~~"Please enter trip name"~~ "Please enter trip name. Send
   /cancel to stop." (BUG-003); "Your unfinished trip is discarded." and
-  "There is nothing to cancel." (BUG-003); `Your trip name "<name>". Please
-  select date and time` with a `today`/`tomorrow` keyboard; "Please enter
-  trip description"; the trip card followed by "Please confirm" with a
+  "There is nothing to cancel." (BUG-003); ~~`Your trip name "<name>". Please
+  select date and time`~~ `Your trip name "<name>". Please select the date or
+  enter it as DD.MM.YYYY.` with a `today`/`tomorrow` keyboard; "Please enter
+  the start time as HH:MM, for example 09:30."; the re-ask messages for an
+  unreadable or past date or time (BUG-004); "Please enter trip
+  description"; the trip card followed by "Please confirm" with a
   `yes`/`no` keyboard; "Trip is published!" followed by the card; "Your trip
   is canceled. Thank you!".
 - **Storage**: A draft trip is stored on the first step and updated on each
   step; cancel soft-deletes it. Nothing survives a restart.
 - **Chats**: All prompts, the announcement, and the pin go to the session's
   chat (see 001).
-- **Configuration**: N/A.
+- **Configuration**: `RIDE_ANNOUNCER_TIMEZONE`, the IANA time zone of trip
+  dates and times (default `UTC`) (BUG-004).
 - **Release impact**: N/A (existing behavior).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -64,11 +71,20 @@ prompt and the saved state after each answer (`TestService_PublishTrip`,
    "Morning ride". Please select date and time` with `today` and `tomorrow`
    buttons, and saves `StateNewTripDate`.
 3. **Given** the state `StateNewTripDate`, **When** the user sends `today`,
-   **Then** the bot saves the date as entered, replies "Please enter trip
-   description", and saves `StateNewTripDescription`.
+   `tomorrow`, or a date as `DD.MM.YYYY` that is not in the past, **Then**
+   the bot saves that day, asks for the start time as `HH:MM`, and saves
+   `StateNewTripTime` (BUG-004).
+3a. **Given** the state `StateNewTripTime`, **When** the user sends a time
+   such as `09:30` and that start is in the future, **Then** the bot saves
+   the trip start, replies "Please enter trip description", and saves
+   `StateNewTripDescription` (BUG-004).
+3b. **Given** the date or time step, **When** the user sends text that is
+   not a date or time, or a start that has passed, **Then** the bot says so
+   and asks again without changing the state (BUG-004).
 4. **Given** the state `StateNewTripDescription`, **When** the user sends
    `Easy pace`, **Then** the bot saves the description, replies with the trip
-   card (`Title`, `Description`, `Date`, `Created By: @<username>`) followed
+   card (`Title`, `Description`, `Date` as `Sun, 15 Nov 2026 09:30 UTC` in
+   the bot's time zone (BUG-004), `Created By: @<username>`) followed
    by "Please confirm" with `yes` and `no` buttons, and saves
    `StateNewTripConfirm`.
 5. **Given** any step, **When** the bot replies, **Then** the new state is
@@ -143,8 +159,11 @@ reply, the state, and that `/mytrips` shows no trips
 - ~~**`/newtrip` sent during the dialog** is handled as the answer to the
   current step; for example, it becomes the trip name. (Gap 3.)~~
   **`/newtrip` sent during the dialog** starts over (BUG-003).
-- **Free-text date**: any text is stored as the date; nothing is parsed or
-  validated, and no time is asked. (Gap 4.)
+- ~~**Free-text date**: any text is stored as the date; nothing is parsed or
+  validated, and no time is asked. (Gap 4.)~~ **Unreadable or past date or
+  time**: asked again (BUG-004).
+- **Midnight in the bot's time zone**: `today` is the current day in
+  `RIDE_ANNOUNCER_TIMEZONE`, not in UTC (BUG-004).
 - **A step fails** (storage, rendering, or a Bot API call): the error is
   logged and the user gets no reply. A pin failure happens after the
   announcement was sent and the state was saved. (Gap 5.)
@@ -168,10 +187,16 @@ reply, the state, and that `/mytrips` shows no trips
   it~~, creating a draft trip owned by that user; when a dialog is unfinished,
   it MUST delete that draft and reply "Your unfinished trip is discarded."
   first (BUG-003).
-- **FR-002**: The dialog MUST ask for the name, then the date, then the
-  description, saving each answer to the draft trip.
+- **FR-002**: The dialog MUST ask for the name, then the date, then the start
+  time (BUG-004), then the description, saving each answer to the draft
+  trip.
 - **FR-003**: The date step MUST offer `today` and `tomorrow` as one-time
-  keyboard buttons and MUST accept any text.
+  keyboard buttons and MUST accept ~~any text~~ `today`, `tomorrow`, or
+  `DD.MM.YYYY` that is not in the past; the time step MUST accept `HH:MM`
+  for a start in the future; anything else MUST be asked again (BUG-004).
+- **FR-015**: Trip dates and times MUST be read and shown in the time zone
+  from `RIDE_ANNOUNCER_TIMEZONE` (default `UTC`); the trip stores its start
+  as a point in time (BUG-004).
 - **FR-004**: After the description, the bot MUST show the trip card and ask
   to confirm with `yes` and `no` buttons.
 - **FR-005**: Each step MUST save the new dialog state before sending the
@@ -203,7 +228,8 @@ reply, the state, and that `/mytrips` shows no trips
 
 ### Key Entities *(include if feature involves data)*
 
-- **Trip**: a planned bicycle trip: name, date (free text), description,
+- **Trip**: a planned bicycle trip: name, ~~date (free text)~~ start date and
+  time (BUG-004), description,
   creator, creation and update time, completed flag, and deletion time
   (soft delete).
 - **Draft trip**: the trip referenced by the user's dialog state until it is
@@ -213,8 +239,9 @@ reply, the state, and that `/mytrips` shows no trips
 
 ### Measurable Outcomes
 
-- **SC-001**: A user can create and publish a trip in one dialog of five
-  messages (`/newtrip`, name, date, description, `yes`).
+- **SC-001**: A user can create and publish a trip in one dialog of ~~five~~
+  six messages (`/newtrip`, name, date, time (BUG-004), description,
+  `yes`).
 - **SC-002**: Every published trip is announced and pinned in the chat of
   the dialog.
 - **SC-003**: A canceled trip does not appear in the user's trip list.
@@ -223,8 +250,9 @@ reply, the state, and that `/mytrips` shows no trips
 
 ## Assumptions
 
-- Dates are stored as entered; `today` and `tomorrow` are not converted to
-  calendar dates.
+- ~~Dates are stored as entered; `today` and `tomorrow` are not converted to
+  calendar dates.~~ `today` and `tomorrow` are resolved when the user
+  answers, in the bot's time zone (BUG-004).
 - The bot has the right to pin messages in the chat where the trip is
   published.
 - Users do not run two trip dialogs at once; there is one dialog state per
@@ -242,8 +270,8 @@ Found during migration; none of them is fixed by this spec.
    BUG-002.
 3. ~~`/newtrip` during the dialog is taken as the answer to the current step.~~
    Fixed by BUG-003.
-4. The date is free text: no parsing, no validation, and no time step,
-   although the prompt asks for "date and time".
+4. ~~The date is free text: no parsing, no validation, and no time step,
+   although the prompt asks for "date and time".~~ Fixed by BUG-004.
 5. Failed steps give the user no reply; a pin failure is reported only after
    the announcement was sent and the state saved.
 6. After cancel, the state `StateNewTrip` makes the next free text start a
