@@ -50,6 +50,7 @@ func (s *Service) startHandler(ctx context.Context) th.Handler {
 
 		if err := s.resetDialog(ctx, sess); err != nil {
 			log.WithError(ctx, err).Error("Failed to reset dialog")
+			s.replyError(ctx, sess.ChatID)
 
 			return nil
 		}
@@ -63,6 +64,7 @@ func (s *Service) startHandler(ctx context.Context) th.Handler {
 		})
 		if err != nil {
 			log.WithError(ctx, err).Error("Failed to render template")
+			s.replyError(ctx, sess.ChatID)
 
 			return nil
 		}
@@ -90,6 +92,7 @@ func (s *Service) helpHandler() th.Handler {
 
 		if err := s.resetDialog(ctx, sess); err != nil {
 			log.WithError(ctx, err).Error("Failed to reset dialog")
+			s.replyError(ctx, sess.ChatID)
 
 			return nil
 		}
@@ -107,6 +110,7 @@ func (s *Service) helpHandler() th.Handler {
 		})
 		if err != nil {
 			log.WithError(ctx, err).Error("Failed to render template")
+			s.replyError(ctx, sess.ChatID)
 
 			return nil
 		}

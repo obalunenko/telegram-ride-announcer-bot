@@ -92,50 +92,68 @@ func TestHandlers_Failure(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler func(svc *Service) th.Handler
-		setup   func(t *testing.T, svc *Service, repos *testRepos)
+		// setup prepares the failure; it can set a draft trip on the session.
+		setup func(t *testing.T, svc *Service, repos *testRepos, sess *models.Session)
+		// wantError means the handler replies with the error message.
+		wantError bool
 	}{
 		{
 			name: "start: save session",
 			handler: func(svc *Service) th.Handler {
 				return svc.startHandler(context.Background())
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.states = failingStates{Repository: repos.states}
 			},
+			wantError: true,
+		},
+		{
+			name: "start: discard draft",
+			handler: func(svc *Service) th.Handler {
+				return svc.startHandler(context.Background())
+			},
+			setup: func(t *testing.T, _ *Service, repos *testRepos, sess *models.Session) {
+				sess.UserState.Trip = newTrip(t, repos, testUserID)
+				repos.trips = failingTrips{Repository: repos.trips, method: "DeleteTrip"}
+			},
+			wantError: true,
 		},
 		{
 			name: "start: render welcome",
 			handler: func(svc *Service) th.Handler {
 				return svc.startHandler(context.Background())
 			},
-			setup: func(_ *testing.T, svc *Service, _ *testRepos) {
+			setup: func(_ *testing.T, svc *Service, _ *testRepos, _ *models.Session) {
 				svc.templates = failingRenderer{}
 			},
+			wantError: true,
 		},
 		{
 			name: "help: save session",
 			handler: func(svc *Service) th.Handler {
 				return svc.helpHandler()
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.states = failingStates{Repository: repos.states}
 			},
+			wantError: true,
 		},
 		{
 			name: "help: render help",
 			handler: func(svc *Service) th.Handler {
 				return svc.helpHandler()
 			},
-			setup: func(_ *testing.T, svc *Service, _ *testRepos) {
+			setup: func(_ *testing.T, svc *Service, _ *testRepos, _ *models.Session) {
 				svc.templates = failingRenderer{}
 			},
+			wantError: true,
 		},
 		{
 			name: "my trips: list trips",
 			handler: func(svc *Service) th.Handler {
 				return svc.myTripsHandler()
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.trips = failingTrips{Repository: repos.trips, method: "ListTripsByUser"}
 			},
 		},
@@ -144,7 +162,7 @@ func TestHandlers_Failure(t *testing.T) {
 			handler: func(svc *Service) th.Handler {
 				return svc.myTripsHandler()
 			},
-			setup: func(t *testing.T, svc *Service, repos *testRepos) {
+			setup: func(t *testing.T, svc *Service, repos *testRepos, _ *models.Session) {
 				newTrip(t, repos, testUserID)
 
 				svc.templates = failingRenderer{}
@@ -155,7 +173,7 @@ func TestHandlers_Failure(t *testing.T) {
 			handler: func(svc *Service) th.Handler {
 				return svc.newTripHandler()
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.states = failingStates{Repository: repos.states}
 			},
 		},
@@ -164,7 +182,7 @@ func TestHandlers_Failure(t *testing.T) {
 			handler: func(svc *Service) th.Handler {
 				return svc.newTripHandler()
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.trips = failingTrips{Repository: repos.trips, method: "CreateTrip"}
 			},
 		},
@@ -176,10 +194,15 @@ func TestHandlers_Failure(t *testing.T) {
 			svc, api := newTestService(t, repos)
 			sess := newSession(t, repos, testUserID, models.StateStart)
 
-			tt.setup(t, svc, repos)
+			tt.setup(t, svc, repos, sess)
 
-			// Handlers log failures and don't reply.
+			// Handlers log failures and return no error to telego.
 			require.NoError(t, tt.handler(svc)(nil, sessionUpdate(sess, "hello")))
+
+			if tt.wantError {
+				assert.Equal(t, msgSomethingWentWrong, nextMessage(t, api))
+			}
+
 			api.AssertNoRequest(t)
 		})
 	}

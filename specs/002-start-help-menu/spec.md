@@ -14,6 +14,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-002 `/start` and `/help` discard an unfinished trip and say so.
 
+**Bugfix**: 2026-11-15 — BUG-003 `/start` and `/help` reply with the error message when they fail.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (bot name, description,
@@ -150,7 +152,8 @@ reading the current profile.
   that the dialog was abandoned. (Gap 2.)~~ the draft trip is deleted and
   the user is told (BUG-002).
 - **Saving the session or rendering a template fails**: the error is logged
-  and the user gets no reply. (Gap 3.)
+  and ~~the user gets no reply. (Gap 3.)~~ the user gets "Sorry, something
+  went wrong. Please try again." (BUG-003).
 - **Menu update failed on startup**: `/help` lists the commands that were
   registered in Telegram before, not the ones in the code. (Gap 4.)
 - **Disabled commands typed by hand**: they still get the "Not implemented
@@ -185,8 +188,9 @@ reading the current profile.
 - **FR-010**: The welcome and help messages MUST be rendered from embedded
   templates; a template that cannot be parsed MUST make service creation
   fail.
-- **FR-011**: When saving the session or rendering fails, the handler MUST
-  log the error and send no reply.
+- **FR-011**: When saving the session, discarding the draft, or rendering
+  fails, the handler MUST log the error and ~~send no reply~~ reply "Sorry,
+  something went wrong. Please try again." (BUG-003).
 - **FR-012**: `README.md` MUST list the enabled commands and name the
   unimplemented ones (BUG-001).
 
@@ -228,7 +232,8 @@ Found during migration; none of them is fixed by this spec.
    Fixed by BUG-001.
 2. ~~`/start` and `/help` interrupt `/newtrip` silently and leave the draft
    trip in the session and in storage.~~ Fixed by BUG-002.
-3. Failures to save the session or render a template give the user no reply.
+3. ~~Failures to save the session or render a template give the user no reply.~~
+   Fixed by BUG-003.
 4. `/help` lists `bot.Commands()`, which can be stale when the menu update
    failed on startup.
 5. No service-level test checks that `/help` lists exactly the enabled

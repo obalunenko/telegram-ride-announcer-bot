@@ -12,6 +12,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
 ## Summary
 
 Commands are `Cmd*` constants in `internal/service/service.go`, registered
@@ -123,7 +125,8 @@ the synced menu through `bot.Commands()` for `/help`.
 5. **Dialog reset** (BUG-002): `resetDialog` in `handlers.go` discards the
    draft trip through `discardDraft`, saves the session in `StateStart`, and
    sends "Your unfinished trip is discarded." when there was a draft. 003
-   reuses `discardDraft` for `/newtrip` and `/cancel`.
+   reuses `discardDraft` for `/newtrip` and `/cancel`. A failed reset or
+   render replies with `replyError` (BUG-003).
 6. **Templates**: embedded with `//go:embed templates/*.gotmpl` and parsed in
    `renderer.New`; parse errors are joined and fail `service.New`.
 

@@ -15,6 +15,8 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 **Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -60,13 +62,16 @@ description: "Migrated task list for Start, Help, and Command Menu"
 - [x] T020 [US1] Use `resetDialog` in `startHandler` and `helpHandler` (depends on T019; BUG-002)
 - [x] T021 [P] [US1] `TestService_InterruptTrip` for `/start` and `/help` in `internal/service/service_internal_test.go` (BUG-002)
 
+- [x] T022 [US1] Reply with `replyError` on every failure in `startHandler` and `helpHandler` in `internal/service/handlers.go` (BUG-003)
+- [x] T023 [P] [US1] Error-reply assertions and the "start: discard draft" case in `TestHandlers_Failure` (BUG-003)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
 - ~~The welcome message promises trip lists, subscriptions, and weather-based recommendations that do not exist.~~ Fixed by BUG-001.
 - ~~`/start` and `/help` silently abandon `/newtrip` and leave the draft trip.~~ Fixed by BUG-002.
-- Save and render failures give the user no reply.
+- ~~Save and render failures give the user no reply.~~ Fixed by BUG-003.
 - `/help` can list a stale menu when the startup update failed.
 - No service-level test for the `/help` command list.
 - Bot username without `@`; default language only; no short description.
