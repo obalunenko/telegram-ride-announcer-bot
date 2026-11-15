@@ -169,6 +169,7 @@ func TestHandlers_Failure(t *testing.T) {
 			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.trips = failingTrips{Repository: repos.trips, method: "ListTripsByUser"}
 			},
+			wantError: true,
 		},
 		{
 			name: "my trips: render trip",
@@ -180,6 +181,7 @@ func TestHandlers_Failure(t *testing.T) {
 
 				svc.templates = failingRenderer{}
 			},
+			wantError: true,
 		},
 		{
 			name: "new trip: save session",

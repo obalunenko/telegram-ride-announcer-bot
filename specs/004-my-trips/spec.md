@@ -16,6 +16,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-003 Long lists are sent in several messages.
 
+**Bugfix**: 2026-11-15 — BUG-004 Failures reply with the error message.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (handler), `internal/ops/`
@@ -87,7 +89,8 @@ A user who has no trips sends `/mytrips` and is told how to create one.
   send fails and the user gets nothing. (Gap 3.)~~ the list is split into
   messages of at most 4096 UTF-16 code units; a card is never split
   (BUG-003).
-- **Listing or rendering fails**: logged; the user gets no reply. (Gap 4.)
+- **Listing or rendering fails**: logged; ~~the user gets no reply. (Gap 4.)~~
+  the user gets "Sorry, something went wrong. Please try again." (BUG-004).
 - **Past trips**: never removed from the list. (Gap 5.)
 - **Trips of other users**: never listed.
 
@@ -105,7 +108,8 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 - **FR-004**: `/mytrips` MUST NOT change the user's dialog state.
 - **FR-005**: Trips created by other users MUST NOT be listed.
 - **FR-006**: When listing or rendering fails, the handler MUST log the
-  error and send no reply.
+  error and ~~send no reply~~ reply "Sorry, something went wrong. Please try
+  again." (BUG-004).
 - **FR-007**: `/mytrips` MUST be enabled in the Telegram menu as "show trips
   you've created".
 - **FR-008**: A list longer than Telegram's 4096-unit message limit MUST be
@@ -143,6 +147,6 @@ Found during migration; none of them is fixed by this spec.
 2. ~~The order comes from map iteration and is random.~~ Fixed by BUG-002.
 3. ~~Long lists can exceed Telegram's 4096-character message limit, so the
    reply fails.~~ Fixed by BUG-003.
-4. Listing or rendering failures give the user no reply.
+4. ~~Listing or rendering failures give the user no reply.~~ Fixed by BUG-004.
 5. Past trips are never filtered out; dates are free text.
 6. No tests for several trips, drafts in the list, or ordering.

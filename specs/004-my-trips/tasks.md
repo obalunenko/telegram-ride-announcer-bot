@@ -17,6 +17,8 @@ description: "Migrated task list for My Trips"
 
 **Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -49,6 +51,9 @@ description: "Migrated task list for My Trips"
 - [x] T012 [US1] `splitMessages`, `utf16Len`, `maxMessageLen` in `internal/service/mytrips.go`; render all cards, then send each message in `myTripsHandler` (BUG-003)
 - [x] T013 [P] [US1] `TestSplitMessages` and `TestMyTripsHandler_LongList` in `internal/service/mytrips_internal_test.go` (BUG-003)
 
+- [x] T014 [US1] Reply with `replyError` when listing or rendering fails in `myTripsHandler` (BUG-004)
+- [x] T015 [P] [US1] Error-reply assertions in the `/mytrips` cases of `TestHandlers_Failure` (BUG-004)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -56,6 +61,6 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Drafts are listed with published trips (003 Gap 1).~~ Fixed by BUG-001.
 - ~~Random order from map iteration.~~ Fixed by BUG-002.
 - ~~Long lists can exceed the Telegram message limit.~~ Fixed by BUG-003.
-- List and render failures give the user no reply.
+- ~~List and render failures give the user no reply.~~ Fixed by BUG-004.
 - Past trips are never filtered out.
 - No tests for several trips, drafts, or ordering.

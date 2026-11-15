@@ -590,6 +590,7 @@ func (s *Service) myTripsHandler() th.Handler {
 		list, err := ops.ListTripsByUser(ctx, s.backends, sess.User)
 		if err != nil {
 			log.WithError(ctx, err).WithField("user_id", sess.User.ID).Error("Failed to list trips")
+			s.replyError(ctx, sess.ChatID)
 
 			return nil
 		}
@@ -611,6 +612,7 @@ func (s *Service) myTripsHandler() th.Handler {
 			tripfmt, err := s.renderTrip(trip)
 			if err != nil {
 				log.WithError(ctx, err).WithField("trip_id", trip.ID).Error("Failed to render trip")
+				s.replyError(ctx, sess.ChatID)
 
 				return nil
 			}

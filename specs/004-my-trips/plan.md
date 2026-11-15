@@ -14,6 +14,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
 ## Summary
 
 `myTripsHandler` asks `ops.ListTripsByUser` for the requesting user's trips;
@@ -99,7 +101,7 @@ list-specific template.
 3. ~~**One message**: all cards are concatenated into one reply;~~ **Messages**
    (BUG-003): all cards are rendered first, then `splitMessages` packs them
    into messages within `maxMessageLen`; a render failure aborts the whole
-   reply.
+   reply and, like a listing failure, replies with `replyError` (BUG-004).
 4. **Published only** (BUG-001): `publishedTrips` in `mytrips.go` drops trips
    that are not completed, so drafts of unfinished dialogs are not listed.
 5. **Order** (BUG-002): `sortByStart` sorts by `Date`, then `CreatedAt`, with
