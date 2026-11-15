@@ -14,6 +14,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-002 Trips are listed by start, the nearest first.
 
+**Bugfix**: 2026-11-15 — BUG-003 Long lists are sent in several messages.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (handler), `internal/ops/`
@@ -23,7 +25,7 @@
   enabled).
 - **Dialog states**: N/A. `/mytrips` does not change the dialog state.
 - **Messages**: `Your trips:` followed by one trip card per trip (the `trip`
-  template from 003); "You have no trips yet. Use /newtrip command to create
+  template from 003), in several messages when the list is long (BUG-003); "You have no trips yet. Use /newtrip command to create
   a new trip."
 - **Storage**: Reads trips; nothing is written.
 - **Chats**: The reply goes to the session's chat (see 001).
@@ -81,8 +83,10 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 - **Order**: ~~trips come in no fixed order and can change between calls.
   (Gap 2.)~~ by start, the nearest first; trips with the same start keep the
   order of creation (BUG-002).
-- **Many trips**: the reply can exceed Telegram's message length limit; the
-  send fails and the user gets nothing. (Gap 3.)
+- **Many trips**: ~~the reply can exceed Telegram's message length limit; the
+  send fails and the user gets nothing. (Gap 3.)~~ the list is split into
+  messages of at most 4096 UTF-16 code units; a card is never split
+  (BUG-003).
 - **Listing or rendering fails**: logged; the user gets no reply. (Gap 4.)
 - **Past trips**: never removed from the list. (Gap 5.)
 - **Trips of other users**: never listed.
@@ -104,6 +108,9 @@ A user who has no trips sends `/mytrips` and is told how to create one.
   error and send no reply.
 - **FR-007**: `/mytrips` MUST be enabled in the Telegram menu as "show trips
   you've created".
+- **FR-008**: A list longer than Telegram's 4096-unit message limit MUST be
+  sent in several messages; the header starts the first one and no card is
+  split (BUG-003).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -121,7 +128,8 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 
 ## Assumptions
 
-- A user has few enough trips for one Telegram message.
+- ~~A user has few enough trips for one Telegram message.~~ A single trip
+  card fits in one Telegram message (BUG-003).
 - Listing includes every non-deleted trip, whatever its date.
 - Depends on the Telegram Bot API (`sendMessage`).
 
@@ -133,8 +141,8 @@ Found during migration; none of them is fixed by this spec.
    listed with published trips and cannot be told apart (003 Gap 1).~~ Fixed
    by BUG-001.
 2. ~~The order comes from map iteration and is random.~~ Fixed by BUG-002.
-3. Long lists can exceed Telegram's 4096-character message limit, so the
-   reply fails.
+3. ~~Long lists can exceed Telegram's 4096-character message limit, so the
+   reply fails.~~ Fixed by BUG-003.
 4. Listing or rendering failures give the user no reply.
 5. Past trips are never filtered out; dates are free text.
 6. No tests for several trips, drafts in the list, or ordering.

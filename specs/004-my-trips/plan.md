@@ -12,6 +12,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
 ## Summary
 
 `myTripsHandler` asks `ops.ListTripsByUser` for the requesting user's trips;
@@ -41,7 +43,8 @@ the empty list in `TestService_CancelTrip`, `my trips: list trips` and
 
 **Performance Goals**: N/A; none established.
 
-**Constraints**: One reply message; no paging.
+**Constraints**: ~~One reply message;~~ As many reply messages as the
+4096-unit limit needs (BUG-003); no paging.
 
 **Scale/Scope**: About 110 lines; one command.
 
@@ -93,8 +96,10 @@ list-specific template.
    and keeps those with a matching `CreatedBy` and no `DeletedAt`.
 2. **Creator from the session**: `ops.ListTripsByUser` sets the requesting
    user as the creator of every listed trip instead of loading it.
-3. **One message**: all cards are concatenated into one reply; a render
-   failure aborts the whole reply.
+3. ~~**One message**: all cards are concatenated into one reply;~~ **Messages**
+   (BUG-003): all cards are rendered first, then `splitMessages` packs them
+   into messages within `maxMessageLen`; a render failure aborts the whole
+   reply.
 4. **Published only** (BUG-001): `publishedTrips` in `mytrips.go` drops trips
    that are not completed, so drafts of unfinished dialogs are not listed.
 5. **Order** (BUG-002): `sortByStart` sorts by `Date`, then `CreatedAt`, with

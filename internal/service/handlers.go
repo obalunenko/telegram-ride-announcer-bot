@@ -605,15 +605,9 @@ func (s *Service) myTripsHandler() th.Handler {
 			return nil
 		}
 
-		msgtxt := "Your trips:\n\n"
+		cards := make([]string, 0, len(list))
 
-		for i := range list {
-			if i > 0 {
-				msgtxt += "\n"
-			}
-
-			trip := list[i]
-
+		for _, trip := range list {
 			tripfmt, err := s.renderTrip(trip)
 			if err != nil {
 				log.WithError(ctx, err).WithField("trip_id", trip.ID).Error("Failed to render trip")
@@ -621,10 +615,13 @@ func (s *Service) myTripsHandler() th.Handler {
 				return nil
 			}
 
-			msgtxt += tripfmt
+			cards = append(cards, tripfmt)
 		}
 
-		s.sendMessage(ctx, msgtxt)
+		// A long list is sent in several messages, so it fits the Telegram limit.
+		for _, msg := range splitMessages("Your trips:\n\n", cards, maxMessageLen) {
+			s.sendMessage(ctx, msg)
+		}
 
 		return nil
 	}
