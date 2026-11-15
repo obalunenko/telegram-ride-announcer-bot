@@ -32,7 +32,8 @@
 - **Bot commands and menu**: `/start` and `/help` (enabled); fallback for
   unknown commands and free text; `/trips`, `/subscribe`, `/unsubscribe`,
   `/subscribed` answer "Not implemented yet" and are disabled in the menu.
-  The menu shows `/start`, `/help`, `/newtrip`, `/mytrips`.
+  The menu shows `/start`, `/help`, `/newtrip`, `/cancel` (since
+  003 BUG-003), `/mytrips`.
 - **Dialog states**: `/start` and `/help` reset the session to `StateStart`
   and discard the draft trip of an unfinished `/newtrip` (BUG-002).
 - **Messages**: welcome (`welcome.gotmpl`), help (`help.gotmpl`), "Command

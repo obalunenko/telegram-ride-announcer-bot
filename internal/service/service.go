@@ -31,6 +31,8 @@ const (
 	CmdMyTrips = "mytrips"
 	// CmdSubscribed is a command for getting user's subscribed trips.
 	CmdSubscribed = "subscribed"
+	// CmdCancel is a command for canceling the trip dialog.
+	CmdCancel = "cancel"
 )
 
 // Service is a Telegram bot service.
@@ -127,6 +129,7 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 	handler.Handle(s.helpHandler(), th.CommandEqual(CmdHelp))
 	handler.Handle(s.startHandler(ctx), th.CommandEqual(CmdStart))
 	handler.Handle(s.newTripHandler(), th.CommandEqual(CmdNewTrip))
+	handler.Handle(s.cancelHandler(), th.CommandEqual(CmdCancel))
 	handler.Handle(s.tripsHandler(), th.CommandEqual(CmdTrips))
 	handler.Handle(s.subscribeHandler(), th.CommandEqual(CmdSubscribe))
 	handler.Handle(s.unsubscribeHandler(), th.CommandEqual(CmdUnsubscribe))

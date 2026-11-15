@@ -47,6 +47,7 @@ var commands = telegram.Commands{
 	telegram.NewCommand(service.CmdStart, "start using the bot", true),
 	telegram.NewCommand(service.CmdHelp, "show help", true),
 	telegram.NewCommand(service.CmdNewTrip, "create new trip", true),
+	telegram.NewCommand(service.CmdCancel, "cancel the trip you are creating", true),
 	telegram.NewCommand(service.CmdTrips, "show all trips", false),
 	telegram.NewCommand(service.CmdSubscribe, "subscribe to a trip", false),
 	telegram.NewCommand(service.CmdUnsubscribe, "unsubscribe from a trip", false),

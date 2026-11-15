@@ -12,6 +12,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -92,7 +94,8 @@ cmd/rideannouncer/
 └── main.go             # /newtrip menu entry
 internal/
 ├── service/
-│   ├── trips.go        # newTripHandler: reset to StateNewTrip, call createTrip
+│   ├── trips.go        # newTripHandler: reset to StateNewTrip, call createTrip;
+│   │                   # tripAnswerHandler and cancelHandler (BUG-003)
 │   ├── handlers.go     # createTrip, replyInTrip, startTrip, setTripName/Date/Description,
 │   │                   # confirmTrip, cancelTrip, publishTrip, textHandler routing
 │   ├── helper.go       # renderTrip
@@ -113,9 +116,13 @@ through the dialog state.
    messages through the dialog state.
 2. **Save before prompt**: `replyInTrip` saves the session, then sends the
    message, so the next answer always finds the new state.
-3. **Routing**: `newTripHandler` resets to `StateNewTrip` only when the user
+3. **Routing**: ~~`newTripHandler` resets to `StateNewTrip` only when the user
    is not in a trip state; `textHandler` routes text in any trip state to
-   `newTripHandler`; `createTrip` switches on the state.
+   `newTripHandler`;~~ `newTripHandler` always calls
+   `resetDialog(ctx, sess, StateNewTrip)`, which discards an unfinished draft;
+   `textHandler` routes text in any trip state to `tripAnswerHandler`;
+   `cancelHandler` calls `resetDialog(ctx, sess, StateStart)` (BUG-003);
+   `createTrip` switches on the state.
 4. **Confirmation**: ~~exact `no` cancels; every other answer publishes.~~
    `yes` publishes and `no` cancels, ignoring case and surrounding spaces;
    any other answer is asked again with `confirmKeyboard()` (BUG-002).

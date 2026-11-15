@@ -48,7 +48,7 @@ func (s *Service) startHandler(ctx context.Context) th.Handler {
 			return nil
 		}
 
-		if err := s.resetDialog(ctx, sess); err != nil {
+		if _, err := s.resetDialog(ctx, sess, models.StateStart); err != nil {
 			log.WithError(ctx, err).Error("Failed to reset dialog")
 			s.replyError(ctx, sess.ChatID)
 
@@ -90,7 +90,7 @@ func (s *Service) helpHandler() th.Handler {
 			return nil
 		}
 
-		if err := s.resetDialog(ctx, sess); err != nil {
+		if _, err := s.resetDialog(ctx, sess, models.StateStart); err != nil {
 			log.WithError(ctx, err).Error("Failed to reset dialog")
 			s.replyError(ctx, sess.ChatID)
 
@@ -144,25 +144,25 @@ func (s *Service) discardDraft(ctx context.Context, sess *models.Session) (bool,
 	return true, nil
 }
 
-// resetDialog ends any dialog of the session: it discards the draft trip, tells the user
-// about it, and saves the session in StateStart.
-func (s *Service) resetDialog(ctx context.Context, sess *models.Session) error {
+// resetDialog ends any dialog of the session: it discards the draft trip, saves the session
+// in the state, and tells the user when a draft was discarded. It reports whether it was.
+func (s *Service) resetDialog(ctx context.Context, sess *models.Session, state models.State) (bool, error) {
 	discarded, err := s.discardDraft(ctx, sess)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	sess.UserState.State = models.StateStart
+	sess.UserState.State = state
 
 	if err = s.saveSession(ctx, sess); err != nil {
-		return fmt.Errorf("failed to update session: %w", err)
+		return false, fmt.Errorf("failed to update session: %w", err)
 	}
 
 	if discarded {
 		s.sendMessage(ctx, msgDraftDiscarded)
 	}
 
-	return nil
+	return discarded, nil
 }
 
 func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error {
@@ -232,6 +232,9 @@ func (s *Service) replyInTrip(
 	return resp, nil
 }
 
+// msgEnterTripName starts the trip dialog and tells how to stop it.
+const msgEnterTripName = "Please enter trip name. Send /cancel to stop."
+
 // startTrip creates a draft trip, if the session has none yet, and asks for the trip name.
 func (s *Service) startTrip(ctx context.Context, sess *models.Session) error {
 	if sess.UserState.Trip == nil {
@@ -252,7 +255,7 @@ func (s *Service) startTrip(ctx context.Context, sess *models.Session) error {
 
 	sess.UserState.State = models.StateNewTripName
 
-	msg := tu.Message(tu.ID(sess.ChatID), "Please enter trip name")
+	msg := tu.Message(tu.ID(sess.ChatID), msgEnterTripName)
 
 	_, err := s.replyInTrip(ctx, sess, msg)
 
@@ -480,7 +483,7 @@ func (s *Service) textHandler() th.Handler {
 			models.StateNewTripDescription,
 			models.StateNewTripConfirm,
 			models.StateNewTripPublish:
-			return s.newTripHandler()(c, update)
+			return s.tripAnswerHandler()(c, update)
 		default:
 			return s.notFoundHandler(ctx)(c, update)
 		}

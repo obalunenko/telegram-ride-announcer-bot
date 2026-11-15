@@ -323,7 +323,7 @@ func TestService_PublishTrip(t *testing.T) {
 	assert.Contains(t, replyTo(t, api, "/start"), "Hello, John! 👋 Welcome to @test_bot.")
 	assert.Contains(t, replyTo(t, api, "/help"), "Welcome to @test_bot Help!")
 
-	assert.Equal(t, "Please enter trip name", replyTo(t, api, "/newtrip"))
+	assert.Equal(t, msgEnterTripName, replyTo(t, api, "/newtrip"))
 	assertState(t, repos, models.StateNewTripName)
 
 	assert.Equal(t, `Your trip name "Morning ride". Please select date and time`, replyTo(t, api, "Morning ride"))
@@ -366,6 +366,81 @@ func toConfirmation(t *testing.T, api *telegramtest.Server, repos *testRepos) {
 	replyTo(t, api, "today")
 	replyTo(t, api, "Easy pace")
 	assertState(t, repos, models.StateNewTripConfirm)
+}
+
+func TestService_NewTripRestarts(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	replyTo(t, api, "/newtrip")
+	replyTo(t, api, "Morning ride")
+	assertState(t, repos, models.StateNewTripDate)
+
+	assert.Equal(t, msgDraftDiscarded, replyTo(t, api, "/newtrip"))
+	assert.Equal(t, msgEnterTripName, nextMessage(t, api))
+	assertState(t, repos, models.StateNewTripName)
+
+	list, err := ops.ListTripsByUser(ctx, repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	require.Len(t, list, 1, "only the new draft is stored")
+	assert.Empty(t, list[0].Name)
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_CancelCommand(t *testing.T) {
+	tests := []struct {
+		name      string
+		steps     []string
+		want      string
+		wantState models.State
+	}{
+		{
+			name:      "during the trip dialog",
+			steps:     []string{"/newtrip", "Morning ride"},
+			want:      msgDraftDiscarded,
+			wantState: models.StateStart,
+		},
+		{
+			name:      "at the confirmation",
+			steps:     []string{"/newtrip", "Morning ride", "today", "Easy pace"},
+			want:      msgDraftDiscarded,
+			wantState: models.StateStart,
+		},
+		{
+			name:      "outside of a dialog",
+			want:      msgNothingToCancel,
+			wantState: models.StateStart,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			repos := newTestRepos()
+			svc, api := newTestService(t, repos)
+
+			svc.Start(ctx)
+
+			for _, step := range tt.steps {
+				replyTo(t, api, step)
+			}
+
+			assert.Equal(t, tt.want, replyTo(t, api, "/cancel"))
+			assertState(t, repos, tt.wantState)
+
+			assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
+
+			svc.Shutdown(ctx)
+			assert.Equal(t, msgFarewell, nextMessage(t, api))
+		})
+	}
 }
 
 func TestService_ConfirmTrip(t *testing.T) {

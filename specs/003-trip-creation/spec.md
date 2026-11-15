@@ -14,17 +14,22 @@
 
 **Bugfix**: 2026-11-15 — BUG-002 Only `yes` publishes and only `no` cancels; other answers are asked again.
 
+**Bugfix**: 2026-11-15 — BUG-003 `/newtrip` during the dialog starts over; `/cancel` ends the dialog on any step.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
   `internal/service/renderer/` (`trip` template), `internal/ops/` (trip
   operations), `internal/repository/trips/` (trip storage),
   `internal/models/` (`Trip`, `State`), `cmd/rideannouncer/` (menu entry).
-- **Bot commands and menu**: `/newtrip` ("create new trip", enabled).
+- **Bot commands and menu**: `/newtrip` ("create new trip", enabled);
+  `/cancel` ("cancel the trip you are creating", enabled, BUG-003).
 - **Dialog states**: `StateNewTrip` → `StateNewTripName` →
   `StateNewTripDate` → `StateNewTripDescription` → `StateNewTripConfirm` →
   `StateStart` on publish, or `StateNewTrip` on cancel.
-- **Messages**: "Please enter trip name"; `Your trip name "<name>". Please
+- **Messages**: ~~"Please enter trip name"~~ "Please enter trip name. Send
+  /cancel to stop." (BUG-003); "Your unfinished trip is discarded." and
+  "There is nothing to cancel." (BUG-003); `Your trip name "<name>". Please
   select date and time` with a `today`/`tomorrow` keyboard; "Please enter
   trip description"; the trip card followed by "Please confirm" with a
   `yes`/`no` keyboard; "Trip is published!" followed by the card; "Your trip
@@ -68,6 +73,9 @@ prompt and the saved state after each answer (`TestService_PublishTrip`,
    `StateNewTripConfirm`.
 5. **Given** any step, **When** the bot replies, **Then** the new state is
    already saved, so the user's answer is handled by the next step.
+6. **Given** a user in the middle of the dialog, **When** they send
+   `/newtrip`, **Then** the bot deletes the draft, replies "Your unfinished
+   trip is discarded.", and starts the dialog again (BUG-003).
 
 ---
 
@@ -119,6 +127,11 @@ reply, the state, and that `/mytrips` shows no trips
    Thank you!", and saves the state `StateNewTrip` without a trip.
 2. **Given** a canceled trip, **When** the user lists their trips, **Then**
    the canceled trip is not listed.
+3. **Given** any step of the dialog, **When** the user sends `/cancel`,
+   **Then** the bot deletes the draft, replies "Your unfinished trip is
+   discarded.", and saves the state `StateStart` (BUG-003).
+4. **Given** a user who is not in the dialog, **When** they send `/cancel`,
+   **Then** the bot replies "There is nothing to cancel." (BUG-003).
 
 ---
 
@@ -127,8 +140,9 @@ reply, the state, and that `/mytrips` shows no trips
 - ~~**Any answer other than exactly `no`** at the confirmation step publishes
   the trip, including `No`, `nope`, or `maybe`. (Gap 2.)~~ **Unclear answer
   at the confirmation step**: the bot asks again (BUG-002).
-- **`/newtrip` sent during the dialog** is handled as the answer to the
-  current step; for example, it becomes the trip name. (Gap 3.)
+- ~~**`/newtrip` sent during the dialog** is handled as the answer to the
+  current step; for example, it becomes the trip name. (Gap 3.)~~
+  **`/newtrip` sent during the dialog** starts over (BUG-003).
 - **Free-text date**: any text is stored as the date; nothing is parsed or
   validated, and no time is asked. (Gap 4.)
 - **A step fails** (storage, rendering, or a Bot API call): the error is
@@ -150,8 +164,10 @@ reply, the state, and that `/mytrips` shows no trips
 
 ### Functional Requirements
 
-- **FR-001**: `/newtrip` MUST start the trip dialog for a user who is not in
-  it, creating a draft trip owned by that user.
+- **FR-001**: `/newtrip` MUST start the trip dialog ~~for a user who is not in
+  it~~, creating a draft trip owned by that user; when a dialog is unfinished,
+  it MUST delete that draft and reply "Your unfinished trip is discarded."
+  first (BUG-003).
 - **FR-002**: The dialog MUST ask for the name, then the date, then the
   description, saving each answer to the draft trip.
 - **FR-003**: The date step MUST offer `today` and `tomorrow` as one-time
@@ -180,6 +196,10 @@ reply, the state, and that `/mytrips` shows no trips
   requests it but does not store it. (Gap 1.)~~ MUST mark the trip as
   completed in storage (BUG-001).
 - **FR-013**: A failed step MUST log the error.
+- **FR-014**: `/cancel` MUST end the trip dialog on any step: delete the
+  draft, reply "Your unfinished trip is discarded.", and set the state to
+  `StateStart`; outside of the dialog it MUST reply "There is nothing to
+  cancel." (BUG-003).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -220,7 +240,8 @@ Found during migration; none of them is fixed by this spec.
    so drafts and published trips cannot be told apart.~~ Fixed by BUG-001.
 2. ~~Any confirmation answer except exactly `no` publishes the trip.~~ Fixed by
    BUG-002.
-3. `/newtrip` during the dialog is taken as the answer to the current step.
+3. ~~`/newtrip` during the dialog is taken as the answer to the current step.~~
+   Fixed by BUG-003.
 4. The date is free text: no parsing, no validation, and no time step,
    although the prompt asks for "date and time".
 5. Failed steps give the user no reply; a pin failure is reported only after
