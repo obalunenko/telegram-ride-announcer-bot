@@ -44,17 +44,6 @@ linters:
           - gocyclo
           - gosec
         path: _test\.go
-      - linters:
-          - dupl
-          - funlen
-          - gocyclo
-          - godot
-          - godox
-          - staticcheck
-        path: internal/input/
-      - linters:
-          - revive
-        path: internal/puzzles/constants.go
       - path: (.+)\.go$
         text: exported func * returns unexported type *, which can be annoying to use
       - path: (.+)\.go$
@@ -81,4 +70,3 @@ formatters:
       - third_party$
       - builtin$
       - examples$
-      - internal/input/

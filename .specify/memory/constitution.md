@@ -1,16 +1,16 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.0.1 (PATCH: factual corrections from
-  /speckit-brownfield-validate)
-- Modified: I (`internal/telegram` tests use `telegramtest`); Naming and
-  Documentation (shell scripts use kebab-case); Quality Gates and Development
-  Tools (the release workflow is configured, but no release is tagged yet)
+- Version change: 1.0.1 → 1.0.2 (PATCH: resolved known deviations)
+- Modified: Known Deviations (removed the stale `internal/input/` and
+  `internal/puzzles/` lint exclusions and the `scrum-report` OCI label, both
+  fixed in the repository)
 - Added sections: none; Removed sections: none
-- Templates: spec-template.md, plan-template.md, tasks-template.md — no change
-  needed; AGENTS.md — owners for `go.mod`/`go.sum`, `.claude/settings.json`,
-  and `CLAUDE.md`
+- Templates: spec-template.md, plan-template.md, tasks-template.md, AGENTS.md —
+  no change needed
 - Follow-up: none
-- Previous: template → 1.0.0 initial ratification from the brownfield scan
+- Previous: 1.0.0 → 1.0.1 factual corrections from
+  /speckit-brownfield-validate; template → 1.0.0 initial ratification from the
+  brownfield scan
 -->
 
 # Telegram Ride Announcer Bot Constitution
@@ -188,10 +188,6 @@ extend them:
   them.
 - `README.md` documents neither the bot commands nor
   `RIDE_ANNOUNCER_TELEGRAM_TOKEN`.
-- `.golangci.yml` and `.golangci.pipe.yml` exclude `internal/input/` and
-  `internal/puzzles/`, which do not exist in this repository.
-- The `org.opencontainers.image.source` label in
-  `build/docker/rideannouncer/Dockerfile` points to `obalunenko/scrum-report`.
 
 ## Governance
 
@@ -204,4 +200,4 @@ extend them:
   sections, PATCH for clarifications.
 - Resolving a known deviation removes it from the list in a PATCH amendment.
 
-**Version**: 1.0.1 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.0.2 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
