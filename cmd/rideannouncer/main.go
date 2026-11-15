@@ -38,8 +38,9 @@ const shutdownTimeout = 10 * time.Second
 
 const (
 	// BotName is a Command of the bot.
-	botName        = "Ride Announcer Bot"
-	botDescription = "Bot for scheduling and announcing planned bicycle trips in chat groups."
+	botName             = "Ride Announcer Bot"
+	botDescription      = "Bot for scheduling and announcing planned bicycle trips in chat groups."
+	botShortDescription = "Plan bike trips and announce them in your chats."
 )
 
 var commands = telegram.Commands{
@@ -91,6 +92,7 @@ func main() {
 	opts := []telegram.BotOption{
 		telegram.WithCommands(commands),
 		telegram.WithDescription(botDescription),
+		telegram.WithShortDescription(botShortDescription),
 		telegram.WithName(botName),
 	}
 

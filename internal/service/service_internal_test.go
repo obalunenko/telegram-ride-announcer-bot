@@ -199,8 +199,8 @@ func newTestService(t *testing.T, repos *testRepos) (*Service, *telegramtest.Ser
 
 	api := telegramtest.NewServer(t)
 
-	// telegram.NewBot calls getMe, getMyDescription, and getMyCommands.
-	return newTestServiceWithAPI(t, repos, api, 3)
+	// telegram.NewBot calls getMe, getMyDescription, getMyShortDescription, and getMyCommands.
+	return newTestServiceWithAPI(t, repos, api, 4)
 }
 
 // newTestServiceWithAPI returns a Service with the bot options that talks to the api.
@@ -320,8 +320,8 @@ func TestService_PublishTrip(t *testing.T) {
 
 	svc.Start(ctx)
 
-	assert.Contains(t, replyTo(t, api, "/start"), "Hello, John! 👋 Welcome to test_bot.")
-	assert.Contains(t, replyTo(t, api, "/help"), "Welcome to test_bot Help!")
+	assert.Contains(t, replyTo(t, api, "/start"), "Hello, John! 👋 Welcome to @test_bot.")
+	assert.Contains(t, replyTo(t, api, "/help"), "Welcome to @test_bot Help!")
 
 	assert.Equal(t, "Please enter trip name", replyTo(t, api, "/newtrip"))
 	assertState(t, repos, models.StateNewTripName)
@@ -391,8 +391,8 @@ func TestService_HelpListsEnabledCommands(t *testing.T) {
 	// Telegram keeps its old menu; /help must still list the commands declared in the code.
 	api.Fail("setMyCommands")
 
-	// telegram.NewBot calls getMe, getMyDescription, getMyCommands, and setMyCommands.
-	svc, _ := newTestServiceWithAPI(t, newTestRepos(), api, 4, telegram.WithCommands(telegram.Commands{
+	// telegram.NewBot calls getMe, getMyDescription, getMyShortDescription, getMyCommands, and setMyCommands.
+	svc, _ := newTestServiceWithAPI(t, newTestRepos(), api, 5, telegram.WithCommands(telegram.Commands{
 		telegram.NewCommand(CmdStart, "start using the bot", true),
 		telegram.NewCommand(CmdHelp, "show help", true),
 		telegram.NewCommand(CmdTrips, "show all trips", false),

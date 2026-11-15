@@ -20,6 +20,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-005 A service test checks the `/help` command list.
 
+**Bugfix**: 2026-11-15 — BUG-006 The bot username appears as `@<username>`; the short description is synced on startup.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (bot name, description,
@@ -38,8 +40,8 @@
   implemented yet. Use /help command to see all available commands."
 - **Storage**: Saves the session state only (see 001).
 - **Chats**: Replies go to the session's chat.
-- **Configuration**: Bot name `Ride Announcer Bot` and description are
-  constants in `cmd/rideannouncer/main.go`.
+- **Configuration**: Bot name `Ride Announcer Bot`, description, and short
+  description (BUG-006) are constants in `cmd/rideannouncer/main.go`.
 - **Release impact**: N/A (existing behavior).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -120,8 +122,9 @@ text, and each stub command, and checks the replies;
 
 ### User Story 4 - Bot Profile and Menu Sync on Startup (Priority: P2)
 
-When the bot starts, it makes its Telegram name, description, and command
-menu match the code, and changes only what differs.
+When the bot starts, it makes its Telegram name, description, short
+description (BUG-006), and command menu match the code, and changes only what
+differs.
 
 **Why this priority**: The menu users see in Telegram stays in line with the
 commands the bot handles, without manual setup in BotFather.
@@ -171,7 +174,7 @@ reading the current profile.
 ### Functional Requirements
 
 - **FR-001**: `/start` MUST reply with the welcome message, greeting the user
-  by first name and naming the bot by username. The welcome MUST describe
+  by first name and naming the bot as `@<username>` (BUG-006). The welcome MUST describe
   only implemented features (BUG-001).
 - **FR-002**: `/help` MUST reply with the help message listing each ~~menu
   command~~ enabled command declared in the code, whether or not Telegram
@@ -186,10 +189,11 @@ reading the current profile.
 - **FR-006**: Each command MUST be declared in the code with a description
   and an enabled flag; only enabled commands are registered in the Telegram
   menu.
-- **FR-007**: On startup the bot MUST read its identity, description, and
-  registered commands, and exit with an error if any read fails.
-- **FR-008**: On startup the bot MUST update its name, description, and menu
-  only when they differ from the code.
+- **FR-007**: On startup the bot MUST read its identity, description, short
+  description (BUG-006), and registered commands, and exit with an error if
+  any read fails.
+- **FR-008**: On startup the bot MUST update its name, description, short
+  description (BUG-006), and menu only when they differ from the code.
 - **FR-009**: A failed name, description, or menu update MUST be logged and
   MUST NOT stop the bot.
 - **FR-010**: The welcome and help messages MUST be rendered from embedded
@@ -205,8 +209,8 @@ reading the current profile.
 
 - **Command**: a bot command with a name, a menu description, and an
   enabled flag.
-- **Bot profile**: the bot's Telegram ID, username, name, description, and
-  registered menu.
+- **Bot profile**: the bot's Telegram ID, username, name, description, short
+  description (BUG-006), and registered menu.
 
 ## Success Criteria *(mandatory)*
 
@@ -228,8 +232,11 @@ reading the current profile.
 - The menu and description are set for the default language only.
 - Disabled commands stay registered as handlers so that typing them still
   gets a reply.
+- Localization is not a requirement; the profile and the menu are set for
+  the default language only (BUG-006).
 - Depends on the Telegram Bot API (`getMe`, `getMyDescription`,
-  `getMyCommands`, `setMyName`, `setMyDescription`, `setMyCommands`).
+  `getMyShortDescription`, `getMyCommands`, `setMyName`, `setMyDescription`,
+  `setMyShortDescription`, `setMyCommands`).
 
 ## Gaps
 
@@ -247,5 +254,6 @@ Found during migration; none of them is fixed by this spec.
    failed on startup.~~ Fixed by BUG-004.
 5. ~~No service-level test checks that `/help` lists exactly the enabled
    commands; tests check only the header.~~ Fixed by BUG-005.
-6. Minor: the bot username appears without `@`; only the default language
-   is synced; the short description is not managed.
+6. ~~Minor: the bot username appears without `@`; only the default language
+   is synced; the short description is not managed.~~ Fixed by BUG-006; the
+   default language only is kept as an assumption.

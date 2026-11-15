@@ -18,6 +18,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Summary
 
 Commands are `Cmd*` constants in `internal/service/service.go`, registered
@@ -121,8 +123,9 @@ declared menu through `bot.Menu()`, so a failed sync does not change it
    answers "Command not found" when the user is not in a dialog.
 2. **Stub commands**: registered with `notImplementedHandler` and disabled in
    the menu, so they are hidden but still answer.
-3. **Sync only on difference**: `maybeUpdateBotName` and
-   `maybeUpdateDescriptionBot` compare with the values read at startup;
+3. **Sync only on difference**: `maybeUpdateBotName`,
+   `maybeUpdateDescriptionBot`, and `maybeUpdateShortDescription` (BUG-006)
+   compare with the values read at startup;
    `maybeUpdateCommands` compares the enabled commands with the registered
    ones by name and description and sends `setMyCommands` with the enabled
    list only when they differ.

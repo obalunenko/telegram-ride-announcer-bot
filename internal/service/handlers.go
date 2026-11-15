@@ -59,7 +59,7 @@ func (s *Service) startHandler(ctx context.Context) th.Handler {
 
 		msg, err := s.templates.Welcome(renderer.WelcomeParams{
 			Firstname:   sess.User.Firstname,
-			BotUsername: s.bot.Username(),
+			BotUsername: "@" + s.bot.Username(),
 			HelpCmd:     fmt.Sprintf("/%s", CmdHelp),
 		})
 		if err != nil {
@@ -104,7 +104,7 @@ func (s *Service) helpHandler() th.Handler {
 		}
 
 		msg, err := s.templates.Help(renderer.HelpParams{
-			BotUsername: s.bot.Username(),
+			BotUsername: "@" + s.bot.Username(),
 			Commands:    cmdsStr,
 			HelpCmd:     fmt.Sprintf("/%s", CmdHelp),
 		})

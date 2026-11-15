@@ -21,6 +21,8 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 **Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -74,6 +76,11 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 - [x] T026 [P] [US2] `newTestServiceWithAPI` and `TestService_HelpListsEnabledCommands` in `internal/service/service_internal_test.go` (BUG-005)
 
+- [x] T027 [US1] Pass `@<username>` to the welcome and help templates in `internal/service/handlers.go`; update `TestService_PublishTrip` (BUG-006)
+- [x] T028 [US4] Read the short description, `WithShortDescription`, `ShortDescription()`, and `maybeUpdateShortDescription` in `internal/telegram/bot.go`; default result in `internal/telegram/telegramtest/server.go` (BUG-006)
+- [x] T029 [US4] `botShortDescription` in `cmd/rideannouncer/main.go` (depends on T028; BUG-006)
+- [x] T030 [P] [US4] `TestNewBot_UpdateShortDescription`, the short-description read failure in `TestNewBot_Error`, and the startup call counts in `internal/telegram/bot_test.go` and `internal/service/service_internal_test.go` (BUG-006)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -83,4 +90,4 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Save and render failures give the user no reply.~~ Fixed by BUG-003.
 - ~~`/help` can list a stale menu when the startup update failed.~~ Fixed by BUG-004.
 - ~~No service-level test for the `/help` command list.~~ Fixed by BUG-005.
-- Bot username without `@`; default language only; no short description.
+- ~~Bot username without `@`; default language only; no short description.~~ Fixed by BUG-006 (default language only is an assumption).
