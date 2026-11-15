@@ -80,6 +80,10 @@ func TestSetSessionMiddleware(t *testing.T) {
 		setup  func(t *testing.T, repos *testRepos)
 		// wantState is the state of the session passed to the next handler; 0 means the chain is stopped.
 		wantState models.State
+		// wantChat is the chat of the session passed to the next handler; 0 means the test chat.
+		wantChat int64
+		// wantError means the chain is stopped with an error reply to the user.
+		wantError bool
 	}{
 		{
 			name:      "new user",
@@ -94,6 +98,33 @@ func TestSetSessionMiddleware(t *testing.T) {
 				require.NoError(t, ops.UpdateSession(context.Background(), repos, sess))
 			},
 			wantState: models.StateNewTripName,
+		},
+		{
+			name:   "same user in another chat",
+			update: chatUpdate(testUserID, otherChatID, "hello"),
+			setup: func(t *testing.T, repos *testRepos) {
+				sess := newSession(t, repos, testUserID, models.StateNewTripName)
+				require.NoError(t, ops.UpdateSession(context.Background(), repos, sess))
+			},
+			wantState: models.StateStart,
+			wantChat:  otherChatID,
+		},
+		{
+			name:   "changed profile",
+			update: textUpdate(testUserID, "hello"),
+			setup: func(t *testing.T, repos *testRepos) {
+				createUser(t, repos, "old_john")
+			},
+			wantState: models.StateStart,
+		},
+		{
+			name:   "update user fails",
+			update: textUpdate(testUserID, "hello"),
+			setup: func(t *testing.T, repos *testRepos) {
+				createUser(t, repos, "old_john")
+				repos.users = failingUsers{Repository: repos.users, method: "Update"}
+			},
+			wantError: true,
 		},
 		{
 			name:   "message from the bot",
@@ -115,6 +146,7 @@ func TestSetSessionMiddleware(t *testing.T) {
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.users = failingUsers{Repository: repos.users, method: "GetBuID"}
 			},
+			wantError: true,
 		},
 		{
 			name:   "create user fails",
@@ -122,13 +154,15 @@ func TestSetSessionMiddleware(t *testing.T) {
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.users = failingUsers{Repository: repos.users, method: "Create"}
 			},
+			wantError: true,
 		},
 		{
 			name:   "get session fails",
 			update: textUpdate(testUserID, "hello"),
 			setup: func(_ *testing.T, repos *testRepos) {
-				repos.sessions = failingSessions{Repository: repos.sessions, method: "GetSessionByUserID"}
+				repos.sessions = failingSessions{Repository: repos.sessions, method: "GetSession"}
 			},
+			wantError: true,
 		},
 		{
 			name:   "create session fails",
@@ -136,13 +170,14 @@ func TestSetSessionMiddleware(t *testing.T) {
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.sessions = failingSessions{Repository: repos.sessions, method: "CreateSession"}
 			},
+			wantError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repos := newTestRepos()
-			svc, _ := newTestService(t, repos)
+			svc, api := newTestService(t, repos)
 
 			if tt.setup != nil {
 				tt.setup(t, repos)
@@ -152,31 +187,80 @@ func TestSetSessionMiddleware(t *testing.T) {
 			if tt.wantState == 0 {
 				assert.Nil(t, next)
 
+				if tt.wantError {
+					assert.Equal(t, msgSomethingWentWrong, nextMessage(t, api))
+				}
+
+				api.AssertNoRequest(t)
+
 				return
 			}
 
 			require.NotNil(t, next)
 
+			wantChat := tt.wantChat
+			if wantChat == 0 {
+				wantChat = testChatID
+			}
+
 			sess := sessionFromContext(next.Context())
 			require.NotNil(t, sess)
 			assert.Equal(t, &models.User{ID: testUserID, Username: "john", Firstname: "John"}, sess.User)
-			assert.Equal(t, testChatID, sess.ChatID)
+			assert.Equal(t, wantChat, sess.ChatID)
 			assert.Equal(t, tt.wantState, sess.UserState.State)
 		})
 	}
 }
 
+// createUser stores the test user with the username.
+func createUser(t *testing.T, repos *testRepos, username string) {
+	t.Helper()
+
+	_, err := ops.CreateUser(context.Background(), repos, ops.CreateUserParams{
+		UserID:    testUserID,
+		Username:  username,
+		Firstname: "John",
+	})
+	require.NoError(t, err)
+}
+
 func TestPanicRecovery(t *testing.T) {
-	svc, _ := newTestService(t, newTestRepos())
+	tests := []struct {
+		name      string
+		update    tgbotapi.Update
+		wantReply bool
+	}{
+		{
+			name:      "message",
+			update:    textUpdate(testUserID, "hello"),
+			wantReply: true,
+		},
+		{
+			name:   "update without a message",
+			update: tgbotapi.Update{},
+		},
+	}
 
-	var group th.HandlerGroup
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, api := newTestService(t, newTestRepos())
 
-	group.Use(svc.panicRecovery())
-	group.Handle(func(*th.Context, tgbotapi.Update) error {
-		panic("handler panic")
-	})
+			var group th.HandlerGroup
 
-	assert.NotPanics(t, func() {
-		assert.NoError(t, group.HandleUpdate(context.Background(), svc.bot.Client(), textUpdate(testUserID, "hello")))
-	})
+			group.Use(svc.panicRecovery())
+			group.Handle(func(*th.Context, tgbotapi.Update) error {
+				panic("handler panic")
+			})
+
+			assert.NotPanics(t, func() {
+				assert.NoError(t, group.HandleUpdate(context.Background(), svc.bot.Client(), tt.update))
+			})
+
+			if tt.wantReply {
+				assert.Equal(t, msgSomethingWentWrong, nextMessage(t, api))
+			}
+
+			api.AssertNoRequest(t)
+		})
+	}
 }

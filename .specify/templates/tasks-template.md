@@ -91,7 +91,7 @@ Examples of foundational tasks (adjust based on the plan):
 
 - [ ] T009 [US1] Add or change the template in `internal/service/renderer/templates/[name].gotmpl` and its method in `internal/service/renderer/renderer.go`
 - [ ] T010 [US1] Implement the handler or dialog step in `internal/service/handlers.go`; save the session before asking for the next input (depends on T006)
-- [ ] T011 [US1] Route new states in `textHandler`, `newTripHandler` (`internal/service/trips.go`), and `createTrip`
+- [ ] T011 [US1] Add new states to the trip states routed by `textHandler` to `tripAnswerHandler` (`internal/service/trips.go`) and give them a branch in `createTrip`
 - [ ] T012 [US1] Add the `Cmd*` constant and register the handler in `initHandlers` in `internal/service/service.go`
 - [ ] T013 [US1] Add or enable the command in `commands` in `cmd/rideannouncer/main.go` (depends on T012)
 - [ ] T014 [US1] Add validation, user-facing error replies, and error wrapping (`fmt.Errorf("...: %w", err)`) for [inputs]

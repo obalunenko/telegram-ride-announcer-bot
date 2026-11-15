@@ -11,6 +11,18 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 **Status**: migrated. All tasks describe code that already exists, so they are marked complete. Gaps are listed at the end as notes, not as open tasks.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -25,14 +37,14 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 ## Phase 2: User Story 1 - Welcome on `/start` (P1)
 
-- [x] T005 [P] [US1] Welcome template in `internal/service/renderer/templates/welcome.gotmpl` with `internal/service/renderer/testdata/welcome.golden`
+- [x] T005 [P] [US1] ⚠️ Reopened Welcome template in `internal/service/renderer/templates/welcome.gotmpl` with `internal/service/renderer/testdata/welcome.golden` (reopened — BUG-001; closed by T017)
 - [x] T006 [US1] `startHandler` resets the state and renders the welcome in `internal/service/handlers.go`
 - [x] T007 [P] [US1] Golden test `TestTemplates_Welcome` in `internal/service/renderer/renderer_test.go`
 
 ## Phase 3: User Story 2 - Command List on `/help` (P1)
 
 - [x] T008 [P] [US2] Help template in `internal/service/renderer/templates/help.gotmpl` with `internal/service/renderer/testdata/help.golden`
-- [x] T009 [US2] `helpHandler` resets the state and lists `bot.Commands()` in `internal/service/handlers.go`
+- [x] T009 [US2] ⚠️ Reopened `helpHandler` resets the state and lists `bot.Commands()` in `internal/service/handlers.go` (reopened — BUG-004; closed by T025)
 - [x] T010 [P] [US2] Golden test `TestTemplates_Help`; `/start` and `/help` replies in `TestService_PublishTrip`; save and render failures in `TestHandlers_Failure`
 
 ## Phase 4: User Story 3 - Fallback Replies (P2)
@@ -47,13 +59,35 @@ description: "Migrated task list for Start, Help, and Command Menu"
 - [x] T015 [P] [US4] Fake Bot API server in `internal/telegram/telegramtest/server.go`
 - [x] T016 [P] [US4] `TestCommand`, `TestCommands_EnabledCommands`, `TestNewBot`, `TestNewBot_Error`, `TestNewBot_UpdateOnStart` in `internal/telegram/bot_test.go`
 
+## Phase 6: Bugfixes
+
+- [x] T017 [US1] Describe only built features in `internal/service/renderer/templates/welcome.gotmpl`; update `internal/service/renderer/testdata/welcome.golden` (BUG-001)
+- [x] T018 [P] [US1] Commands section in `README.md` (BUG-001)
+
+- [x] T019 [US1] `discardDraft` and `resetDialog` in `internal/service/handlers.go` (BUG-002)
+- [x] T020 [US1] Use `resetDialog` in `startHandler` and `helpHandler` (depends on T019; BUG-002)
+- [x] T021 [P] [US1] `TestService_InterruptTrip` for `/start` and `/help` in `internal/service/service_internal_test.go` (BUG-002)
+
+- [x] T022 [US1] Reply with `replyError` on every failure in `startHandler` and `helpHandler` in `internal/service/handlers.go` (BUG-003)
+- [x] T023 [P] [US1] Error-reply assertions and the "start: discard draft" case in `TestHandlers_Failure` (BUG-003)
+
+- [x] T024 [US2] Keep the declared commands and add `Menu()` in `internal/telegram/bot.go` with `TestBot_Menu` in `internal/telegram/bot_test.go` (BUG-004)
+- [x] T025 [US2] List `bot.Menu()` in `helpHandler` in `internal/service/handlers.go` (depends on T024; BUG-004)
+
+- [x] T026 [P] [US2] `newTestServiceWithAPI` and `TestService_HelpListsEnabledCommands` in `internal/service/service_internal_test.go` (BUG-005)
+
+- [x] T027 [US1] Pass `@<username>` to the welcome and help templates in `internal/service/handlers.go`; update `TestService_PublishTrip` (BUG-006)
+- [x] T028 [US4] Read the short description, `WithShortDescription`, `ShortDescription()`, and `maybeUpdateShortDescription` in `internal/telegram/bot.go`; default result in `internal/telegram/telegramtest/server.go` (BUG-006)
+- [x] T029 [US4] `botShortDescription` in `cmd/rideannouncer/main.go` (depends on T028; BUG-006)
+- [x] T030 [P] [US4] `TestNewBot_UpdateShortDescription`, the short-description read failure in `TestNewBot_Error`, and the startup call counts in `internal/telegram/bot_test.go` and `internal/service/service_internal_test.go` (BUG-006)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
-- The welcome message promises trip lists, subscriptions, and weather-based recommendations that do not exist.
-- `/start` and `/help` silently abandon `/newtrip` and leave the draft trip.
-- Save and render failures give the user no reply.
-- `/help` can list a stale menu when the startup update failed.
-- No service-level test for the `/help` command list.
-- Bot username without `@`; default language only; no short description.
+- ~~The welcome message promises trip lists, subscriptions, and weather-based recommendations that do not exist.~~ Fixed by BUG-001.
+- ~~`/start` and `/help` silently abandon `/newtrip` and leave the draft trip.~~ Fixed by BUG-002.
+- ~~Save and render failures give the user no reply.~~ Fixed by BUG-003.
+- ~~`/help` can list a stale menu when the startup update failed.~~ Fixed by BUG-004.
+- ~~No service-level test for the `/help` command list.~~ Fixed by BUG-005.
+- ~~Bot username without `@`; default language only; no short description.~~ Fixed by BUG-006 (default language only is an assumption).

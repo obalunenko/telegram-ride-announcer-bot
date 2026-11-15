@@ -3,6 +3,7 @@ package ops
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	log "github.com/obalunenko/logger"
@@ -14,7 +15,7 @@ import (
 // CreateTripParams is a params for CreateTrip function.
 type CreateTripParams struct {
 	Name        string
-	Date        string
+	Date        time.Time
 	Description string
 	CreatedBy   int64
 }
@@ -58,13 +59,14 @@ func GetTrip(ctx context.Context, b backends, id uuid.UUID) (*models.Trip, error
 			Firstname: user.Firstname,
 			Lastname:  user.Lastname,
 		},
+		Completed: t.Completed,
 	}, nil
 }
 
 // UpdateTripParams is a params for UpdateTrip function.
 type UpdateTripParams struct {
 	Name        *string
-	Date        *string
+	Date        *time.Time
 	Description *string
 	Completed   *bool
 }
@@ -75,6 +77,7 @@ func UpdateTrip(ctx context.Context, b backends, id uuid.UUID, p UpdateTripParam
 		Name:        p.Name,
 		Date:        p.Date,
 		Description: p.Description,
+		Completed:   p.Completed,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("update trip: %w", err)
@@ -119,6 +122,7 @@ func ListTripsByUser(ctx context.Context, b backends, user *models.User) ([]*mod
 			CreatedAt:   t.CreatedAt,
 			UpdatedAt:   t.UpdatedAt,
 			CreatedBy:   user,
+			Completed:   t.Completed,
 		})
 	}
 

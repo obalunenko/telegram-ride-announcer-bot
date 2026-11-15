@@ -61,16 +61,24 @@ func NewCommand(command, description string, enabled bool) Command {
 type Bot struct {
 	client *tgbotapi.Bot
 
-	id          int64
-	username    string
-	name        string
-	description string
-	commands    Commands
+	id               int64
+	username         string
+	name             string
+	description      string
+	shortDescription string
+	commands         Commands
+	// menu holds the commands declared with WithCommands.
+	menu Commands
 }
 
 // Description returns bot description.
 func (b *Bot) Description() string {
 	return b.description
+}
+
+// ShortDescription returns the bot short description shown on its profile page.
+func (b *Bot) ShortDescription() string {
+	return b.shortDescription
 }
 
 // ID returns bot ID.
@@ -93,16 +101,27 @@ func (b *Bot) Name() string {
 	return b.name
 }
 
-// Commands returns bot commands.
+// Commands returns the commands registered in Telegram.
 func (b *Bot) Commands() Commands {
 	return b.commands
 }
 
+// Menu returns the enabled commands declared with WithCommands, even when Telegram
+// did not accept them on start. Without declared commands, it returns the registered ones.
+func (b *Bot) Menu() []tgbotapi.BotCommand {
+	if len(b.menu) == 0 {
+		return b.commands.EnabledCommands()
+	}
+
+	return b.menu.EnabledCommands()
+}
+
 type botOptions struct {
-	commands      Commands
-	description   string
-	name          string
-	clientOptions []tgbotapi.BotOption
+	commands         Commands
+	description      string
+	shortDescription string
+	name             string
+	clientOptions    []tgbotapi.BotOption
 }
 
 // BotOption is a bot option.
@@ -119,6 +138,13 @@ func WithCommands(commands Commands) BotOption {
 func WithDescription(description string) BotOption {
 	return func(o *botOptions) {
 		o.description = description
+	}
+}
+
+// WithShortDescription sets bot short description shown on its profile page and in shared links.
+func WithShortDescription(shortDescription string) BotOption {
+	return func(o *botOptions) {
+		o.shortDescription = shortDescription
 	}
 }
 
@@ -161,18 +187,27 @@ func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) 
 		return nil, fmt.Errorf("failed to get bot description: %w", err)
 	}
 
+	shortDescription, err := client.GetMyShortDescription(ctx, &tgbotapi.GetMyShortDescriptionParams{
+		LanguageCode: "",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bot short description: %w", err)
+	}
+
 	registedCmds, err := client.GetMyCommands(ctx, &tgbotapi.GetMyCommandsParams{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot commands: %w", err)
 	}
 
 	bot := &Bot{
-		id:          self.ID,
-		client:      client,
-		username:    self.Username,
-		name:        self.FirstName,
-		description: description.Description,
-		commands:    toCommands(registedCmds),
+		id:               self.ID,
+		client:           client,
+		username:         self.Username,
+		name:             self.FirstName,
+		description:      description.Description,
+		shortDescription: shortDescription.ShortDescription,
+		commands:         toCommands(registedCmds),
+		menu:             params.commands,
 	}
 
 	bot.updateOnStart(ctx, params)
@@ -183,6 +218,10 @@ func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) 
 func (b *Bot) updateOnStart(ctx context.Context, params botOptions) {
 	if params.description != "" {
 		b.maybeUpdateDescriptionBot(ctx, params.description)
+	}
+
+	if params.shortDescription != "" {
+		b.maybeUpdateShortDescription(ctx, params.shortDescription)
 	}
 
 	if params.name != "" {
@@ -242,6 +281,29 @@ func (b *Bot) maybeUpdateDescriptionBot(ctx context.Context, botDescription stri
 	b.description = botDescription
 
 	log.Info(ctx, "Bot description is up to date")
+}
+
+func (b *Bot) maybeUpdateShortDescription(ctx context.Context, shortDescription string) {
+	if b.ShortDescription() == shortDescription {
+		log.Info(ctx, "Bot short description is up to date")
+
+		return
+	}
+
+	log.Info(ctx, "Updating bot short description")
+
+	err := b.Client().SetMyShortDescription(ctx, &tgbotapi.SetMyShortDescriptionParams{
+		ShortDescription: shortDescription,
+	})
+	if err != nil {
+		log.WithError(ctx, err).Error("Failed to set bot short description")
+
+		return
+	}
+
+	b.shortDescription = shortDescription
+
+	log.Info(ctx, "Bot short description is up to date")
 }
 
 func (b *Bot) maybeUpdateCommands(ctx context.Context, botCommands Commands) {

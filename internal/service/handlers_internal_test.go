@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"testing"
+	"time"
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -45,10 +46,23 @@ func newTrip(t *testing.T, repos *testRepos, createdBy int64) *models.Trip {
 
 	trip, err := ops.CreateTrip(context.Background(), repos, ops.CreateTripParams{
 		Name:        "Morning ride",
-		Date:        "today",
+		Date:        testNow.Add(24 * time.Hour),
 		Description: "Easy pace",
 		CreatedBy:   createdBy,
 	})
+	require.NoError(t, err)
+
+	return trip
+}
+
+// newPublishedTrip creates a published trip of the user.
+func newPublishedTrip(t *testing.T, repos *testRepos, createdBy int64) *models.Trip {
+	t.Helper()
+
+	trip := newTrip(t, repos, createdBy)
+	completed := true
+
+	trip, err := ops.UpdateTrip(context.Background(), repos, trip.ID, ops.UpdateTripParams{Completed: &completed})
 	require.NoError(t, err)
 
 	return trip
@@ -92,81 +106,125 @@ func TestHandlers_Failure(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler func(svc *Service) th.Handler
-		setup   func(t *testing.T, svc *Service, repos *testRepos)
+		// setup prepares the failure; it can set a draft trip on the session.
+		setup func(t *testing.T, svc *Service, repos *testRepos, sess *models.Session)
+		// wantError means the handler replies with the error message.
+		wantError bool
 	}{
 		{
 			name: "start: save session",
 			handler: func(svc *Service) th.Handler {
 				return svc.startHandler(context.Background())
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.states = failingStates{Repository: repos.states}
 			},
+			wantError: true,
+		},
+		{
+			name: "start: discard draft",
+			handler: func(svc *Service) th.Handler {
+				return svc.startHandler(context.Background())
+			},
+			setup: func(t *testing.T, _ *Service, repos *testRepos, sess *models.Session) {
+				sess.UserState.Trip = newTrip(t, repos, testUserID)
+				repos.trips = failingTrips{Repository: repos.trips, method: "DeleteTrip"}
+			},
+			wantError: true,
 		},
 		{
 			name: "start: render welcome",
 			handler: func(svc *Service) th.Handler {
 				return svc.startHandler(context.Background())
 			},
-			setup: func(_ *testing.T, svc *Service, _ *testRepos) {
+			setup: func(_ *testing.T, svc *Service, _ *testRepos, _ *models.Session) {
 				svc.templates = failingRenderer{}
 			},
+			wantError: true,
 		},
 		{
 			name: "help: save session",
 			handler: func(svc *Service) th.Handler {
 				return svc.helpHandler()
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.states = failingStates{Repository: repos.states}
 			},
+			wantError: true,
 		},
 		{
 			name: "help: render help",
 			handler: func(svc *Service) th.Handler {
 				return svc.helpHandler()
 			},
-			setup: func(_ *testing.T, svc *Service, _ *testRepos) {
+			setup: func(_ *testing.T, svc *Service, _ *testRepos, _ *models.Session) {
 				svc.templates = failingRenderer{}
 			},
+			wantError: true,
 		},
 		{
 			name: "my trips: list trips",
 			handler: func(svc *Service) th.Handler {
 				return svc.myTripsHandler()
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.trips = failingTrips{Repository: repos.trips, method: "ListTripsByUser"}
 			},
+			wantError: true,
 		},
 		{
 			name: "my trips: render trip",
 			handler: func(svc *Service) th.Handler {
 				return svc.myTripsHandler()
 			},
-			setup: func(t *testing.T, svc *Service, repos *testRepos) {
-				newTrip(t, repos, testUserID)
+			setup: func(t *testing.T, svc *Service, repos *testRepos, _ *models.Session) {
+				newPublishedTrip(t, repos, testUserID)
 
 				svc.templates = failingRenderer{}
 			},
+			wantError: true,
 		},
 		{
 			name: "new trip: save session",
 			handler: func(svc *Service) th.Handler {
 				return svc.newTripHandler()
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.states = failingStates{Repository: repos.states}
 			},
+			wantError: true,
 		},
 		{
 			name: "new trip: create trip",
 			handler: func(svc *Service) th.Handler {
 				return svc.newTripHandler()
 			},
-			setup: func(_ *testing.T, _ *Service, repos *testRepos) {
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.trips = failingTrips{Repository: repos.trips, method: "CreateTrip"}
 			},
+			wantError: true,
+		},
+		{
+			name: "trip answer: update trip",
+			handler: func(svc *Service) th.Handler {
+				return svc.tripAnswerHandler()
+			},
+			setup: func(t *testing.T, _ *Service, repos *testRepos, sess *models.Session) {
+				sess.UserState.State = models.StateNewTripName
+				sess.UserState.Trip = newTrip(t, repos, testUserID)
+				repos.trips = failingTrips{Repository: repos.trips, method: "UpdateTrip"}
+			},
+			wantError: true,
+		},
+		{
+			name: "cancel: save session",
+			handler: func(svc *Service) th.Handler {
+				return svc.cancelHandler()
+			},
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
+				repos.states = failingStates{Repository: repos.states}
+			},
+			wantError: true,
 		},
 	}
 
@@ -176,10 +234,15 @@ func TestHandlers_Failure(t *testing.T) {
 			svc, api := newTestService(t, repos)
 			sess := newSession(t, repos, testUserID, models.StateStart)
 
-			tt.setup(t, svc, repos)
+			tt.setup(t, svc, repos, sess)
 
-			// Handlers log failures and don't reply.
+			// Handlers log failures and return no error to telego.
 			require.NoError(t, tt.handler(svc)(nil, sessionUpdate(sess, "hello")))
+
+			if tt.wantError {
+				assert.Equal(t, msgSomethingWentWrong, nextMessage(t, api))
+			}
+
 			api.AssertNoRequest(t)
 		})
 	}
@@ -249,6 +312,26 @@ func TestService_CreateTrip(t *testing.T) {
 				repos.trips = failingTrips{Repository: repos.trips, method: "UpdateTrip"}
 			},
 			wantErr: "failed to update trip",
+		},
+		{
+			name:   "time: update trip",
+			state:  models.StateNewTripTime,
+			text:   "09:30",
+			tripBy: testUserID,
+			setup: func(_ *Service, repos *testRepos, _ *telegramtest.Server) {
+				repos.trips = failingTrips{Repository: repos.trips, method: "UpdateTrip"}
+			},
+			wantErr: "failed to update trip",
+		},
+		{
+			name:   "time: send reply",
+			state:  models.StateNewTripTime,
+			text:   "09:30",
+			tripBy: testUserID,
+			setup: func(_ *Service, _ *testRepos, api *telegramtest.Server) {
+				api.Fail("sendMessage")
+			},
+			wantErr: "failed to send message",
 		},
 		{
 			name:   "description: update trip",
@@ -345,6 +428,7 @@ func TestService_CreateTrip(t *testing.T) {
 			wantErr: "failed to send message",
 		},
 		{
+			// A failed pin does not fail the step: the trip is published already.
 			name:   "publish: pin announcement",
 			state:  models.StateNewTripConfirm,
 			text:   "yes",
@@ -352,11 +436,11 @@ func TestService_CreateTrip(t *testing.T) {
 			setup: func(_ *Service, _ *testRepos, api *telegramtest.Server) {
 				api.Fail("pinChatMessage")
 			},
-			wantErr: "failed to pin message",
+			wantErr: "",
 		},
 		{
 			name:    "unexpected state",
-			state:   models.StateNewTripPublish,
+			state:   models.StateStart,
 			text:    "yes",
 			tripBy:  testUserID,
 			wantErr: "",

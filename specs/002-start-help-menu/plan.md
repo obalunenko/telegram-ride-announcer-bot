@@ -8,6 +8,18 @@
 
 **Note**: Reverse-engineered from existing code by `/speckit-brownfield-migrate`; it describes what was built, not a proposal.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Summary
 
 Commands are `Cmd*` constants in `internal/service/service.go`, registered
@@ -29,7 +41,7 @@ commands get fallback replies.
 
 **Storage**: N/A beyond saving the session state (001).
 
-**Testing**: `TestService_Commands`, `TestService_PublishTrip`,
+**Testing**: `TestService_HelpListsEnabledCommands` (BUG-005), `TestService_Commands`, `TestService_PublishTrip`,
 `TestHandlers_Failure`, `TestHandlers_NoSession` in `internal/service/`;
 `TestCommand`, `TestCommands_EnabledCommands`, `TestNewBot`,
 `TestNewBot_Error`, `TestNewBot_UpdateOnStart` in
@@ -65,7 +77,8 @@ fallbacks, startup sync of 3 profile fields.
 - [x] V. Handlers and the bot wrapper are tested against `telegramtest` with
       table-driven testify tests.
 - [x] VI. No generated code involved.
-- [ ] `README.md` does not document the bot commands (Known Deviation).
+- [x] ~~`README.md` does not document the bot commands (Known Deviation).~~
+      `README.md` lists the commands (BUG-001).
 - [x] Known deviations are not extended.
 
 ## Project Structure
@@ -98,8 +111,10 @@ internal/
 ```
 
 **Structure Decision**: The menu definition lives in `main` with the rest of
-the wiring; `internal/telegram` owns the sync with Telegram; handlers read
-the synced menu through `bot.Commands()` for `/help`.
+the wiring; `internal/telegram` owns the sync with Telegram; ~~handlers read
+the synced menu through `bot.Commands()` for `/help`.~~ `/help` reads the
+declared menu through `bot.Menu()`, so a failed sync does not change it
+(BUG-004).
 
 ## Design Decisions (as built)
 
@@ -108,14 +123,20 @@ the synced menu through `bot.Commands()` for `/help`.
    answers "Command not found" when the user is not in a dialog.
 2. **Stub commands**: registered with `notImplementedHandler` and disabled in
    the menu, so they are hidden but still answer.
-3. **Sync only on difference**: `maybeUpdateBotName` and
-   `maybeUpdateDescriptionBot` compare with the values read at startup;
+3. **Sync only on difference**: `maybeUpdateBotName`,
+   `maybeUpdateDescriptionBot`, and `maybeUpdateShortDescription` (BUG-006)
+   compare with the values read at startup;
    `maybeUpdateCommands` compares the enabled commands with the registered
    ones by name and description and sends `setMyCommands` with the enabled
    list only when they differ.
 4. **Non-fatal updates**: update failures are logged and the cached values
    stay unchanged; read failures in `NewBot` are fatal.
-5. **Templates**: embedded with `//go:embed templates/*.gotmpl` and parsed in
+5. **Dialog reset** (BUG-002): `resetDialog` in `handlers.go` discards the
+   draft trip through `discardDraft`, saves the session in `StateStart`, and
+   sends "Your unfinished trip is discarded." when there was a draft. 003
+   reuses `discardDraft` for `/newtrip` and `/cancel`. A failed reset or
+   render replies with `replyError` (BUG-003).
+6. **Templates**: embedded with `//go:embed templates/*.gotmpl` and parsed in
    `renderer.New`; parse errors are joined and fail `service.New`.
 
 ## Complexity Tracking

@@ -11,6 +11,18 @@ description: "Migrated task list for My Trips"
 
 **Status**: migrated. All tasks describe code that already exists, so they are marked complete. Gaps are listed at the end as notes, not as open tasks.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
+
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -32,13 +44,33 @@ description: "Migrated task list for My Trips"
 - [x] T006 [US2] Empty-list hint pointing to `/newtrip` in `myTripsHandler`
 - [x] T007 [P] [US2] Empty list after cancel in `TestService_CancelTrip`
 
+## Phase 4: Bugfixes
+
+- [x] T008 [US1] `publishedTrips` in `internal/service/mytrips.go`; `myTripsHandler` lists only published trips (BUG-001)
+- [x] T009 [P] [US1] `TestPublishedTrips` in `internal/service/mytrips_internal_test.go`; `TestService_MyTripsHidesDrafts`; `newPublishedTrip` for `TestHandlers_Failure` (BUG-001)
+
+- [x] T010 [US1] `sortByStart` in `internal/service/mytrips.go`; sort in `myTripsHandler` (BUG-002)
+- [x] T011 [P] [US1] `TestSortByStart` in `internal/service/mytrips_internal_test.go` (BUG-002)
+
+- [x] T012 [US1] `splitMessages`, `utf16Len`, `maxMessageLen` in `internal/service/mytrips.go`; render all cards, then send each message in `myTripsHandler` (BUG-003)
+- [x] T013 [P] [US1] `TestSplitMessages` and `TestMyTripsHandler_LongList` in `internal/service/mytrips_internal_test.go` (BUG-003)
+
+- [x] T014 [US1] Reply with `replyError` when listing or rendering fails in `myTripsHandler` (BUG-004)
+- [x] T015 [P] [US1] Error-reply assertions in the `/mytrips` cases of `TestHandlers_Failure` (BUG-004)
+
+- [x] T016 [US1] Replace `publishedTrips` with `upcomingTrips(list, s.now())`; `msgNoUpcomingTrips` and `myTripsHeader` in `internal/service/mytrips.go` (BUG-005)
+- [x] T017 [P] [US1] "show your upcoming trips" in `cmd/rideannouncer/main.go`; welcome template and golden file; `README.md` (BUG-005)
+- [x] T018 [P] [US1] `TestUpcomingTrips` and `TestMyTripsHandler_UpcomingOnly` in `internal/service/mytrips_internal_test.go`; test trips start tomorrow (BUG-005)
+
+- [x] T019 [P] [US1] `TestService_MyTripsOrder` in `internal/service/service_internal_test.go`; record the list tests from T009, T011, T013, T018 (BUG-006)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
-- Drafts are listed with published trips (003 Gap 1).
-- Random order from map iteration.
-- Long lists can exceed the Telegram message limit.
-- List and render failures give the user no reply.
-- Past trips are never filtered out.
-- No tests for several trips, drafts, or ordering.
+- ~~Drafts are listed with published trips (003 Gap 1).~~ Fixed by BUG-001.
+- ~~Random order from map iteration.~~ Fixed by BUG-002.
+- ~~Long lists can exceed the Telegram message limit.~~ Fixed by BUG-003.
+- ~~List and render failures give the user no reply.~~ Fixed by BUG-004.
+- ~~Past trips are never filtered out.~~ Fixed by BUG-005.
+- ~~No tests for several trips, drafts, or ordering.~~ Fixed by BUG-006.

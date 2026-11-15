@@ -10,6 +10,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
 
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
@@ -62,32 +63,18 @@ func (s *Service) setSessionMiddleware() th.Handler {
 			return nil
 		}
 
-		user, err := ops.GetUser(ctx, s.backends, uid)
+		user, err := s.loadUser(ctx, update.Message.From)
 		if err != nil {
-			if !errors.Is(err, users.ErrNotFound) {
-				log.WithError(ctx, err).Error("Failed to get user")
+			log.WithError(ctx, err).Error("Failed to load user")
+			s.replyError(ctx, cid)
 
-				return nil
-			}
-
-			p := ops.CreateUserParams{
-				UserID:    uid,
-				Username:  update.Message.From.Username,
-				Firstname: update.Message.From.FirstName,
-				Lastname:  update.Message.From.LastName,
-			}
-
-			user, err = ops.CreateUser(ctx, s.backends, p)
-			if err != nil {
-				log.WithError(ctx, err).Error("Failed to create user")
-
-				return nil
-			}
+			return nil
 		}
 
-		session, err := ops.GetSession(ctx, s.backends, user)
+		session, err := ops.GetSession(ctx, s.backends, user, cid)
 		if err != nil && !errors.Is(err, sessions.ErrNotFound) {
 			log.WithError(ctx, err).Error("Failed to get session")
+			s.replyError(ctx, cid)
 
 			return nil
 		}
@@ -99,6 +86,7 @@ func (s *Service) setSessionMiddleware() th.Handler {
 			})
 			if err != nil {
 				log.WithError(ctx, err).Error("Failed to create session")
+				s.replyError(ctx, cid)
 
 				return nil
 			}
@@ -112,14 +100,61 @@ func (s *Service) setSessionMiddleware() th.Handler {
 	}
 }
 
-// PanicRecovery is a middleware that will recover handler from panic
+// loadUser returns the stored user of the sender. It creates the user on first contact
+// and refreshes the stored profile when the sender changed it in Telegram.
+func (s *Service) loadUser(ctx context.Context, from *tgbotapi.User) (*models.User, error) {
+	user, err := ops.GetUser(ctx, s.backends, from.ID)
+	if err != nil {
+		if !errors.Is(err, users.ErrNotFound) {
+			return nil, fmt.Errorf("get user: %w", err)
+		}
+
+		user, err = ops.CreateUser(ctx, s.backends, ops.CreateUserParams{
+			UserID:    from.ID,
+			Username:  from.Username,
+			Firstname: from.FirstName,
+			Lastname:  from.LastName,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("create user: %w", err)
+		}
+
+		return user, nil
+	}
+
+	if user.Username == from.Username && user.Firstname == from.FirstName && user.Lastname == from.LastName {
+		return user, nil
+	}
+
+	user, err = ops.UpdateUser(ctx, s.backends, ops.UpdateUserParams{
+		UserID:    from.ID,
+		Username:  from.Username,
+		Firstname: from.FirstName,
+		Lastname:  from.LastName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("update user: %w", err)
+	}
+
+	return user, nil
+}
+
+// PanicRecovery is a middleware that will recover handler from panic.
+// It logs the panic with its stack and tells the user that the bot failed to handle the message.
 func (s *Service) panicRecovery() th.Handler {
 	return func(c *th.Context, update tgbotapi.Update) error {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Println(string(debug.Stack()))
+				ctx := update.Context()
 
-				log.WithField(update.Context(), "error", err).Error("Panic recovered")
+				log.WithFields(ctx, log.Fields{
+					"error": err,
+					"stack": string(debug.Stack()),
+				}).Error("Panic recovered")
+
+				if update.Message != nil {
+					s.replyError(ctx, update.Message.Chat.ID)
+				}
 			}
 		}()
 

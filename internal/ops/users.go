@@ -52,3 +52,30 @@ func CreateUser(ctx context.Context, b backends, p CreateUserParams) (*models.Us
 
 	return GetUser(ctx, b, p.UserID)
 }
+
+// UpdateUserParams is a params for UpdateUser function.
+type UpdateUserParams struct {
+	UserID    int64
+	Username  string
+	Firstname string
+	Lastname  string
+}
+
+// UpdateUser replaces the profile of an existing user.
+func UpdateUser(ctx context.Context, b backends, p UpdateUserParams) (*models.User, error) {
+	err := b.UsersRepository().Update(ctx, &users.User{
+		ID:        p.UserID,
+		Username:  p.Username,
+		Firstname: p.Firstname,
+		Lastname:  p.Lastname,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	log.WithFields(ctx, log.Fields{
+		"user_id": p.UserID,
+	}).Debug("User updated")
+
+	return GetUser(ctx, b, p.UserID)
+}

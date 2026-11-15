@@ -125,8 +125,118 @@ func TestNewBot(t *testing.T) {
 	assert.Equal(t, Commands{NewCommand("help", "show help", true)}, bot.Commands())
 	assert.NotNil(t, bot.Client())
 
-	for _, method := range []string{"getMe", "getMyDescription", "getMyCommands"} {
+	for _, method := range []string{"getMe", "getMyDescription", "getMyShortDescription", "getMyCommands"} {
 		assert.Equal(t, method, api.NextRequest(t).Method)
+	}
+}
+
+func TestBot_Menu(t *testing.T) {
+	helpCmd := tgbotapi.BotCommand{Command: "help", Description: "show help"}
+	tripsCmd := tgbotapi.BotCommand{Command: "trips", Description: "show trips"}
+
+	tests := []struct {
+		name string
+		opts []BotOption
+		fail string
+		want []tgbotapi.BotCommand
+	}{
+		{
+			name: "declared commands",
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, helpCmd.Description, true),
+				NewCommand(tripsCmd.Command, tripsCmd.Description, false),
+			})},
+			want: []tgbotapi.BotCommand{helpCmd},
+		},
+		{
+			name: "declared commands when the update fails",
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, helpCmd.Description, true),
+				NewCommand(tripsCmd.Command, tripsCmd.Description, true),
+			})},
+			fail: "setMyCommands",
+			want: []tgbotapi.BotCommand{helpCmd, tripsCmd},
+		},
+		{
+			name: "no declared commands",
+			want: []tgbotapi.BotCommand{tripsCmd},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			api := telegramtest.NewServer(t)
+			api.SetResult("getMyCommands", []tgbotapi.BotCommand{tripsCmd})
+
+			if tt.fail != "" {
+				api.Fail(tt.fail)
+			}
+
+			opts := append([]BotOption{WithClientOptions(api.ClientOptions()...)}, tt.opts...)
+
+			bot, err := NewBot(context.Background(), telegramtest.Token, opts...)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, bot.Menu())
+		})
+	}
+}
+
+func TestNewBot_UpdateShortDescription(t *testing.T) {
+	const registered = "Bike trips"
+
+	tests := []struct {
+		name     string
+		want     string
+		fail     bool
+		wantCall bool
+		wantDesc string
+	}{
+		{
+			name:     "up to date",
+			want:     registered,
+			wantDesc: registered,
+		},
+		{
+			name:     "updated",
+			want:     "Plan bike trips",
+			wantCall: true,
+			wantDesc: "Plan bike trips",
+		},
+		{
+			name:     "update fails",
+			want:     "Plan bike trips",
+			fail:     true,
+			wantCall: true,
+			wantDesc: registered,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			api := telegramtest.NewServer(t)
+			api.SetResult("getMyShortDescription", tgbotapi.BotShortDescription{ShortDescription: registered})
+
+			if tt.fail {
+				api.Fail("setMyShortDescription")
+			}
+
+			bot, err := NewBot(context.Background(), telegramtest.Token,
+				WithClientOptions(api.ClientOptions()...), WithShortDescription(tt.want))
+			require.NoError(t, err)
+
+			for range 4 { // getMe, getMyDescription, getMyShortDescription, getMyCommands.
+				api.NextRequest(t)
+			}
+
+			if tt.wantCall {
+				req := api.NextRequest(t)
+				assert.Equal(t, "setMyShortDescription", req.Method)
+				assert.Equal(t, map[string]any{"short_description": tt.want}, req.Params)
+			}
+
+			api.AssertNoRequest(t)
+			assert.Equal(t, tt.wantDesc, bot.ShortDescription())
+		})
 	}
 }
 
@@ -153,6 +263,12 @@ func TestNewBot_Error(t *testing.T) {
 			token:   telegramtest.Token,
 			fail:    "getMyDescription",
 			wantErr: "failed to get bot description",
+		},
+		{
+			name:    "get bot short description",
+			token:   telegramtest.Token,
+			fail:    "getMyShortDescription",
+			wantErr: "failed to get bot short description",
 		},
 		{
 			name:    "get bot commands",
@@ -342,7 +458,7 @@ func TestNewBot_UpdateOnStart(t *testing.T) {
 			bot, err := NewBot(context.Background(), telegramtest.Token, opts...)
 			require.NoError(t, err)
 
-			for range 3 { // getMe, getMyDescription, getMyCommands.
+			for range 4 { // getMe, getMyDescription, getMyShortDescription, getMyCommands.
 				api.NextRequest(t)
 			}
 

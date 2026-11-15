@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	tgbotapi "github.com/mymmrac/telego"
@@ -26,13 +28,18 @@ const (
 	testUserID  int64 = 42
 	otherUserID int64 = 43
 	testChatID  int64 = 4242
+	otherChatID int64 = 4343
 
 	msgNotFound       = "Command not found. Use /help command to see all available commands."
 	msgNotImplemented = "Not implemented yet. Use /help command to see all available commands."
 	msgFarewell       = "I'm going to sleep. Bye, John!"
+	msgPublished      = "Trip is published!"
 )
 
 var errTest = errors.New("test error")
+
+// testNow is the current time of the test services: Sunday, 15 November 2026, 08:00 UTC.
+var testNow = time.Date(2026, time.November, 15, 8, 0, 0, 0, time.UTC)
 
 // testRepos are in-memory repositories. A test replaces any of them to inject failures.
 type testRepos struct {
@@ -90,6 +97,14 @@ func (f failingUsers) GetBuID(ctx context.Context, id int64) (*users.User, error
 	return f.Repository.GetBuID(ctx, id)
 }
 
+func (f failingUsers) Update(ctx context.Context, user *users.User) error {
+	if f.method == "Update" {
+		return errTest
+	}
+
+	return f.Repository.Update(ctx, user)
+}
+
 // failingSessions fails the method named in it.
 type failingSessions struct {
 	sessions.Repository
@@ -105,12 +120,20 @@ func (f failingSessions) CreateSession(ctx context.Context, userID, chatID int64
 	return f.Repository.CreateSession(ctx, userID, chatID, stateID)
 }
 
-func (f failingSessions) GetSessionByUserID(ctx context.Context, userID int64) (*sessions.Session, error) {
-	if f.method == "GetSessionByUserID" {
+func (f failingSessions) GetSession(ctx context.Context, userID, chatID int64) (*sessions.Session, error) {
+	if f.method == "GetSession" {
 		return nil, errTest
 	}
 
-	return f.Repository.GetSessionByUserID(ctx, userID)
+	return f.Repository.GetSession(ctx, userID, chatID)
+}
+
+func (f failingSessions) ListSessions(ctx context.Context) ([]*sessions.Session, error) {
+	if f.method == "ListSessions" {
+		return nil, errTest
+	}
+
+	return f.Repository.ListSessions(ctx)
 }
 
 // failingStates fails to update states, so sessions can't be saved.
@@ -129,7 +152,13 @@ type failingTrips struct {
 	method string
 }
 
-func (f failingTrips) CreateTrip(ctx context.Context, name, date, description string, createdBy int64) (*trips.Trip, error) {
+func (f failingTrips) CreateTrip(
+	ctx context.Context,
+	name string,
+	date time.Time,
+	description string,
+	createdBy int64,
+) (*trips.Trip, error) {
 	if f.method == "CreateTrip" {
 		return nil, errTest
 	}
@@ -182,23 +211,45 @@ func newTestService(t *testing.T, repos *testRepos) (*Service, *telegramtest.Ser
 
 	api := telegramtest.NewServer(t)
 
-	bot, err := telegram.NewBot(context.Background(), telegramtest.Token,
-		telegram.WithClientOptions(api.ClientOptions()...))
+	// telegram.NewBot calls getMe, getMyDescription, getMyShortDescription, and getMyCommands.
+	return newTestServiceWithAPI(t, repos, api, 4)
+}
+
+// newTestServiceWithAPI returns a Service with the bot options that talks to the api.
+// It skips the startupCalls Bot API calls that telegram.NewBot makes.
+func newTestServiceWithAPI(
+	t *testing.T,
+	repos *testRepos,
+	api *telegramtest.Server,
+	startupCalls int,
+	opts ...telegram.BotOption,
+) (*Service, *telegramtest.Server) {
+	t.Helper()
+
+	opts = append([]telegram.BotOption{telegram.WithClientOptions(api.ClientOptions()...)}, opts...)
+
+	bot, err := telegram.NewBot(context.Background(), telegramtest.Token, opts...)
 	require.NoError(t, err)
 
-	// Skip the calls made by telegram.NewBot: getMe, getMyDescription, getMyCommands.
-	for range 3 {
+	for range startupCalls {
 		api.NextRequest(t)
 	}
 
 	svc, err := New(bot, repos)
 	require.NoError(t, err)
 
+	svc.now = func() time.Time { return testNow }
+
 	return svc, api
 }
 
 // textUpdate returns an update with a text message sent to the test chat.
 func textUpdate(from int64, text string) tgbotapi.Update {
+	return chatUpdate(from, testChatID, text)
+}
+
+// chatUpdate returns an update with a text message sent to the chat.
+func chatUpdate(from, chatID int64, text string) tgbotapi.Update {
 	return tgbotapi.Update{
 		Message: &tgbotapi.Message{
 			MessageID: 1,
@@ -208,7 +259,7 @@ func textUpdate(from int64, text string) tgbotapi.Update {
 				Username:  "john",
 			},
 			Chat: tgbotapi.Chat{
-				ID:   testChatID,
+				ID:   chatID,
 				Type: tgbotapi.ChatTypePrivate,
 			},
 			Text: text,
@@ -220,9 +271,16 @@ func textUpdate(from int64, text string) tgbotapi.Update {
 func nextMessage(t *testing.T, api *telegramtest.Server) string {
 	t.Helper()
 
+	return nextMessageIn(t, api, testChatID)
+}
+
+// nextMessageIn returns the text of the next message the bot sends, which must go to the chat.
+func nextMessageIn(t *testing.T, api *telegramtest.Server, chatID int64) string {
+	t.Helper()
+
 	req := api.NextRequest(t)
 	require.Equal(t, "sendMessage", req.Method)
-	assert.EqualValues(t, testChatID, req.Params["chat_id"])
+	assert.EqualValues(t, chatID, req.Params["chat_id"])
 
 	text, ok := req.Params["text"].(string)
 	require.True(t, ok, "message text is not a string: %v", req.Params["text"])
@@ -244,7 +302,7 @@ func replyTo(t *testing.T, api *telegramtest.Server, text string) string {
 func assertState(t *testing.T, repos *testRepos, want models.State) {
 	t.Helper()
 
-	sess, err := ops.GetSession(context.Background(), repos, &models.User{ID: testUserID})
+	sess, err := ops.GetSession(context.Background(), repos, &models.User{ID: testUserID}, testChatID)
 	require.NoError(t, err)
 	assert.Equal(t, want, sess.UserState.State)
 }
@@ -255,6 +313,26 @@ func TestNew(t *testing.T) {
 	assert.Nil(t, svc)
 }
 
+func TestService_Shutdown_ListSessionsFails(t *testing.T) {
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	newSession(t, repos, testUserID, models.StateStart)
+
+	repos.sessions = failingSessions{Repository: repos.sessions, method: "ListSessions"}
+
+	var stopped bool
+
+	svc.stopFns = append(svc.stopFns, func(context.Context) {
+		stopped = true
+	})
+
+	svc.Shutdown(context.Background())
+
+	assert.True(t, stopped, "the bot must stop even when it fails to say goodbye")
+	api.AssertNoRequest(t)
+}
+
 func TestService_PublishTrip(t *testing.T) {
 	ctx := context.Background()
 
@@ -263,20 +341,25 @@ func TestService_PublishTrip(t *testing.T) {
 
 	svc.Start(ctx)
 
-	assert.Contains(t, replyTo(t, api, "/start"), "Hello, John! 👋 Welcome to test_bot.")
-	assert.Contains(t, replyTo(t, api, "/help"), "Welcome to test_bot Help!")
+	assert.Contains(t, replyTo(t, api, "/start"), "Hello, John! 👋 Welcome to @test_bot.")
+	assert.Contains(t, replyTo(t, api, "/help"), "Welcome to @test_bot Help!")
 
-	assert.Equal(t, "Please enter trip name", replyTo(t, api, "/newtrip"))
+	assert.Equal(t, msgEnterTripName, replyTo(t, api, "/newtrip"))
 	assertState(t, repos, models.StateNewTripName)
 
-	assert.Equal(t, `Your trip name "Morning ride". Please select date and time`, replyTo(t, api, "Morning ride"))
+	assert.Equal(t, `Your trip name "Morning ride". Please select the date or enter it as DD.MM.YYYY.`,
+		replyTo(t, api, "Morning ride"))
 	assertState(t, repos, models.StateNewTripDate)
 
-	assert.Equal(t, "Please enter trip description", replyTo(t, api, "today"))
+	assert.Equal(t, msgEnterTripTime, replyTo(t, api, "today"))
+	assertState(t, repos, models.StateNewTripTime)
+
+	assert.Equal(t, msgEnterTripDesc, replyTo(t, api, "09:30"))
 	assertState(t, repos, models.StateNewTripDescription)
 
 	confirm := replyTo(t, api, "Easy pace")
-	assert.Contains(t, confirm, "Title: Morning ride\nDescription: Easy pace\nDate: today\nCreated By: @john")
+	assert.Contains(t, confirm,
+		"Title: Morning ride\nDescription: Easy pace\nDate: Sun, 15 Nov 2026 09:30 UTC\nCreated By: @john")
 	assert.True(t, strings.HasSuffix(confirm, "Please confirm"), confirm)
 	assertState(t, repos, models.StateNewTripConfirm)
 
@@ -287,9 +370,392 @@ func TestService_PublishTrip(t *testing.T) {
 	assert.EqualValues(t, testChatID, pin.Params["chat_id"])
 	assertState(t, repos, models.StateStart)
 
+	published, err := ops.ListTripsByUser(ctx, repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	require.Len(t, published, 1)
+	assert.True(t, published[0].Completed, "a published trip is completed")
+
 	myTrips := replyTo(t, api, "/mytrips")
-	assert.True(t, strings.HasPrefix(myTrips, "Your trips:"), myTrips)
+	assert.True(t, strings.HasPrefix(myTrips, myTripsHeader), myTrips)
 	assert.Contains(t, myTrips, "Title: Morning ride")
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+// toConfirmation runs the trip dialog up to the confirmation step.
+func toConfirmation(t *testing.T, api *telegramtest.Server, repos *testRepos) {
+	t.Helper()
+
+	replyTo(t, api, "/newtrip")
+	replyTo(t, api, "Morning ride")
+	replyTo(t, api, "today")
+	replyTo(t, api, "09:30")
+	replyTo(t, api, "Easy pace")
+	assertState(t, repos, models.StateNewTripConfirm)
+}
+
+func TestService_TripDateAndTime(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	replyTo(t, api, "/newtrip")
+	replyTo(t, api, "Morning ride")
+
+	steps := []struct {
+		text  string
+		want  string
+		state models.State
+	}{
+		{text: "next week", want: msgInvalidDate, state: models.StateNewTripDate},
+		{text: "14.11.2026", want: msgDateInPast, state: models.StateNewTripDate},
+		{text: "15.11.2026", want: msgEnterTripTime, state: models.StateNewTripTime},
+		{text: "7 pm", want: msgInvalidTime, state: models.StateNewTripTime},
+		{text: "07:00", want: msgTimeInPast, state: models.StateNewTripTime},
+		{text: "19:00", want: msgEnterTripDesc, state: models.StateNewTripDescription},
+	}
+
+	for _, step := range steps {
+		assert.Equal(t, step.want, replyTo(t, api, step.text), step.text)
+		assertState(t, repos, step.state)
+	}
+
+	sess, err := ops.GetSession(ctx, repos, &models.User{ID: testUserID}, testChatID)
+	require.NoError(t, err)
+	assert.True(t, time.Date(2026, time.November, 15, 19, 0, 0, 0, time.UTC).Equal(sess.UserState.Trip.Date))
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_TripInTimeZone(t *testing.T) {
+	ctx := context.Background()
+
+	tbilisi, err := time.LoadLocation("Asia/Tbilisi")
+	require.NoError(t, err)
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+	WithLocation(tbilisi)(svc)
+
+	svc.Start(ctx)
+
+	// testNow is 12:00 in Tbilisi (UTC+4).
+	for _, text := range []string{"/newtrip", "Morning ride", "today", "13:30"} {
+		replyTo(t, api, text)
+	}
+
+	assert.Contains(t, replyTo(t, api, "Easy pace"), "Date: Sun, 15 Nov 2026 13:30 +04")
+
+	assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), "Trip is published!"))
+	assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+
+	list, err := ops.ListTripsByUser(ctx, repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	// 13:30 in Tbilisi is 09:30 UTC.
+	assert.True(t, time.Date(2026, time.November, 15, 9, 30, 0, 0, time.UTC).Equal(list[0].Date), list[0].Date)
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_TripTextLimits(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	replyTo(t, api, "/newtrip")
+
+	steps := []struct {
+		text  string
+		want  string
+		state models.State
+	}{
+		{text: "   ", want: msgInvalidTripName, state: models.StateNewTripName},
+		{text: strings.Repeat("a", maxTripNameLen+1), want: msgInvalidTripName, state: models.StateNewTripName},
+		{text: "  Morning ride  ", want: fmt.Sprintf(msgEnterTripDate, "Morning ride"), state: models.StateNewTripDate},
+		{text: "today", want: msgEnterTripTime, state: models.StateNewTripTime},
+		{text: "09:30", want: msgEnterTripDesc, state: models.StateNewTripDescription},
+		{text: strings.Repeat("a", maxTripDescriptionLen+1), want: msgInvalidTripDesc, state: models.StateNewTripDescription},
+	}
+
+	for _, step := range steps {
+		assert.Equal(t, step.want, replyTo(t, api, step.text))
+		assertState(t, repos, step.state)
+	}
+
+	confirm := replyTo(t, api, strings.Repeat("a", maxTripDescriptionLen))
+	assert.True(t, strings.HasSuffix(confirm, "Please confirm"), confirm)
+	assertState(t, repos, models.StateNewTripConfirm)
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_MyTripsHidesDrafts(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	toConfirmation(t, api, repos)
+	assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), msgPublished))
+	assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+
+	// Start another trip and look at the list in the middle of the dialog.
+	replyTo(t, api, "/newtrip")
+	replyTo(t, api, "Evening ride")
+
+	myTrips := replyTo(t, api, "/mytrips")
+	assert.Contains(t, myTrips, "Title: Morning ride")
+	assert.NotContains(t, myTrips, "Evening ride", "the draft is not listed")
+	assertState(t, repos, models.StateNewTripDate)
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_MyTripsOrder(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	// The later trip is published first.
+	for _, trip := range [][]string{
+		{"Later ride", "tomorrow", "10:00"},
+		{"Sooner ride", "today", "09:30"},
+	} {
+		for _, text := range []string{"/newtrip", trip[0], trip[1], trip[2], "Easy pace"} {
+			replyTo(t, api, text)
+		}
+
+		assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), msgPublished))
+		assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+	}
+
+	myTrips := replyTo(t, api, "/mytrips")
+	sooner, later := strings.Index(myTrips, "Title: Sooner ride"), strings.Index(myTrips, "Title: Later ride")
+	require.NotEqual(t, -1, sooner, myTrips)
+	require.NotEqual(t, -1, later, myTrips)
+	assert.Less(t, sooner, later, "the nearest trip comes first")
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_NewTripRestarts(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	replyTo(t, api, "/newtrip")
+	replyTo(t, api, "Morning ride")
+	assertState(t, repos, models.StateNewTripDate)
+
+	assert.Equal(t, msgDraftDiscarded, replyTo(t, api, "/newtrip"))
+	assert.Equal(t, msgEnterTripName, nextMessage(t, api))
+	assertState(t, repos, models.StateNewTripName)
+
+	list, err := ops.ListTripsByUser(ctx, repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	require.Len(t, list, 1, "only the new draft is stored")
+	assert.Empty(t, list[0].Name)
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_CancelCommand(t *testing.T) {
+	tests := []struct {
+		name      string
+		steps     []string
+		want      string
+		wantState models.State
+	}{
+		{
+			name:      "during the trip dialog",
+			steps:     []string{"/newtrip", "Morning ride"},
+			want:      msgDraftDiscarded,
+			wantState: models.StateStart,
+		},
+		{
+			name:      "at the confirmation",
+			steps:     []string{"/newtrip", "Morning ride", "today", "09:30", "Easy pace"},
+			want:      msgDraftDiscarded,
+			wantState: models.StateStart,
+		},
+		{
+			name:      "outside of a dialog",
+			want:      msgNothingToCancel,
+			wantState: models.StateStart,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			repos := newTestRepos()
+			svc, api := newTestService(t, repos)
+
+			svc.Start(ctx)
+
+			for _, step := range tt.steps {
+				replyTo(t, api, step)
+			}
+
+			assert.Equal(t, tt.want, replyTo(t, api, "/cancel"))
+			assertState(t, repos, tt.wantState)
+
+			assert.Equal(t, msgNoUpcomingTrips, replyTo(t, api, "/mytrips"))
+
+			svc.Shutdown(ctx)
+			assert.Equal(t, msgFarewell, nextMessage(t, api))
+		})
+	}
+}
+
+func TestService_ConfirmTrip(t *testing.T) {
+	tests := []struct {
+		name       string
+		answers    []string
+		wantPrefix string
+		wantState  models.State
+	}{
+		{
+			name:       "yes in another case",
+			answers:    []string{"Yes"},
+			wantPrefix: msgPublished,
+			wantState:  models.StateStart,
+		},
+		{
+			name:       "no with spaces",
+			answers:    []string{" NO "},
+			wantPrefix: "Your trip is canceled.",
+			wantState:  models.StateStart,
+		},
+		{
+			name:       "unclear answer",
+			answers:    []string{"maybe"},
+			wantPrefix: msgConfirmAgain,
+			wantState:  models.StateNewTripConfirm,
+		},
+		{
+			name:       "yes after an unclear answer",
+			answers:    []string{"maybe", "yes"},
+			wantPrefix: msgPublished,
+			wantState:  models.StateStart,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			repos := newTestRepos()
+			svc, api := newTestService(t, repos)
+
+			svc.Start(ctx)
+
+			toConfirmation(t, api, repos)
+
+			var reply string
+
+			for _, answer := range tt.answers {
+				reply = replyTo(t, api, answer)
+			}
+
+			assert.True(t, strings.HasPrefix(reply, tt.wantPrefix), reply)
+			assertState(t, repos, tt.wantState)
+
+			if tt.wantPrefix == msgPublished {
+				assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+			}
+
+			svc.Shutdown(ctx)
+			assert.Equal(t, msgFarewell, nextMessage(t, api))
+		})
+	}
+}
+
+func TestService_PublishInDialogChat(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	// The user talks to the bot privately first, then creates the trip in a group.
+	assert.Contains(t, replyTo(t, api, "/start"), "Hello, John!")
+
+	for _, text := range []string{"/newtrip", "Morning ride", "today", "09:30", "Easy pace"} {
+		api.SendUpdate(chatUpdate(testUserID, otherChatID, text))
+		nextMessageIn(t, api, otherChatID)
+	}
+
+	api.SendUpdate(chatUpdate(testUserID, otherChatID, "yes"))
+	assert.True(t, strings.HasPrefix(nextMessageIn(t, api, otherChatID), msgPublished))
+
+	pin := api.NextRequest(t)
+	assert.Equal(t, "pinChatMessage", pin.Method)
+	assert.EqualValues(t, otherChatID, pin.Params["chat_id"], "the trip is pinned in the chat of the dialog")
+
+	assertState(t, repos, models.StateStart)
+
+	svc.Shutdown(ctx)
+
+	// Each chat of the user has its own session, so both get the farewell.
+	farewells := map[any]string{}
+
+	for range 2 {
+		req := api.NextRequest(t)
+
+		text, ok := req.Params["text"].(string)
+		require.True(t, ok, "message text is not a string: %v", req.Params["text"])
+
+		farewells[req.Params["chat_id"]] = text
+	}
+
+	assert.Equal(t, map[any]string{float64(testChatID): msgFarewell, float64(otherChatID): msgFarewell}, farewells)
+}
+
+func TestService_PinFails(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+	api.Fail("pinChatMessage")
+
+	svc.Start(ctx)
+
+	toConfirmation(t, api, repos)
+
+	assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), "Trip is published!"))
+	assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+	assert.Equal(t, msgPinFailed, nextMessage(t, api))
+	assertState(t, repos, models.StateStart)
+
+	list, err := ops.ListTripsByUser(ctx, repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	assert.True(t, list[0].Completed, "the trip is published although it is not pinned")
 
 	svc.Shutdown(ctx)
 	assert.Equal(t, msgFarewell, nextMessage(t, api))
@@ -309,7 +775,8 @@ func TestService_CancelTrip(t *testing.T) {
 	}{
 		{text: "/newtrip", state: models.StateNewTripName},
 		{text: "Evening ride", state: models.StateNewTripDate},
-		{text: "tomorrow", state: models.StateNewTripDescription},
+		{text: "tomorrow", state: models.StateNewTripTime},
+		{text: "18:00", state: models.StateNewTripDescription},
 		{text: "Fast pace", state: models.StateNewTripConfirm},
 	}
 
@@ -319,12 +786,83 @@ func TestService_CancelTrip(t *testing.T) {
 	}
 
 	assert.Equal(t, "Your trip is canceled. Thank you!", replyTo(t, api, "no"))
-	assertState(t, repos, models.StateNewTrip)
+	assertState(t, repos, models.StateStart)
 
-	assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
+	// The dialog is over: free text does not start a new trip.
+	assert.Equal(t, msgNotFound, replyTo(t, api, "Another ride"))
+	assertState(t, repos, models.StateStart)
+
+	assert.Equal(t, msgNoUpcomingTrips, replyTo(t, api, "/mytrips"))
 
 	svc.Shutdown(ctx)
 	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_HelpListsEnabledCommands(t *testing.T) {
+	ctx := context.Background()
+
+	api := telegramtest.NewServer(t)
+	// Telegram keeps its old menu; /help must still list the commands declared in the code.
+	api.Fail("setMyCommands")
+
+	// telegram.NewBot calls getMe, getMyDescription, getMyShortDescription, getMyCommands, and setMyCommands.
+	svc, _ := newTestServiceWithAPI(t, newTestRepos(), api, 5, telegram.WithCommands(telegram.Commands{
+		telegram.NewCommand(CmdStart, "start using the bot", true),
+		telegram.NewCommand(CmdHelp, "show help", true),
+		telegram.NewCommand(CmdTrips, "show all trips", false),
+	}))
+
+	svc.Start(ctx)
+
+	help := replyTo(t, api, "/help")
+	assert.Contains(t, help, "\t/start - start using the bot\n\t/help - show help\n")
+	assert.NotContains(t, help, "/trips")
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_InterruptTrip(t *testing.T) {
+	tests := []struct {
+		name string
+		cmd  string
+		want string
+	}{
+		{
+			name: "start",
+			cmd:  "/" + CmdStart,
+			want: "Hello, John!",
+		},
+		{
+			name: "help",
+			cmd:  "/" + CmdHelp,
+			want: "Help!",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			repos := newTestRepos()
+			svc, api := newTestService(t, repos)
+
+			svc.Start(ctx)
+
+			replyTo(t, api, "/newtrip")
+			replyTo(t, api, "Morning ride")
+			assertState(t, repos, models.StateNewTripDate)
+
+			assert.Equal(t, msgDraftDiscarded, replyTo(t, api, tt.cmd))
+			assert.Contains(t, nextMessage(t, api), tt.want)
+			assertState(t, repos, models.StateStart)
+
+			assert.Equal(t, msgNoUpcomingTrips, replyTo(t, api, "/mytrips"))
+
+			svc.Shutdown(ctx)
+			assert.Equal(t, msgFarewell, nextMessage(t, api))
+		})
+	}
 }
 
 func TestService_Commands(t *testing.T) {

@@ -61,8 +61,10 @@ repositories.]
       concurrent use, and the spec states whether data must survive a
       restart.
 - [ ] III. New dialog steps add a `State` before `stateSentinel`, regenerate
-      `state_string.go`, are routed in `textHandler`, `newTripHandler`, and
-      `createTrip`, and save the session before asking for the next input.
+      `state_string.go`, join the trip states routed by `textHandler`, get a
+      branch in `createTrip`, save the session before asking for the next
+      input, and ask again on invalid answers; commands that end a dialog go
+      through `resetDialog`.
 - [ ] IV. Commands change their `Cmd*` constant, handler, and menu entry
       together; unimplemented commands stay disabled; changed templates have
       golden tests.

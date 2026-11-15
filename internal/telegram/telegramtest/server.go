@@ -71,8 +71,9 @@ func NewServer(t testing.TB) *Server {
 				FirstName: "Test Bot",
 				Username:  BotUsername,
 			},
-			"getMyDescription": tgbotapi.BotDescription{},
-			"getMyCommands":    []tgbotapi.BotCommand{},
+			"getMyDescription":      tgbotapi.BotDescription{},
+			"getMyShortDescription": tgbotapi.BotShortDescription{},
+			"getMyCommands":         []tgbotapi.BotCommand{},
 		},
 		failures: make(map[string]bool),
 	}

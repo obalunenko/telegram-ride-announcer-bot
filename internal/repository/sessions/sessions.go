@@ -17,17 +17,18 @@ var (
 )
 
 // Repository provides access to the session storage.
+// A user has one session per chat.
 type Repository interface {
-	// CreateSession creates a new session.
+	// CreateSession creates a new session of the user in the chat.
 	CreateSession(ctx context.Context, userID, chatID int64, stateID *uuid.UUID) error
 	// ListSessions returns all sessions.
 	ListSessions(ctx context.Context) ([]*Session, error)
-	// GetSessionByUserID returns a session by user ID.
-	GetSessionByUserID(ctx context.Context, userID int64) (*Session, error)
+	// GetSession returns the session of the user in the chat.
+	GetSession(ctx context.Context, userID, chatID int64) (*Session, error)
 	// UpdateSession updates a session.
 	UpdateSession(ctx context.Context, sess *Session) error
-	// DeleteSession deletes a session.
-	DeleteSession(ctx context.Context, userID int64) error
+	// DeleteSession deletes the session of the user in the chat.
+	DeleteSession(ctx context.Context, userID, chatID int64) error
 }
 
 // Session represents a session.
@@ -47,11 +48,17 @@ func newSession(userID, chatID int64, stateID *uuid.UUID) *Session {
 	}
 }
 
+// key identifies the session of a user in a chat.
+type key struct {
+	userID int64
+	chatID int64
+}
+
 // NewInMemory creates a new in-memory repository.
 func NewInMemory() Repository {
 	return &inMemoryRepository{
 		RWMutex:  sync.RWMutex{},
-		sessions: make(map[int64]*Session),
+		sessions: make(map[key]*Session),
 	}
 }
 
@@ -59,7 +66,7 @@ func NewInMemory() Repository {
 type inMemoryRepository struct {
 	sync.RWMutex
 
-	sessions map[int64]*Session
+	sessions map[key]*Session
 }
 
 func (i *inMemoryRepository) ListSessions(_ context.Context) ([]*Session, error) {
@@ -81,20 +88,22 @@ func (i *inMemoryRepository) CreateSession(_ context.Context, userID, chatID int
 	i.Lock()
 	defer i.Unlock()
 
-	if _, ok := i.sessions[userID]; ok {
+	k := key{userID: userID, chatID: chatID}
+
+	if _, ok := i.sessions[k]; ok {
 		return ErrAlreadyExists
 	}
 
-	i.sessions[userID] = s
+	i.sessions[k] = s
 
 	return nil
 }
 
-func (i *inMemoryRepository) GetSessionByUserID(_ context.Context, userID int64) (*Session, error) {
+func (i *inMemoryRepository) GetSession(_ context.Context, userID, chatID int64) (*Session, error) {
 	i.RLock()
 	defer i.RUnlock()
 
-	s, ok := i.sessions[userID]
+	s, ok := i.sessions[key{userID: userID, chatID: chatID}]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -107,29 +116,31 @@ func (i *inMemoryRepository) UpdateSession(_ context.Context, sess *Session) err
 		return errors.New("session is nil")
 	}
 
-	userID := sess.UserID
+	k := key{userID: sess.UserID, chatID: sess.ChatID}
 
 	i.Lock()
 	defer i.Unlock()
 
-	if _, ok := i.sessions[userID]; !ok {
+	if _, ok := i.sessions[k]; !ok {
 		return ErrNotFound
 	}
 
-	i.sessions[userID] = sess
+	i.sessions[k] = sess
 
 	return nil
 }
 
-func (i *inMemoryRepository) DeleteSession(_ context.Context, userID int64) error {
+func (i *inMemoryRepository) DeleteSession(_ context.Context, userID, chatID int64) error {
+	k := key{userID: userID, chatID: chatID}
+
 	i.Lock()
 	defer i.Unlock()
 
-	if _, ok := i.sessions[userID]; !ok {
+	if _, ok := i.sessions[k]; !ok {
 		return ErrNotFound
 	}
 
-	delete(i.sessions, userID)
+	delete(i.sessions, k)
 
 	return nil
 }

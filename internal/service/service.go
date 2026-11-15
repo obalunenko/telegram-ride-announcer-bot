@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
@@ -31,6 +32,8 @@ const (
 	CmdMyTrips = "mytrips"
 	// CmdSubscribed is a command for getting user's subscribed trips.
 	CmdSubscribed = "subscribed"
+	// CmdCancel is a command for canceling the trip dialog.
+	CmdCancel = "cancel"
 )
 
 // Service is a Telegram bot service.
@@ -38,12 +41,28 @@ type Service struct {
 	bot       *telegram.Bot
 	backends  backends
 	templates templates.Renderer
+	// location is the time zone of trip dates and times.
+	location *time.Location
+	// now returns the current time; tests replace it.
+	now func() time.Time
 
 	stopFns []stopFunc
 }
 
+// Option configures the Service.
+type Option func(*Service)
+
+// WithLocation sets the time zone of trip dates and times. The default is UTC.
+func WithLocation(loc *time.Location) Option {
+	return func(s *Service) {
+		if loc != nil {
+			s.location = loc
+		}
+	}
+}
+
 // New creates a new Service.
-func New(bot *telegram.Bot, b backends) (*Service, error) {
+func New(bot *telegram.Bot, b backends, opts ...Option) (*Service, error) {
 	if bot == nil {
 		return nil, errors.New("bot is nil")
 	}
@@ -53,12 +72,20 @@ func New(bot *telegram.Bot, b backends) (*Service, error) {
 		return nil, fmt.Errorf("failed to load templates: %w", err)
 	}
 
-	return &Service{
+	s := &Service{
 		bot:       bot,
 		backends:  b,
 		templates: tpls,
+		location:  time.UTC,
+		now:       time.Now,
 		stopFns:   nil,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s, nil
 }
 
 // Start is a helper function that will be called when the program starts.
@@ -70,7 +97,17 @@ func (s *Service) Start(ctx context.Context) {
 
 // Shutdown is a helper function that will be called when the program receives an interrupt signal.
 // It will gracefully shut down the bot by waiting for all requests to be processed before shutting down.
+// It stops the bot even when it fails to say goodbye.
 func (s *Service) Shutdown(ctx context.Context) {
+	s.sayGoodbye(ctx)
+
+	for _, fn := range s.stopFns {
+		fn(ctx)
+	}
+}
+
+// sayGoodbye sends the farewell to every session and deletes the session.
+func (s *Service) sayGoodbye(ctx context.Context) {
 	list, err := ops.ListSessions(ctx, s.backends)
 	if err != nil {
 		log.WithError(ctx, err).Error("Failed to get sessions")
@@ -88,10 +125,6 @@ func (s *Service) Shutdown(ctx context.Context) {
 
 			continue
 		}
-	}
-
-	for _, fn := range s.stopFns {
-		fn(ctx)
 	}
 }
 
@@ -121,6 +154,7 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 	handler.Handle(s.helpHandler(), th.CommandEqual(CmdHelp))
 	handler.Handle(s.startHandler(ctx), th.CommandEqual(CmdStart))
 	handler.Handle(s.newTripHandler(), th.CommandEqual(CmdNewTrip))
+	handler.Handle(s.cancelHandler(), th.CommandEqual(CmdCancel))
 	handler.Handle(s.tripsHandler(), th.CommandEqual(CmdTrips))
 	handler.Handle(s.subscribeHandler(), th.CommandEqual(CmdSubscribe))
 	handler.Handle(s.unsubscribeHandler(), th.CommandEqual(CmdUnsubscribe))

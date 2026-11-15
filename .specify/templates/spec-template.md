@@ -107,8 +107,9 @@
 - [For changed dialogs: `/start`, `/help`, or another command in the middle
   of a step; an unexpected message or empty text during a step; the user
   answering an old prompt. Mark unrelated cases N/A.]
-- [For changed input: empty or very long names and descriptions, dates in the
-  past, free-text dates instead of the keyboard options.]
+- [For changed input: empty or very long names and descriptions, dates or
+  times in the past, text that is not a date (`DD.MM.YYYY`) or a time
+  (`HH:MM`), dates around midnight in `RIDE_ANNOUNCER_TIMEZONE`.]
 - [For changed trips: a trip that does not exist or was deleted, a user who is
   not the trip's creator, several trips by the same user.]
 - [For changed chats: the same user in a private chat and a group, the bot

@@ -1,7 +1,7 @@
 FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine3.24 AS builder
 
 LABEL maintainer="oleg.balunenko@gmail.com"
-LABEL org.opencontainers.image.source="https://github.com/obalunenko/scrum-report"
+LABEL org.opencontainers.image.source="https://github.com/obalunenko/telegram-ride-announcer-bot"
 LABEL stage="base"
 
 WORKDIR /src

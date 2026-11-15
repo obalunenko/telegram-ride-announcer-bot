@@ -10,6 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	// Embed the time zone database: the Docker image has none.
+	_ "time/tzdata"
+
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
 
@@ -24,6 +27,15 @@ import (
 
 const (
 	envTGAPIToken = "RIDE_ANNOUNCER_TELEGRAM_TOKEN"
+	envLogLevel   = "RIDE_ANNOUNCER_LOG_LEVEL"
+	envLogFormat  = "RIDE_ANNOUNCER_LOG_FORMAT"
+	envTimezone   = "RIDE_ANNOUNCER_TIMEZONE"
+)
+
+const (
+	defaultLogLevel  = "INFO"
+	defaultLogFormat = "text"
+	defaultTimezone  = "UTC"
 )
 
 // shutdownTimeout limits the time the bot has to say bye and finish the updates in flight.
@@ -31,18 +43,20 @@ const shutdownTimeout = 10 * time.Second
 
 const (
 	// BotName is a Command of the bot.
-	botName        = "Ride Announcer Bot"
-	botDescription = "Bot for scheduling and announcing planned bicycle trips in chat groups."
+	botName             = "Ride Announcer Bot"
+	botDescription      = "Bot for scheduling and announcing planned bicycle trips in chat groups."
+	botShortDescription = "Plan bike trips and announce them in your chats."
 )
 
 var commands = telegram.Commands{
 	telegram.NewCommand(service.CmdStart, "start using the bot", true),
 	telegram.NewCommand(service.CmdHelp, "show help", true),
 	telegram.NewCommand(service.CmdNewTrip, "create new trip", true),
+	telegram.NewCommand(service.CmdCancel, "cancel the trip you are creating", true),
 	telegram.NewCommand(service.CmdTrips, "show all trips", false),
 	telegram.NewCommand(service.CmdSubscribe, "subscribe to a trip", false),
 	telegram.NewCommand(service.CmdUnsubscribe, "unsubscribe from a trip", false),
-	telegram.NewCommand(service.CmdMyTrips, "show trips you've created", true),
+	telegram.NewCommand(service.CmdMyTrips, "show your upcoming trips", true),
 	telegram.NewCommand(service.CmdSubscribed, "show trips you've subscribed to", false),
 }
 
@@ -68,8 +82,8 @@ func main() {
 
 	log.Init(ctx, log.Params{
 		Writer: os.Stdout,
-		Level:  "DEBUG",
-		Format: "text",
+		Level:  getenv.EnvOrDefault(envLogLevel, defaultLogLevel),
+		Format: getenv.EnvOrDefault(envLogFormat, defaultLogFormat),
 	})
 
 	ctx = log.ContextWithLogger(ctx, log.FromContext(ctx))
@@ -84,6 +98,7 @@ func main() {
 	opts := []telegram.BotOption{
 		telegram.WithCommands(commands),
 		telegram.WithDescription(botDescription),
+		telegram.WithShortDescription(botShortDescription),
 		telegram.WithName(botName),
 	}
 
@@ -109,7 +124,12 @@ func main() {
 		log.WithError(ctx, err).Fatal("failed to create backends for service")
 	}
 
-	svc, err := service.New(bot, b)
+	loc, err := time.LoadLocation(getenv.EnvOrDefault(envTimezone, defaultTimezone))
+	if err != nil {
+		log.WithError(ctx, err).Fatal("failed to load time zone")
+	}
+
+	svc, err := service.New(bot, b, service.WithLocation(loc))
 	if err != nil {
 		log.WithError(ctx, err).Fatal("failed to create service")
 	}
