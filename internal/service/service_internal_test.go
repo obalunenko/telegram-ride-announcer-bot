@@ -199,12 +199,27 @@ func newTestService(t *testing.T, repos *testRepos) (*Service, *telegramtest.Ser
 
 	api := telegramtest.NewServer(t)
 
-	bot, err := telegram.NewBot(context.Background(), telegramtest.Token,
-		telegram.WithClientOptions(api.ClientOptions()...))
+	// telegram.NewBot calls getMe, getMyDescription, and getMyCommands.
+	return newTestServiceWithAPI(t, repos, api, 3)
+}
+
+// newTestServiceWithAPI returns a Service with the bot options that talks to the api.
+// It skips the startupCalls Bot API calls that telegram.NewBot makes.
+func newTestServiceWithAPI(
+	t *testing.T,
+	repos *testRepos,
+	api *telegramtest.Server,
+	startupCalls int,
+	opts ...telegram.BotOption,
+) (*Service, *telegramtest.Server) {
+	t.Helper()
+
+	opts = append([]telegram.BotOption{telegram.WithClientOptions(api.ClientOptions()...)}, opts...)
+
+	bot, err := telegram.NewBot(context.Background(), telegramtest.Token, opts...)
 	require.NoError(t, err)
 
-	// Skip the calls made by telegram.NewBot: getMe, getMyDescription, getMyCommands.
-	for range 3 {
+	for range startupCalls {
 		api.NextRequest(t)
 	}
 
@@ -364,6 +379,30 @@ func TestService_CancelTrip(t *testing.T) {
 	assertState(t, repos, models.StateNewTrip)
 
 	assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_HelpListsEnabledCommands(t *testing.T) {
+	ctx := context.Background()
+
+	api := telegramtest.NewServer(t)
+	// Telegram keeps its old menu; /help must still list the commands declared in the code.
+	api.Fail("setMyCommands")
+
+	// telegram.NewBot calls getMe, getMyDescription, getMyCommands, and setMyCommands.
+	svc, _ := newTestServiceWithAPI(t, newTestRepos(), api, 4, telegram.WithCommands(telegram.Commands{
+		telegram.NewCommand(CmdStart, "start using the bot", true),
+		telegram.NewCommand(CmdHelp, "show help", true),
+		telegram.NewCommand(CmdTrips, "show all trips", false),
+	}))
+
+	svc.Start(ctx)
+
+	help := replyTo(t, api, "/help")
+	assert.Contains(t, help, "\t/start - start using the bot\n\t/help - show help\n")
+	assert.NotContains(t, help, "/trips")
 
 	svc.Shutdown(ctx)
 	assert.Equal(t, msgFarewell, nextMessage(t, api))

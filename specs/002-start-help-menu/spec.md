@@ -18,6 +18,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-004 `/help` lists the enabled commands declared in the code.
 
+**Bugfix**: 2026-11-15 — BUG-005 A service test checks the `/help` command list.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (bot name, description,
@@ -218,6 +220,8 @@ reading the current profile.
   already matches the code.
 - **SC-004**: Every unknown command, free-text message outside a dialog, and
   stub command gets a reply pointing to `/help`.
+- **SC-005**: `/help` lists exactly the enabled commands in their declared
+  order, even when the menu update failed (BUG-005).
 
 ## Assumptions
 
@@ -241,7 +245,7 @@ Found during migration; none of them is fixed by this spec.
    Fixed by BUG-003.
 4. ~~`/help` lists `bot.Commands()`, which can be stale when the menu update
    failed on startup.~~ Fixed by BUG-004.
-5. No service-level test checks that `/help` lists exactly the enabled
-   commands; tests check only the header.
+5. ~~No service-level test checks that `/help` lists exactly the enabled
+   commands; tests check only the header.~~ Fixed by BUG-005.
 6. Minor: the bot username appears without `@`; only the default language
    is synced; the short description is not managed.

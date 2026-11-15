@@ -16,6 +16,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
+
 ## Summary
 
 Commands are `Cmd*` constants in `internal/service/service.go`, registered
@@ -37,7 +39,7 @@ commands get fallback replies.
 
 **Storage**: N/A beyond saving the session state (001).
 
-**Testing**: `TestService_Commands`, `TestService_PublishTrip`,
+**Testing**: `TestService_HelpListsEnabledCommands` (BUG-005), `TestService_Commands`, `TestService_PublishTrip`,
 `TestHandlers_Failure`, `TestHandlers_NoSession` in `internal/service/`;
 `TestCommand`, `TestCommands_EnabledCommands`, `TestNewBot`,
 `TestNewBot_Error`, `TestNewBot_UpdateOnStart` in
