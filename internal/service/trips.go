@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Service) newTripHandler() th.Handler {
-	return func(_ *tgbotapi.Bot, update tgbotapi.Update) {
+	return func(_ *th.Context, update tgbotapi.Update) error {
 		ctx := update.Context()
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdNewTrip))
@@ -20,7 +20,7 @@ func (s *Service) newTripHandler() th.Handler {
 		if sess == nil {
 			log.Error(ctx, "Session is nil")
 
-			return
+			return nil
 		}
 
 		tripStates := []models.State{
@@ -39,12 +39,14 @@ func (s *Service) newTripHandler() th.Handler {
 			if err := s.saveSession(ctx, sess); err != nil {
 				log.WithError(ctx, err).Error("Failed to save session")
 
-				return
+				return nil
 			}
 		}
 
 		if err := s.createTrip(ctx, update); err != nil {
 			log.WithError(ctx, err).Error("Failed to create trip")
 		}
+
+		return nil
 	}
 }

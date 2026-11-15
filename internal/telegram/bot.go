@@ -129,19 +129,19 @@ func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) 
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
 
-	self, err := client.GetMe()
+	self, err := client.GetMe(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot info: %w", err)
 	}
 
-	description, err := client.GetMyDescription(&tgbotapi.GetMyDescriptionParams{
+	description, err := client.GetMyDescription(ctx, &tgbotapi.GetMyDescriptionParams{
 		LanguageCode: "",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot description: %w", err)
 	}
 
-	registedCmds, err := client.GetMyCommands(&tgbotapi.GetMyCommandsParams{})
+	registedCmds, err := client.GetMyCommands(ctx, &tgbotapi.GetMyCommandsParams{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot commands: %w", err)
 	}
@@ -192,7 +192,7 @@ func (b *Bot) maybeUpdateBotName(ctx context.Context, botName string) {
 
 	log.Info(ctx, "Updating bot name")
 
-	err := b.Client().SetMyName(&tgbotapi.SetMyNameParams{
+	err := b.Client().SetMyName(ctx, &tgbotapi.SetMyNameParams{
 		Name: botName,
 	})
 	if err != nil {
@@ -215,7 +215,7 @@ func (b *Bot) maybeUpdateDescriptionBot(ctx context.Context, botDescription stri
 
 	log.Info(ctx, "Updating bot description")
 
-	err := b.Client().SetMyDescription(&tgbotapi.SetMyDescriptionParams{
+	err := b.Client().SetMyDescription(ctx, &tgbotapi.SetMyDescriptionParams{
 		Description: botDescription,
 	})
 	if err != nil {
@@ -255,7 +255,7 @@ func (b *Bot) maybeUpdateCommands(ctx context.Context, botCommands Commands) {
 
 	log.Info(ctx, "Updating bot commands")
 
-	err := b.Client().SetMyCommands(&tgbotapi.SetMyCommandsParams{
+	err := b.Client().SetMyCommands(ctx, &tgbotapi.SetMyCommandsParams{
 		Commands: enabled,
 	})
 	if err != nil {

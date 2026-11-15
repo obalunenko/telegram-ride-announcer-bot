@@ -21,7 +21,7 @@ func (s *Service) sendMessage(ctx context.Context, text string) {
 
 	msg := tu.Message(tu.ID(sess.ChatID), text)
 
-	_, err := s.bot.Client().SendMessage(msg)
+	_, err := s.bot.Client().SendMessage(ctx, msg)
 	if err != nil {
 		log.WithError(ctx, err).Error("Failed to send message")
 	}

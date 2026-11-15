@@ -1,6 +1,7 @@
 package telego
 
 import (
+	"context"
 	"fmt"
 
 	ta "github.com/mymmrac/telego/telegoapi"
@@ -36,40 +37,50 @@ type GetUpdatesParams struct {
 
 // Update types you want your bot to receive
 const (
-	MessageUpdates            = "message"
-	EditedMessageUpdates      = "edited_message"
-	ChannelPostUpdates        = "channel_post"
-	EditedChannelPostUpdates  = "edited_channel_post"
-	MessageReaction           = "message_reaction"
-	MessageReactionCount      = "message_reaction_count"
-	InlineQueryUpdates        = "inline_query"
-	ChosenInlineResultUpdates = "chosen_inline_result"
-	CallbackQueryUpdates      = "callback_query"
-	ShippingQueryUpdates      = "shipping_query"
-	PreCheckoutQueryUpdates   = "pre_checkout_query"
-	PollUpdates               = "poll"
-	PollAnswerUpdates         = "poll_answer"
-	MyChatMemberUpdates       = "my_chat_member"
-	ChatMemberUpdates         = "chat_member"
-	ChatJoinRequestUpdates    = "chat_join_request"
+	MessageUpdates                 = "message"
+	EditedMessageUpdates           = "edited_message"
+	ChannelPostUpdates             = "channel_post"
+	EditedChannelPostUpdates       = "edited_channel_post"
+	BusinessConnectionUpdates      = "business_connection"
+	BusinessMessageUpdates         = "business_message"
+	EditedBusinessMessageUpdates   = "edited_business_message"
+	DeletedBusinessMessagesUpdates = "deleted_business_messages"
+	GuestMessageUpdates            = "guest_message"
+	MessageReactionUpdates         = "message_reaction"
+	MessageReactionCountUpdates    = "message_reaction_count"
+	InlineQueryUpdates             = "inline_query"
+	ChosenInlineResultUpdates      = "chosen_inline_result"
+	CallbackQueryUpdates           = "callback_query"
+	WidgetQueryUpdates             = "widget_query"
+	SharedWidgetQueryUpdates       = "shared_widget_query"
+	ShippingQueryUpdates           = "shipping_query"
+	PreCheckoutQueryUpdates        = "pre_checkout_query"
+	PurchasedPaidMediaUpdates      = "purchased_paid_media"
+	PollUpdates                    = "poll"
+	PollAnswerUpdates              = "poll_answer"
+	MyChatMemberUpdates            = "my_chat_member"
+	ChatMemberUpdates              = "chat_member"
+	ChatJoinRequestUpdates         = "chat_join_request"
+	ChatBoostUpdates               = "chat_boost"
+	RemovedChatBoostUpdates        = "removed_chat_boost"
+	ManagedBot                     = "managed_bot"
 )
 
 // GetUpdates - Use this method to receive incoming updates using long polling (wiki
 // (https://en.wikipedia.org/wiki/Push_technology#Long_polling)). Returns an Array of Update
 // (https://core.telegram.org/bots/api#update) objects.
-func (b *Bot) GetUpdates(params *GetUpdatesParams) ([]Update, error) {
+func (b *Bot) GetUpdates(ctx context.Context, params *GetUpdatesParams) ([]Update, error) {
 	var updates []Update
-	err := b.performRequest("getUpdates", params, &updates)
+	err := b.performRequest(ctx, "getUpdates", params, &updates)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getUpdates(): %w", err)
+		return nil, fmt.Errorf("telego: getUpdates: %w", err)
 	}
-
 	return updates, nil
 }
 
 // SetWebhookParams - Represents parameters of setWebhook method.
 type SetWebhookParams struct {
-	// URL - HTTPS URL to send updates to. Use an empty string to remove webhook integration
+	// URL - HTTPS URL to send updates to. Use an empty string to remove webhook integration.
 	URL string `json:"url"`
 
 	// Certificate - Optional. Upload your public key certificate so that the root certificate in use can be
@@ -123,12 +134,11 @@ func (p *SetWebhookParams) fileParameters() map[string]ta.NamedReader {
 // If you'd like to make sure that the webhook was set by you, you can specify secret data in the parameter
 // secret_token. If specified, the request will contain a header “X-Telegram-Bot-Api-Secret-Token” with the
 // secret token as content.
-func (b *Bot) SetWebhook(params *SetWebhookParams) error {
-	err := b.performRequest("setWebhook", params)
+func (b *Bot) SetWebhook(ctx context.Context, params *SetWebhookParams) error {
+	err := b.performRequest(ctx, "setWebhook", params)
 	if err != nil {
-		return fmt.Errorf("telego: setWebhook(): %w", err)
+		return fmt.Errorf("telego: setWebhook: %w", err)
 	}
-
 	return nil
 }
 
@@ -140,37 +150,34 @@ type DeleteWebhookParams struct {
 
 // DeleteWebhook - Use this method to remove webhook integration if you decide to switch back to getUpdates
 // (https://core.telegram.org/bots/api#getupdates). Returns True on success.
-func (b *Bot) DeleteWebhook(params *DeleteWebhookParams) error {
-	err := b.performRequest("deleteWebhook", params)
+func (b *Bot) DeleteWebhook(ctx context.Context, params *DeleteWebhookParams) error {
+	err := b.performRequest(ctx, "deleteWebhook", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteWebhook(): %w", err)
+		return fmt.Errorf("telego: deleteWebhook: %w", err)
 	}
-
 	return nil
 }
 
 // GetWebhookInfo - Use this method to get current webhook status. Requires no parameters. On success,
 // returns a WebhookInfo (https://core.telegram.org/bots/api#webhookinfo) object. If the bot is using getUpdates
 // (https://core.telegram.org/bots/api#getupdates), will return an object with the URL field empty.
-func (b *Bot) GetWebhookInfo() (*WebhookInfo, error) {
+func (b *Bot) GetWebhookInfo(ctx context.Context) (*WebhookInfo, error) {
 	var webhookInfo *WebhookInfo
-	err := b.performRequest("getWebhookInfo", nil, &webhookInfo)
+	err := b.performRequest(ctx, "getWebhookInfo", nil, &webhookInfo)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getWebhookInfo(): %w", err)
+		return nil, fmt.Errorf("telego: getWebhookInfo: %w", err)
 	}
-
 	return webhookInfo, nil
 }
 
 // GetMe - A simple method for testing your bot's authentication token. Requires no parameters. Returns basic
 // information about the bot in form of a User (https://core.telegram.org/bots/api#user) object.
-func (b *Bot) GetMe() (*User, error) {
+func (b *Bot) GetMe(ctx context.Context) (*User, error) {
 	var user *User
-	err := b.performRequest("getMe", nil, &user)
+	err := b.performRequest(ctx, "getMe", nil, &user)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getMe(): %w", err)
+		return nil, fmt.Errorf("telego: getMe: %w", err)
 	}
-
 	return user, nil
 }
 
@@ -178,12 +185,11 @@ func (b *Bot) GetMe() (*User, error) {
 // must log out the bot before running it locally, otherwise there is no guarantee that the bot will receive
 // updates. After a successful call, you can immediately log in on a local server, but will not be able to log
 // in back to the cloud Bot API server for 10 minutes. Returns True on success. Requires no parameters.
-func (b *Bot) LogOut() error {
-	err := b.performRequest("logOut", nil)
+func (b *Bot) LogOut(ctx context.Context) error {
+	err := b.performRequest(ctx, "logOut", nil)
 	if err != nil {
-		return fmt.Errorf("telego: logOut(): %w", err)
+		return fmt.Errorf("telego: logOut: %w", err)
 	}
-
 	return nil
 }
 
@@ -191,12 +197,11 @@ func (b *Bot) LogOut() error {
 // need to delete the webhook before calling this method to ensure that the bot isn't launched again after
 // server restart. The method will return error 429 in the first 10 minutes after the bot is launched. Returns
 // True on success. Requires no parameters.
-func (b *Bot) Close() error {
-	err := b.performRequest("close", nil)
+func (b *Bot) Close(ctx context.Context) error {
+	err := b.performRequest(ctx, "close", nil)
 	if err != nil {
-		return fmt.Errorf("telego: close(): %w", err)
+		return fmt.Errorf("telego: close: %w", err)
 	}
-
 	return nil
 }
 
@@ -206,13 +211,22 @@ type SendMessageParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Text - Text of the message to be sent, 1-4096 characters after entities parsing
 	Text string `json:"text"`
@@ -237,12 +251,17 @@ type SendMessageParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -250,7 +269,7 @@ type SendMessageParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -263,29 +282,35 @@ const (
 
 // SendMessage - Use this method to send text messages. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendMessage(params *SendMessageParams) (*Message, error) {
+func (b *Bot) SendMessage(ctx context.Context, params *SendMessageParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendMessage", params, &message)
+	err := b.performRequest(ctx, "sendMessage", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendMessage(): %w", err)
+		return nil, fmt.Errorf("telego: sendMessage: %w", err)
 	}
-
 	return message, nil
 }
 
 // ForwardMessageParams - Represents parameters of forwardMessage method.
 type ForwardMessageParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
-	// FromChatID - Unique identifier for the chat where the original message was sent (or channel username in
-	// the format @channel_username)
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// forwarded; required if the message is forwarded to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// FromChatID - Unique identifier for the chat where the original message was sent (or username of the
+	// target bot, supergroup, or channel in the format @username)
 	FromChatID ChatID `json:"from_chat_id"`
+
+	// VideoStartTimestamp - Optional. New start timestamp for the forwarded video in the message
+	VideoStartTimestamp int `json:"video_start_timestamp,omitempty"`
 
 	// DisableNotification - Optional. Sends the message silently
 	// (https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
@@ -294,6 +319,14 @@ type ForwardMessageParams struct {
 	// ProtectContent - Optional. Protects the contents of the forwarded message from forwarding and saving
 	ProtectContent bool `json:"protect_content,omitempty"`
 
+	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; only
+	// available when forwarding to private chats
+	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
+
 	// MessageID - Message identifier in the chat specified in from_chat_id
 	MessageID int `json:"message_id"`
 }
@@ -301,28 +334,31 @@ type ForwardMessageParams struct {
 // ForwardMessage - Use this method to forward messages of any kind. Service messages and messages with
 // protected content can't be forwarded. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) ForwardMessage(params *ForwardMessageParams) (*Message, error) {
+func (b *Bot) ForwardMessage(ctx context.Context, params *ForwardMessageParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("forwardMessage", params, &message)
+	err := b.performRequest(ctx, "forwardMessage", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: forwardMessage(): %w", err)
+		return nil, fmt.Errorf("telego: forwardMessage: %w", err)
 	}
-
 	return message, nil
 }
 
 // ForwardMessagesParams - Represents parameters of forwardMessages method.
 type ForwardMessagesParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
-	// FromChatID - Unique identifier for the chat where the original messages were sent (or channel username in
-	// the format @channel_username)
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the messages will be
+	// forwarded; required if the messages are forwarded to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// FromChatID - Unique identifier for the chat where the original messages were sent (or username of the
+	// target bot, supergroup, or channel in the format @username)
 	FromChatID ChatID `json:"from_chat_id"`
 
 	// MessageIDs - A JSON-serialized list of 1-100 identifiers of messages in the chat from_chat_id to forward.
@@ -339,37 +375,43 @@ type ForwardMessagesParams struct {
 
 // ForwardMessages - Use this method to forward multiple messages of any kind. If some of the specified
 // messages can't be found or forwarded, they are skipped. Service messages and messages with protected content
-// can't be forwarded. Album grouping is kept for forwarded messages. On success, an array of MessageID
+// can't be forwarded. Album grouping is kept for forwarded messages. On success, an Array of MessageID
 // (https://core.telegram.org/bots/api#messageid) of the sent messages is returned.
-func (b *Bot) ForwardMessages(params *ForwardMessagesParams) ([]MessageID, error) {
+func (b *Bot) ForwardMessages(ctx context.Context, params *ForwardMessagesParams) ([]MessageID, error) {
 	var messageIDs []MessageID
-	err := b.performRequest("forwardMessages", params, &messageIDs)
+	err := b.performRequest(ctx, "forwardMessages", params, &messageIDs)
 	if err != nil {
-		return nil, fmt.Errorf("telego: forwardMessages(): %w", err)
+		return nil, fmt.Errorf("telego: forwardMessages: %w", err)
 	}
-
 	return messageIDs, nil
 }
 
 // CopyMessageParams - Represents parameters of copyMessage method.
 type CopyMessageParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
-	// FromChatID - Unique identifier for the chat where the original message was sent (or channel username in
-	// the format @channel_username)
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// FromChatID - Unique identifier for the chat where the original message was sent (or username of the
+	// target bot, supergroup, or channel in the format @username)
 	FromChatID ChatID `json:"from_chat_id"`
 
 	// MessageID - Message identifier in the chat specified in from_chat_id
 	MessageID int `json:"message_id"`
 
+	// VideoStartTimestamp - Optional. New start timestamp for the copied video in the message
+	VideoStartTimestamp int `json:"video_start_timestamp,omitempty"`
+
 	// Caption - Optional. New caption for media, 0-1024 characters after entities parsing. If not specified,
-	// the original caption is kept
+	// the original caption is kept.
 	Caption string `json:"caption,omitempty"`
 
 	// ParseMode - Optional. Mode for parsing entities in the new caption. See formatting options
@@ -380,8 +422,8 @@ type CopyMessageParams struct {
 	// which can be specified instead of parse_mode
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
 
-	// ShowCaptionAboveMedia - Optional. Pass True, if the caption must be shown above the message media.
-	// Ignored if a new caption isn't specified.
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the message media. Ignored
+	// if a new caption isn't specified.
 	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 
 	// DisableNotification - Optional. Sends the message silently
@@ -393,8 +435,17 @@ type CopyMessageParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
+
+	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; only
+	// available when copying to private chats
+	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -402,39 +453,42 @@ type CopyMessageParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
 // CopyMessage - Use this method to copy messages of any kind. Service messages, paid media messages,
-// giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz poll
-// (https://core.telegram.org/bots/api#poll) can be copied only if the value of the field correct_option_id is
-// known to the bot. The method is analogous to the method forwardMessage
+// giveaway messages, giveaway winners messages, invoice messages, and widget messages can't be copied. A quiz
+// poll (https://core.telegram.org/bots/api#poll) can be copied only if the value of the field
+// correct_option_ids is known to the bot. The method is analogous to the method forwardMessage
 // (https://core.telegram.org/bots/api#forwardmessage), but the copied message doesn't have a link to the
 // original message. Returns the MessageID (https://core.telegram.org/bots/api#messageid) of the sent message on
 // success.
-func (b *Bot) CopyMessage(params *CopyMessageParams) (*MessageID, error) {
+func (b *Bot) CopyMessage(ctx context.Context, params *CopyMessageParams) (*MessageID, error) {
 	var messageID *MessageID
-	err := b.performRequest("copyMessage", params, &messageID)
+	err := b.performRequest(ctx, "copyMessage", params, &messageID)
 	if err != nil {
-		return nil, fmt.Errorf("telego: copyMessage(): %w", err)
+		return nil, fmt.Errorf("telego: copyMessage: %w", err)
 	}
-
 	return messageID, nil
 }
 
 // CopyMessagesParams - Represents parameters of copyMessages method.
 type CopyMessagesParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
-	// FromChatID - Unique identifier for the chat where the original messages were sent (or channel username in
-	// the format @channel_username)
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the messages will be
+	// sent; required if the messages are sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// FromChatID - Unique identifier for the chat where the original messages were sent (or username of the
+	// target bot, supergroup, or channel in the format @username)
 	FromChatID ChatID `json:"from_chat_id"`
 
 	// MessageIDs - A JSON-serialized list of 1-100 identifiers of messages in the chat from_chat_id to copy.
@@ -454,18 +508,18 @@ type CopyMessagesParams struct {
 
 // CopyMessages - Use this method to copy messages of any kind. If some of the specified messages can't be
 // found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners
-// messages, and invoice messages can't be copied. A quiz poll (https://core.telegram.org/bots/api#poll) can be
-// copied only if the value of the field correct_option_id is known to the bot. The method is analogous to the
-// method forwardMessages (https://core.telegram.org/bots/api#forwardmessages), but the copied messages don't
-// have a link to the original message. Album grouping is kept for copied messages. On success, an array of
-// MessageID (https://core.telegram.org/bots/api#messageid) of the sent messages is returned.
-func (b *Bot) CopyMessages(params *CopyMessagesParams) ([]MessageID, error) {
+// messages, invoice messages, and widget messages can't be copied. A quiz poll
+// (https://core.telegram.org/bots/api#poll) can be copied only if the value of the field correct_option_ids is
+// known to the bot. The method is analogous to the method forwardMessages
+// (https://core.telegram.org/bots/api#forwardmessages), but the copied messages don't have a link to the
+// original message. Album grouping is kept for copied messages. On success, an Array of MessageID
+// (https://core.telegram.org/bots/api#messageid) of the sent messages is returned.
+func (b *Bot) CopyMessages(ctx context.Context, params *CopyMessagesParams) ([]MessageID, error) {
 	var messageIDs []MessageID
-	err := b.performRequest("copyMessages", params, &messageIDs)
+	err := b.performRequest(ctx, "copyMessages", params, &messageIDs)
 	if err != nil {
-		return nil, fmt.Errorf("telego: copyMessages(): %w", err)
+		return nil, fmt.Errorf("telego: copyMessages: %w", err)
 	}
-
 	return messageIDs, nil
 }
 
@@ -475,13 +529,22 @@ type SendPhotoParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Photo - Photo to send. Pass a file_id as String to send a photo that exists on the Telegram servers
 	// (recommended), pass an HTTP URL as a String for Telegram to get a photo from the Internet, or upload a new
@@ -502,7 +565,7 @@ type SendPhotoParams struct {
 	// can be specified instead of parse_mode
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
 
-	// ShowCaptionAboveMedia - Optional. Pass True, if the caption must be shown above the message media
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the message media
 	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 
 	// HasSpoiler - Optional. Pass True if the photo needs to be covered with a spoiler animation
@@ -517,12 +580,17 @@ type SendPhotoParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -530,7 +598,7 @@ type SendPhotoParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -542,13 +610,113 @@ func (p *SendPhotoParams) fileParameters() map[string]ta.NamedReader {
 
 // SendPhoto - Use this method to send photos. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendPhoto(params *SendPhotoParams) (*Message, error) {
+func (b *Bot) SendPhoto(ctx context.Context, params *SendPhotoParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendPhoto", params, &message)
+	err := b.performRequest(ctx, "sendPhoto", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendPhoto(): %w", err)
+		return nil, fmt.Errorf("telego: sendPhoto: %w", err)
 	}
+	return message, nil
+}
 
+// SendLivePhotoParams - Represents parameters of sendLivePhoto method.
+type SendLivePhotoParams struct {
+	// BusinessConnectionID - Optional. Unique identifier of the business connection on behalf of which the
+	// message will be sent
+	BusinessConnectionID string `json:"business_connection_id,omitempty"`
+
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
+
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
+	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
+
+	// LivePhoto - Live photo video to send. The video must be no longer than 10 seconds and must not exceed 10
+	// MB in size. Pass a file_id as String to send a video that exists on the Telegram servers (recommended) or
+	// upload a new video using multipart/form-data. More information on Sending Files »
+	// (https://core.telegram.org/bots/api#sending-files). Sending live photos by a URL is currently unsupported.
+	LivePhoto InputFile `json:"live_photo"`
+
+	// Photo - The static photo to send. Pass a file_id as String to send a photo that exists on the Telegram
+	// servers (recommended) or upload a new video using multipart/form-data. More information on Sending Files »
+	// (https://core.telegram.org/bots/api#sending-files). Sending live photos by a URL is currently unsupported.
+	Photo InputFile `json:"photo"`
+
+	// Caption - Optional. Video caption (may also be used when resending videos by file_id), 0-1024 characters
+	// after entities parsing
+	Caption string `json:"caption,omitempty"`
+
+	// ParseMode - Optional. Mode for parsing entities in the video caption. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// CaptionEntities - Optional. A JSON-serialized list of special entities that appear in the caption, which
+	// can be specified instead of parse_mode
+	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the message media
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
+
+	// HasSpoiler - Optional. Pass True if the video needs to be covered with a spoiler animation
+	HasSpoiler bool `json:"has_spoiler,omitempty"`
+
+	// DisableNotification - Optional. Sends the message silently
+	// (https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
+	DisableNotification bool `json:"disable_notification,omitempty"`
+
+	// ProtectContent - Optional. Protects the contents of the sent message from forwarding and saving
+	ProtectContent bool `json:"protect_content,omitempty"`
+
+	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
+	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
+	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
+
+	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
+	// private chats only
+	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
+
+	// ReplyParameters - Optional. Description of the message to reply to
+	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
+
+	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
+	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
+	// reply from the user.
+	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
+}
+
+func (p *SendLivePhotoParams) fileParameters() map[string]ta.NamedReader {
+	return map[string]ta.NamedReader{
+		"live_photo": p.LivePhoto.File,
+		"photo":      p.Photo.File,
+	}
+}
+
+// SendLivePhoto - Use this method to send live photos. On success, the sent Message
+// (https://core.telegram.org/bots/api#message) is returned.
+func (b *Bot) SendLivePhoto(ctx context.Context, params *SendLivePhotoParams) (*Message, error) {
+	var message *Message
+	err := b.performRequest(ctx, "sendLivePhoto", params, &message)
+	if err != nil {
+		return nil, fmt.Errorf("telego: sendLivePhoto: %w", err)
+	}
 	return message, nil
 }
 
@@ -558,13 +726,22 @@ type SendAudioParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Audio - Audio file to send. Pass a file_id as String to send an audio file that exists on the Telegram
 	// servers (recommended), pass an HTTP URL as a String for Telegram to get an audio file from the Internet, or
@@ -609,12 +786,17 @@ type SendAudioParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -622,7 +804,7 @@ type SendAudioParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -642,13 +824,12 @@ func (p *SendAudioParams) fileParameters() map[string]ta.NamedReader {
 // (https://core.telegram.org/bots/api#message) is returned. Bots can currently send audio files of up to 50 MB
 // in size, this limit may be changed in the future.
 // For sending voice messages, use the sendVoice (https://core.telegram.org/bots/api#sendvoice) method instead.
-func (b *Bot) SendAudio(params *SendAudioParams) (*Message, error) {
+func (b *Bot) SendAudio(ctx context.Context, params *SendAudioParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendAudio", params, &message)
+	err := b.performRequest(ctx, "sendAudio", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendAudio(): %w", err)
+		return nil, fmt.Errorf("telego: sendAudio: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -658,13 +839,22 @@ type SendDocumentParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Document - File to send. Pass a file_id as String to send a file that exists on the Telegram servers
 	// (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one
@@ -705,12 +895,17 @@ type SendDocumentParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -718,7 +913,7 @@ type SendDocumentParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -736,13 +931,12 @@ func (p *SendDocumentParams) fileParameters() map[string]ta.NamedReader {
 // SendDocument - Use this method to send general files. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned. Bots can currently send files of any type of up to
 // 50 MB in size, this limit may be changed in the future.
-func (b *Bot) SendDocument(params *SendDocumentParams) (*Message, error) {
+func (b *Bot) SendDocument(ctx context.Context, params *SendDocumentParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendDocument", params, &message)
+	err := b.performRequest(ctx, "sendDocument", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendDocument(): %w", err)
+		return nil, fmt.Errorf("telego: sendDocument: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -752,13 +946,22 @@ type SendVideoParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Video - Video to send. Pass a file_id as String to send a video that exists on the Telegram servers
 	// (recommended), pass an HTTP URL as a String for Telegram to get a video from the Internet, or upload a new
@@ -783,6 +986,15 @@ type SendVideoParams struct {
 	// <file_attach_name>. More information on Sending Files » (https://core.telegram.org/bots/api#sending-files)
 	Thumbnail *InputFile `json:"thumbnail,omitempty"`
 
+	// Cover - Optional. Cover for the video in the message. Pass a file_id to send a file that exists on the
+	// Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass
+	// “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name>
+	// name. More information on Sending Files » (https://core.telegram.org/bots/api#sending-files)
+	Cover *InputFile `json:"cover,omitempty"`
+
+	// StartTimestamp - Optional. Start timestamp for the video in the message
+	StartTimestamp int `json:"start_timestamp,omitempty"`
+
 	// Caption - Optional. Video caption (may also be used when resending videos by file_id), 0-1024 characters
 	// after entities parsing
 	Caption string `json:"caption,omitempty"`
@@ -795,7 +1007,7 @@ type SendVideoParams struct {
 	// can be specified instead of parse_mode
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
 
-	// ShowCaptionAboveMedia - Optional. Pass True, if the caption must be shown above the message media
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the message media
 	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 
 	// HasSpoiler - Optional. Pass True if the video needs to be covered with a spoiler animation
@@ -813,12 +1025,17 @@ type SendVideoParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -826,7 +1043,7 @@ type SendVideoParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -837,6 +1054,9 @@ func (p *SendVideoParams) fileParameters() map[string]ta.NamedReader {
 	if p.Thumbnail != nil {
 		fp["thumbnail"] = p.Thumbnail.File
 	}
+	if p.Cover != nil {
+		fp["cover"] = p.Cover.File
+	}
 
 	return fp
 }
@@ -845,13 +1065,12 @@ func (p *SendVideoParams) fileParameters() map[string]ta.NamedReader {
 // be sent as Document (https://core.telegram.org/bots/api#document)). On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned. Bots can currently send video files of up to 50 MB
 // in size, this limit may be changed in the future.
-func (b *Bot) SendVideo(params *SendVideoParams) (*Message, error) {
+func (b *Bot) SendVideo(ctx context.Context, params *SendVideoParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendVideo", params, &message)
+	err := b.performRequest(ctx, "sendVideo", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendVideo(): %w", err)
+		return nil, fmt.Errorf("telego: sendVideo: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -861,13 +1080,22 @@ type SendAnimationParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Animation - Animation to send. Pass a file_id as String to send an animation that exists on the Telegram
 	// servers (recommended), pass an HTTP URL as a String for Telegram to get an animation from the Internet, or
@@ -904,7 +1132,7 @@ type SendAnimationParams struct {
 	// can be specified instead of parse_mode
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
 
-	// ShowCaptionAboveMedia - Optional. Pass True, if the caption must be shown above the message media
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the message media
 	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 
 	// HasSpoiler - Optional. Pass True if the animation needs to be covered with a spoiler animation
@@ -919,12 +1147,17 @@ type SendAnimationParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -932,7 +1165,7 @@ type SendAnimationParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -950,13 +1183,12 @@ func (p *SendAnimationParams) fileParameters() map[string]ta.NamedReader {
 // SendAnimation - Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without sound). On
 // success, the sent Message (https://core.telegram.org/bots/api#message) is returned. Bots can currently send
 // animation files of up to 50 MB in size, this limit may be changed in the future.
-func (b *Bot) SendAnimation(params *SendAnimationParams) (*Message, error) {
+func (b *Bot) SendAnimation(ctx context.Context, params *SendAnimationParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendAnimation", params, &message)
+	err := b.performRequest(ctx, "sendAnimation", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendAnimation(): %w", err)
+		return nil, fmt.Errorf("telego: sendAnimation: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -966,13 +1198,22 @@ type SendVoiceParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Voice - Audio file to send. Pass a file_id as String to send a file that exists on the Telegram servers
 	// (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one
@@ -1003,12 +1244,17 @@ type SendVoiceParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -1016,7 +1262,7 @@ type SendVoiceParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -1032,13 +1278,12 @@ func (p *SendVoiceParams) fileParameters() map[string]ta.NamedReader {
 // Document (https://core.telegram.org/bots/api#document)). On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned. Bots can currently send voice messages of up to 50
 // MB in size, this limit may be changed in the future.
-func (b *Bot) SendVoice(params *SendVoiceParams) (*Message, error) {
+func (b *Bot) SendVoice(ctx context.Context, params *SendVoiceParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendVoice", params, &message)
+	err := b.performRequest(ctx, "sendVoice", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendVoice(): %w", err)
+		return nil, fmt.Errorf("telego: sendVoice: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -1048,17 +1293,26 @@ type SendVideoNoteParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// VideoNote - Video note to send. Pass a file_id as String to send a video note that exists on the Telegram
 	// servers (recommended) or upload a new video using multipart/form-data. More information on Sending Files »
-	// (https://core.telegram.org/bots/api#sending-files). Sending video notes by a URL is currently unsupported
+	// (https://core.telegram.org/bots/api#sending-files). Sending video notes by a URL is currently unsupported.
 	VideoNote InputFile `json:"video_note"`
 
 	// Duration - Optional. Duration of sent video in seconds
@@ -1084,12 +1338,17 @@ type SendVideoNoteParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -1097,7 +1356,7 @@ type SendVideoNoteParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -1112,16 +1371,173 @@ func (p *SendVideoNoteParams) fileParameters() map[string]ta.NamedReader {
 	return fp
 }
 
-// SendVideoNote - As of v.4.0 (https://telegram.org/blog/video-messages-and-telescope), Telegram clients
-// support rounded square MPEG4 videos of up to 1 minute long. Use this method to send video messages. On
-// success, the sent Message (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendVideoNote(params *SendVideoNoteParams) (*Message, error) {
+// SendVideoNote - Use this method to send a rounded square MPEG4 video of up to 1 minute long. On success,
+// the sent Message (https://core.telegram.org/bots/api#message) is returned.
+func (b *Bot) SendVideoNote(ctx context.Context, params *SendVideoNoteParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendVideoNote", params, &message)
+	err := b.performRequest(ctx, "sendVideoNote", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendVideoNote(): %w", err)
+		return nil, fmt.Errorf("telego: sendVideoNote: %w", err)
 	}
+	return message, nil
+}
 
+// SendWidgetParams - Represents parameters of sendWidget method.
+type SendWidgetParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
+	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// HTML - HTML code of the widget, 1-32768 bytes. The code must not exceed 4096 bytes when compressed by
+	// zlib with the maximum compression level.
+	HTML string `json:"html"`
+
+	// Width - Optional. Width of the widget in logical pixels; omit if the widget must occupy the whole width
+	// of the message bubble. The width is clamped by the app to the range from 200 to the maximum width of the
+	// message bubble.
+	Width int `json:"width,omitempty"`
+
+	// Height - Optional. Height of the widget in logical pixels; omit if the height of the widget isn't fixed.
+	// The height is clamped by the app to the range 50-600.
+	Height int `json:"height,omitempty"`
+
+	// PublicData - Optional. Public data of the widget, 0-1024 bytes, which will be available wherever the
+	// widget is shown. If the widget is shared, then all messages with it will have the same public data.
+	PublicData string `json:"public_data,omitempty"`
+
+	// ChatData - Optional. Data of the widget, which is specific to the message, 0-1024 bytes
+	ChatData string `json:"chat_data,omitempty"`
+
+	// Caption - Optional. Widget caption, 0-1024 characters after entities parsing
+	Caption string `json:"caption,omitempty"`
+
+	// ParseMode - Optional. Mode for parsing entities in the widget caption. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// CaptionEntities - Optional. A JSON-serialized list of special entities that appear in the caption, which
+	// can be specified instead of parse_mode
+	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the widget
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
+
+	// AllowQueries - Optional. Pass True to allow the widget to send queries to the bot
+	AllowQueries bool `json:"allow_queries,omitempty"`
+
+	// IsShared - Optional. Pass True to create a shared widget, which can be sent again using the method
+	// sendSharedWidget (https://core.telegram.org/bots/api#sendsharedwidget)
+	IsShared bool `json:"is_shared,omitempty"`
+
+	// DisableNotification - Optional. Sends the message silently
+	// (https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
+	DisableNotification bool `json:"disable_notification,omitempty"`
+
+	// ProtectContent - Optional. Protects the contents of the sent message from forwarding and saving
+	ProtectContent bool `json:"protect_content,omitempty"`
+
+	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
+	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
+	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
+
+	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
+	// private chats only
+	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// ReplyParameters - Optional. Description of the message to reply to
+	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
+
+	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
+	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
+	// reply from the user.
+	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
+}
+
+// SendWidget - Use this method to send a message with an HTML widget
+// (https://core.telegram.org/bots/widgets). Currently, in the production environment, widgets can be sent only
+// to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On
+// success, the sent Message (https://core.telegram.org/bots/api#message) is returned.
+func (b *Bot) SendWidget(ctx context.Context, params *SendWidgetParams) (*Message, error) {
+	var message *Message
+	err := b.performRequest(ctx, "sendWidget", params, &message)
+	if err != nil {
+		return nil, fmt.Errorf("telego: sendWidget: %w", err)
+	}
+	return message, nil
+}
+
+// SendSharedWidgetParams - Represents parameters of sendSharedWidget method.
+type SendSharedWidgetParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
+	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// WidgetID - Unique identifier of the shared widget
+	WidgetID string `json:"widget_id"`
+
+	// ChatData - Optional. Data of the widget, which is specific to the message, 0-1024 bytes
+	ChatData string `json:"chat_data,omitempty"`
+
+	// Caption - Optional. Widget caption, 0-1024 characters after entities parsing
+	Caption string `json:"caption,omitempty"`
+
+	// ParseMode - Optional. Mode for parsing entities in the widget caption. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// CaptionEntities - Optional. A JSON-serialized list of special entities that appear in the caption, which
+	// can be specified instead of parse_mode
+	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the widget
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
+
+	// DisableNotification - Optional. Sends the message silently
+	// (https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
+	DisableNotification bool `json:"disable_notification,omitempty"`
+
+	// ProtectContent - Optional. Protects the contents of the sent message from forwarding and saving
+	ProtectContent bool `json:"protect_content,omitempty"`
+
+	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
+	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
+	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
+
+	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
+	// private chats only
+	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// ReplyParameters - Optional. Description of the message to reply to
+	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
+
+	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
+	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
+	// reply from the user.
+	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
+}
+
+// SendSharedWidget - Use this method to send again a shared widget created by the bot. Currently, in the
+// production environment, widgets can be sent only to private chats, and sent widgets automatically have
+// protected content and therefore can't be forwarded. On success, the sent Message
+// (https://core.telegram.org/bots/api#message) is returned.
+func (b *Bot) SendSharedWidget(ctx context.Context, params *SendSharedWidgetParams) (*Message, error) {
+	var message *Message
+	err := b.performRequest(ctx, "sendSharedWidget", params, &message)
+	if err != nil {
+		return nil, fmt.Errorf("telego: sendSharedWidget: %w", err)
+	}
 	return message, nil
 }
 
@@ -1131,15 +1547,23 @@ type SendPaidMediaParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username). If the chat is a channel, all Telegram Star proceeds from this media will be credited to
-	// the chat's balance. Otherwise, they will be credited to the bot's balance.
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username. If the chat is a channel, all Telegram Star proceeds from this media will be credited
+	// to the chat's balance. Otherwise, they will be credited to the bot's balance.
 	ChatID ChatID `json:"chat_id"`
 
-	// StarCount - The number of Telegram Stars that must be paid to buy access to the media; 1-2500
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
+	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// StarCount - The number of Telegram Stars that must be paid to buy access to the media; 1-25000
 	StarCount int `json:"star_count"`
 
-	// Media - A JSON-serialized array describing the media to be sent; up to 10 items
+	// Media - A JSON-serialized Array describing the media to be sent; up to 10 items
 	Media []InputPaidMedia `json:"media"`
 
 	// Payload - Optional. Bot-defined paid media payload, 0-128 bytes. This will not be displayed to the user,
@@ -1157,7 +1581,7 @@ type SendPaidMediaParams struct {
 	// can be specified instead of parse_mode
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
 
-	// ShowCaptionAboveMedia - Optional. Pass True, if the caption must be shown above the message media
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the message media
 	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 
 	// DisableNotification - Optional. Sends the message silently
@@ -1169,8 +1593,13 @@ type SendPaidMediaParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -1178,19 +1607,18 @@ type SendPaidMediaParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
 // SendPaidMedia - Use this method to send paid media. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendPaidMedia(params *SendPaidMediaParams) (*Message, error) {
+func (b *Bot) SendPaidMedia(ctx context.Context, params *SendPaidMediaParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendPaidMedia", params, &message)
+	err := b.performRequest(ctx, "sendPaidMedia", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendPaidMedia(): %w", err)
+		return nil, fmt.Errorf("telego: sendPaidMedia: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -1200,15 +1628,19 @@ type SendMediaGroupParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
-	// Media - A JSON-serialized array describing messages to be sent, must include 2-10 items
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the messages will be
+	// sent; required if the messages are sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// Media - A JSON-serialized Array describing messages to be sent, must include 2-10 items
 	Media []InputMedia `json:"media"`
 
 	// DisableNotification - Optional. Sends messages silently
@@ -1220,7 +1652,7 @@ type SendMediaGroupParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
@@ -1246,16 +1678,15 @@ func (p *SendMediaGroupParams) fileParameters() map[string]ta.NamedReader {
 	return fp
 }
 
-// SendMediaGroup - Use this method to send a group of photos, videos, documents or audios as an album.
-// Documents and audio files can be only grouped in an album with messages of the same type. On success, an
-// array of Messages (https://core.telegram.org/bots/api#message) that were sent is returned.
-func (b *Bot) SendMediaGroup(params *SendMediaGroupParams) ([]Message, error) {
+// SendMediaGroup - Use this method to send a group of photos, live photos, videos, documents or audios as an
+// album. Documents and audio files can be only grouped in an album with messages of the same type. On success,
+// an Array of Message (https://core.telegram.org/bots/api#message) objects that were sent is returned.
+func (b *Bot) SendMediaGroup(ctx context.Context, params *SendMediaGroupParams) ([]Message, error) {
 	var messages []Message
-	err := b.performRequest("sendMediaGroup", params, &messages)
+	err := b.performRequest(ctx, "sendMediaGroup", params, &messages)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendMediaGroup(): %w", err)
+		return nil, fmt.Errorf("telego: sendMediaGroup: %w", err)
 	}
-
 	return messages, nil
 }
 
@@ -1265,13 +1696,22 @@ type SendLocationParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Latitude - Latitude of the location
 	Latitude float64 `json:"latitude"`
@@ -1283,8 +1723,8 @@ type SendLocationParams struct {
 	HorizontalAccuracy float64 `json:"horizontal_accuracy,omitempty"`
 
 	// LivePeriod - Optional. Period in seconds during which the location will be updated (see Live Locations
-	// (https://telegram.org/blog/live-locations), should be between 60 and 86400, or 0x7FFFFFFF for live locations
-	// that can be edited indefinitely.
+	// (https://telegram.org/blog/live-locations)), must be between 60 and 86400, or 0x7FFFFFFF for live locations
+	// that can be edited indefinitely. Must be 0 for ephemeral messages.
 	LivePeriod int `json:"live_period,omitempty"`
 
 	// Heading - Optional. For live locations, a direction in which the user is moving, in degrees. Must be
@@ -1304,12 +1744,17 @@ type SendLocationParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -1317,19 +1762,18 @@ type SendLocationParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
 // SendLocation - Use this method to send point on the map. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendLocation(params *SendLocationParams) (*Message, error) {
+func (b *Bot) SendLocation(ctx context.Context, params *SendLocationParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendLocation", params, &message)
+	err := b.performRequest(ctx, "sendLocation", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendLocation(): %w", err)
+		return nil, fmt.Errorf("telego: sendLocation: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -1339,13 +1783,22 @@ type SendVenueParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Latitude - Latitude of the venue
 	Latitude float64 `json:"latitude"`
@@ -1382,12 +1835,17 @@ type SendVenueParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -1395,19 +1853,18 @@ type SendVenueParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
 // SendVenue - Use this method to send information about a venue. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendVenue(params *SendVenueParams) (*Message, error) {
+func (b *Bot) SendVenue(ctx context.Context, params *SendVenueParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendVenue", params, &message)
+	err := b.performRequest(ctx, "sendVenue", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendVenue(): %w", err)
+		return nil, fmt.Errorf("telego: sendVenue: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -1417,13 +1874,22 @@ type SendContactParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// PhoneNumber - Contact's phone number
 	PhoneNumber string `json:"phone_number"`
@@ -1447,12 +1913,17 @@ type SendContactParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -1460,19 +1931,18 @@ type SendContactParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
 // SendContact - Use this method to send phone contacts. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendContact(params *SendContactParams) (*Message, error) {
+func (b *Bot) SendContact(ctx context.Context, params *SendContactParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendContact", params, &message)
+	err := b.performRequest(ctx, "sendContact", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendContact(): %w", err)
+		return nil, fmt.Errorf("telego: sendContact: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -1482,12 +1952,12 @@ type SendPollParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username. Polls can't be sent to channel direct messages chats.
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
 	// Question - Poll question, 1-300 characters
@@ -1495,14 +1965,14 @@ type SendPollParams struct {
 
 	// QuestionParseMode - Optional. Mode for parsing entities in the question. See formatting options
 	// (https://core.telegram.org/bots/api#formatting-options) for more details. Currently, only custom emoji
-	// entities are allowed
+	// entities are allowed.
 	QuestionParseMode string `json:"question_parse_mode,omitempty"`
 
 	// QuestionEntities - Optional. A JSON-serialized list of special entities that appear in the poll question.
-	// It can be specified instead of question_parse_mode
+	// It can be specified instead of question_parse_mode.
 	QuestionEntities []MessageEntity `json:"question_entities,omitempty"`
 
-	// Options - A JSON-serialized list of 2-10 answer options
+	// Options - A JSON-serialized list of 1-12 answer options
 	Options []InputPollOption `json:"options"`
 
 	// IsAnonymous - Optional. True, if the poll needs to be anonymous, defaults to True
@@ -1511,13 +1981,36 @@ type SendPollParams struct {
 	// Type - Optional. Poll type, “quiz” or “regular”, defaults to “regular”
 	Type string `json:"type,omitempty"`
 
-	// AllowsMultipleAnswers - Optional. True, if the poll allows multiple answers, ignored for polls in quiz
-	// mode, defaults to False
+	// AllowsMultipleAnswers - Optional. Pass True if the poll allows multiple answers, defaults to False
 	AllowsMultipleAnswers bool `json:"allows_multiple_answers,omitempty"`
 
-	// CorrectOptionID - Optional. 0-based identifier of the correct answer option, required for polls in quiz
-	// mode
-	CorrectOptionID *int `json:"correct_option_id,omitempty"`
+	// AllowsRevoting - Optional. Pass True if the poll allows to change chosen answer options, defaults to
+	// False for quizzes and to True for regular polls
+	AllowsRevoting bool `json:"allows_revoting,omitempty"`
+
+	// ShuffleOptions - Optional. Pass True if the poll options must be shown in random order
+	ShuffleOptions bool `json:"shuffle_options,omitempty"`
+
+	// AllowAddingOptions - Optional. Pass True if answer options can be added to the poll after creation; not
+	// supported for anonymous polls and quizzes
+	AllowAddingOptions bool `json:"allow_adding_options,omitempty"`
+
+	// HideResultsUntilCloses - Optional. Pass True if poll results must be shown only after the poll closes
+	HideResultsUntilCloses bool `json:"hide_results_until_closes,omitempty"`
+
+	// MembersOnly - Optional. Pass True if voting is limited to users who have been members of the chat where
+	// the poll is being sent for more than 24 hours; for channel chats only
+	MembersOnly bool `json:"members_only,omitempty"`
+
+	// CountryCodes - Optional. A JSON-serialized list of 0-12 two-letter ISO 3166-1 alpha-2
+	// (https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country codes indicating the countries from which users
+	// can vote in the poll; for channel chats only. Use “FT” as a country code to allow users with anonymous
+	// numbers to vote. If omitted or empty, then users from any country can participate in the poll.
+	CountryCodes []string `json:"country_codes,omitempty"`
+
+	// CorrectOptionIDs - Optional. A JSON-serialized list of monotonically increasing 0-based identifiers of
+	// the correct answer options, required for polls in quiz mode
+	CorrectOptionIDs []int `json:"correct_option_ids,omitempty"`
 
 	// Explanation - Optional. Text that is shown when a user chooses an incorrect answer or taps on the lamp
 	// icon in a quiz-style poll, 0-200 characters with at most 2 line feeds after entities parsing
@@ -1528,20 +2021,37 @@ type SendPollParams struct {
 	ExplanationParseMode string `json:"explanation_parse_mode,omitempty"`
 
 	// ExplanationEntities - Optional. A JSON-serialized list of special entities that appear in the poll
-	// explanation. It can be specified instead of explanation_parse_mode
+	// explanation. It can be specified instead of explanation_parse_mode.
 	ExplanationEntities []MessageEntity `json:"explanation_entities,omitempty"`
 
-	// OpenPeriod - Optional. Amount of time in seconds the poll will be active after creation, 5-600. Can't be
-	// used together with close_date.
+	// ExplanationMedia - Optional. Media added to the quiz explanation
+	ExplanationMedia InputPollMedia `json:"explanation_media,omitempty"`
+
+	// OpenPeriod - Optional. Amount of time in seconds the poll will be active after creation, 5-2628000. Can't
+	// be used together with close_date.
 	OpenPeriod int `json:"open_period,omitempty"`
 
 	// CloseDate - Optional. Point in time (Unix timestamp) when the poll will be automatically closed. Must be
-	// at least 5 and no more than 600 seconds in the future. Can't be used together with open_period.
+	// at least 5 and no more than 2628000 seconds in the future. Can't be used together with open_period.
 	CloseDate int64 `json:"close_date,omitempty"`
 
 	// IsClosed - Optional. Pass True if the poll needs to be immediately closed. This can be useful for poll
 	// preview.
 	IsClosed bool `json:"is_closed,omitempty"`
+
+	// Description - Optional. Description of the poll to be sent, 0-1024 characters after entities parsing
+	Description string `json:"description,omitempty"`
+
+	// DescriptionParseMode - Optional. Mode for parsing entities in the poll description. See formatting
+	// options (https://core.telegram.org/bots/api#formatting-options) for more details.
+	DescriptionParseMode string `json:"description_parse_mode,omitempty"`
+
+	// DescriptionEntities - Optional. A JSON-serialized list of special entities that appear in the poll
+	// description, which can be specified instead of description_parse_mode
+	DescriptionEntities []MessageEntity `json:"description_entities,omitempty"`
+
+	// Media - Optional. Media added to the poll description
+	Media InputPollMedia `json:"media,omitempty"`
 
 	// DisableNotification - Optional. Sends the message silently
 	// (https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
@@ -1552,7 +2062,7 @@ type SendPollParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
@@ -1565,19 +2075,59 @@ type SendPollParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
 // SendPoll - Use this method to send a native poll. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendPoll(params *SendPollParams) (*Message, error) {
+func (b *Bot) SendPoll(ctx context.Context, params *SendPollParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendPoll", params, &message)
+	err := b.performRequest(ctx, "sendPoll", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendPoll(): %w", err)
+		return nil, fmt.Errorf("telego: sendPoll: %w", err)
 	}
+	return message, nil
+}
 
+// SendChecklistParams - Represents parameters of sendChecklist method.
+type SendChecklistParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection on behalf of which the message will
+	// be sent
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// ChatID - Unique identifier for the target chat or username of the target bot in the format @username
+	ChatID ChatID `json:"chat_id"`
+
+	// Checklist - A JSON-serialized object for the checklist to send
+	Checklist InputChecklist `json:"checklist"`
+
+	// DisableNotification - Optional. Sends the message silently. Users will receive a notification with no
+	// sound.
+	DisableNotification bool `json:"disable_notification,omitempty"`
+
+	// ProtectContent - Optional. Protects the contents of the sent message from forwarding and saving
+	ProtectContent bool `json:"protect_content,omitempty"`
+
+	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message
+	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// ReplyParameters - Optional. A JSON-serialized object for description of the message to reply to
+	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
+
+	// ReplyMarkup - Optional. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards)
+	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+// SendChecklist - Use this method to send a checklist on behalf of a connected business account. On success,
+// the sent Message (https://core.telegram.org/bots/api#message) is returned.
+func (b *Bot) SendChecklist(ctx context.Context, params *SendChecklistParams) (*Message, error) {
+	var message *Message
+	err := b.performRequest(ctx, "sendChecklist", params, &message)
+	if err != nil {
+		return nil, fmt.Errorf("telego: sendChecklist: %w", err)
+	}
 	return message, nil
 }
 
@@ -1587,18 +2137,22 @@ type SendDiceParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
 
 	// Emoji - Optional. Emoji on which the dice throw animation is based. Currently, must be one of “🎲”,
 	// “🎯”, “🏀”, “⚽”, “🎳”, or “🎰”. Dice can have values 1-6 for “🎲”,
 	// “🎯” and “🎳”, values 1-5 for “🏀” and “⚽”, and values 1-64 for “🎰”. Defaults
-	// to “🎲”
+	// to “🎲”.
 	Emoji string `json:"emoji,omitempty"`
 
 	// DisableNotification - Optional. Sends the message silently
@@ -1610,12 +2164,17 @@ type SendDiceParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -1623,20 +2182,66 @@ type SendDiceParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
 // SendDice - Use this method to send an animated emoji that will display a random value. On success, the
 // sent Message (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendDice(params *SendDiceParams) (*Message, error) {
+func (b *Bot) SendDice(ctx context.Context, params *SendDiceParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendDice", params, &message)
+	err := b.performRequest(ctx, "sendDice", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendDice(): %w", err)
+		return nil, fmt.Errorf("telego: sendDice: %w", err)
 	}
-
 	return message, nil
+}
+
+// SendMessageDraftParams - Represents parameters of sendMessageDraft method.
+type SendMessageDraftParams struct {
+	// ChatID - Unique identifier for the target private chat
+	ChatID int64 `json:"chat_id"`
+
+	// MessageThreadID - Optional. Unique identifier for the target message thread
+	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DraftID - Unique identifier of the message draft; must be non-zero. Changes to drafts with the same
+	// identifier are animated. Otherwise, the draft is replaced without animation.
+	DraftID int `json:"draft_id"`
+
+	// Text - Optional. Text of the message to be sent, 0-4096 characters after entities parsing. Pass an empty
+	// text to show a “Thinking…” placeholder.
+	Text string `json:"text,omitempty"`
+
+	// ParseMode - Optional. Mode for parsing entities in the message text. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// Entities - Optional. A JSON-serialized list of special entities that appear in message text, which can be
+	// specified instead of parse_mode
+	Entities []MessageEntity `json:"entities,omitempty"`
+
+	// CanStop - Optional. Pass True to show the user a button to stop further drafts. The bot will receive an
+	// Update (https://core.telegram.org/bots/api#update) “stopped_message_generation” if the user presses the
+	// button.
+	CanStop bool `json:"can_stop,omitempty"`
+
+	// KeepOnStop - Optional. Pass True to keep the draft in the chat when the button is pressed. The draft will
+	// still disappear after a short time or if the bot sends a message. To fully preserve the partial draft, the
+	// bot should send it as a new message.
+	KeepOnStop bool `json:"keep_on_stop,omitempty"`
+}
+
+// SendMessageDraft - Use this method to stream a partial message to a user while the message is being
+// generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the
+// output is finalized, you must call sendMessage (https://core.telegram.org/bots/api#sendmessage) with the
+// complete message to persist it in the user's chat. Returns True on success.
+func (b *Bot) SendMessageDraft(ctx context.Context, params *SendMessageDraftParams) error {
+	err := b.performRequest(ctx, "sendMessageDraft", params)
+	if err != nil {
+		return fmt.Errorf("telego: sendMessageDraft: %w", err)
+	}
+	return nil
 }
 
 // SendChatActionParams - Represents parameters of sendChatAction method.
@@ -1645,11 +2250,12 @@ type SendChatActionParams struct {
 	// action will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot or supergroup in the format
+	// @username. Channel chats and channel direct messages chats aren't supported.
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread; for supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread or topic of a forum; for
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
 	// Action - Type of action to broadcast. Choose one, depending on what the user is about to receive: typing
@@ -1688,19 +2294,18 @@ const (
 // see a “sending photo” status for the bot.
 // We only recommend using this method when a response from the bot will take a noticeable amount of time to
 // arrive.
-func (b *Bot) SendChatAction(params *SendChatActionParams) error {
-	err := b.performRequest("sendChatAction", params)
+func (b *Bot) SendChatAction(ctx context.Context, params *SendChatActionParams) error {
+	err := b.performRequest(ctx, "sendChatAction", params)
 	if err != nil {
-		return fmt.Errorf("telego: sendChatAction(): %w", err)
+		return fmt.Errorf("telego: sendChatAction: %w", err)
 	}
-
 	return nil
 }
 
 // SetMessageReactionParams - Represents parameters of setMessageReaction method.
 type SetMessageReactionParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageID - Identifier of the target message. If the message belongs to a media group, the reaction is
@@ -1717,15 +2322,14 @@ type SetMessageReactionParams struct {
 	IsBig bool `json:"is_big,omitempty"`
 }
 
-// SetMessageReaction - Use this method to change the chosen reactions on a message. Service messages can't
-// be reacted to. Automatically forwarded messages from a channel to its discussion group have the same
-// available reactions as messages in the channel. Bots can't use paid reactions. Returns True on success.
-func (b *Bot) SetMessageReaction(params *SetMessageReactionParams) error {
-	err := b.performRequest("setMessageReaction", params)
+// SetMessageReaction - Use this method to change the chosen reactions on a message. Service messages of some
+// types can't be reacted to. Automatically forwarded messages from a channel to its discussion group have the
+// same available reactions as messages in the channel. Bots can't use paid reactions. Returns True on success.
+func (b *Bot) SetMessageReaction(ctx context.Context, params *SetMessageReactionParams) error {
+	err := b.performRequest(ctx, "setMessageReaction", params)
 	if err != nil {
-		return fmt.Errorf("telego: setMessageReaction(): %w", err)
+		return fmt.Errorf("telego: setMessageReaction: %w", err)
 	}
-
 	return nil
 }
 
@@ -1745,14 +2349,38 @@ type GetUserProfilePhotosParams struct {
 
 // GetUserProfilePhotos - Use this method to get a list of profile pictures for a user. Returns a
 // UserProfilePhotos (https://core.telegram.org/bots/api#userprofilephotos) object.
-func (b *Bot) GetUserProfilePhotos(params *GetUserProfilePhotosParams) (*UserProfilePhotos, error) {
+func (b *Bot) GetUserProfilePhotos(ctx context.Context, params *GetUserProfilePhotosParams) (*UserProfilePhotos, error) {
 	var userProfilePhotos *UserProfilePhotos
-	err := b.performRequest("getUserProfilePhotos", params, &userProfilePhotos)
+	err := b.performRequest(ctx, "getUserProfilePhotos", params, &userProfilePhotos)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getUserProfilePhotos(): %w", err)
+		return nil, fmt.Errorf("telego: getUserProfilePhotos: %w", err)
 	}
-
 	return userProfilePhotos, nil
+}
+
+// GetUserProfileAudiosParams - Represents parameters of getUserProfileAudios method.
+type GetUserProfileAudiosParams struct {
+	// UserID - Unique identifier of the target user
+	UserID int64 `json:"user_id"`
+
+	// Offset - Optional. Sequential number of the first audio to be returned. By default, all audios are
+	// returned.
+	Offset int `json:"offset,omitempty"`
+
+	// Limit - Optional. Limits the number of audios to be retrieved. Values between 1-100 are accepted.
+	// Defaults to 100.
+	Limit int `json:"limit,omitempty"`
+}
+
+// GetUserProfileAudios - Use this method to get a list of profile audios for a user. Returns a
+// UserProfileAudios (https://core.telegram.org/bots/api#userprofileaudios) object.
+func (b *Bot) GetUserProfileAudios(ctx context.Context, params *GetUserProfileAudiosParams) (*UserProfileAudios, error) {
+	var userProfileAudios *UserProfileAudios
+	err := b.performRequest(ctx, "getUserProfileAudios", params, &userProfileAudios)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getUserProfileAudios: %w", err)
+	}
+	return userProfileAudios, nil
 }
 
 // SetUserEmojiStatusParams - Represents parameters of setUserEmojiStatus method.
@@ -1771,12 +2399,11 @@ type SetUserEmojiStatusParams struct {
 // SetUserEmojiStatus - Changes the emoji status for a given user that previously allowed the bot to manage
 // their emoji status via the Mini App method requestEmojiStatusAccess
 // (https://core.telegram.org/bots/webapps#initializing-mini-apps). Returns True on success.
-func (b *Bot) SetUserEmojiStatus(params *SetUserEmojiStatusParams) error {
-	err := b.performRequest("setUserEmojiStatus", params)
+func (b *Bot) SetUserEmojiStatus(ctx context.Context, params *SetUserEmojiStatusParams) error {
+	err := b.performRequest(ctx, "setUserEmojiStatus", params)
 	if err != nil {
-		return fmt.Errorf("telego: setUserEmojiStatus(): %w", err)
+		return fmt.Errorf("telego: setUserEmojiStatus: %w", err)
 	}
-
 	return nil
 }
 
@@ -1792,20 +2419,19 @@ type GetFileParams struct {
 // https://api.telegram.org/file/bot<token>/<file_path>, where <file_path> is taken from the response. It is
 // guaranteed that the link will be valid for at least 1 hour. When the link expires, a new one can be requested
 // by calling getFile (https://core.telegram.org/bots/api#getfile) again.
-func (b *Bot) GetFile(params *GetFileParams) (*File, error) {
+func (b *Bot) GetFile(ctx context.Context, params *GetFileParams) (*File, error) {
 	var file *File
-	err := b.performRequest("getFile", params, &file)
+	err := b.performRequest(ctx, "getFile", params, &file)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getFile(): %w", err)
+		return nil, fmt.Errorf("telego: getFile: %w", err)
 	}
-
 	return file, nil
 }
 
 // BanChatMemberParams - Represents parameters of banChatMember method.
 type BanChatMemberParams struct {
-	// ChatID - Unique identifier for the target group or username of the target supergroup or channel (in the
-	// format @channel_username)
+	// ChatID - Unique identifier for the target group or username of the target supergroup or channel in the
+	// format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -1827,19 +2453,18 @@ type BanChatMemberParams struct {
 // etc., unless unbanned (https://core.telegram.org/bots/api#unbanchatmember) first. The bot must be an
 // administrator in the chat for this to work and must have the appropriate administrator rights. Returns True
 // on success.
-func (b *Bot) BanChatMember(params *BanChatMemberParams) error {
-	err := b.performRequest("banChatMember", params)
+func (b *Bot) BanChatMember(ctx context.Context, params *BanChatMemberParams) error {
+	err := b.performRequest(ctx, "banChatMember", params)
 	if err != nil {
-		return fmt.Errorf("telego: banChatMember(): %w", err)
+		return fmt.Errorf("telego: banChatMember: %w", err)
 	}
-
 	return nil
 }
 
 // UnbanChatMemberParams - Represents parameters of unbanChatMember method.
 type UnbanChatMemberParams struct {
-	// ChatID - Unique identifier for the target group or username of the target supergroup or channel (in the
-	// format @channel_username)
+	// ChatID - Unique identifier for the target group or username of the target supergroup or channel in the
+	// format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -1854,19 +2479,18 @@ type UnbanChatMemberParams struct {
 // be an administrator for this to work. By default, this method guarantees that after the call the user is not
 // a member of the chat, but will be able to join it. So if the user is a member of the chat they will also be
 // removed from the chat. If you don't want this, use the parameter only_if_banned. Returns True on success.
-func (b *Bot) UnbanChatMember(params *UnbanChatMemberParams) error {
-	err := b.performRequest("unbanChatMember", params)
+func (b *Bot) UnbanChatMember(ctx context.Context, params *UnbanChatMemberParams) error {
+	err := b.performRequest(ctx, "unbanChatMember", params)
 	if err != nil {
-		return fmt.Errorf("telego: unbanChatMember(): %w", err)
+		return fmt.Errorf("telego: unbanChatMember: %w", err)
 	}
-
 	return nil
 }
 
 // RestrictChatMemberParams - Represents parameters of restrictChatMember method.
 type RestrictChatMemberParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -1883,26 +2507,24 @@ type RestrictChatMemberParams struct {
 
 	// UntilDate - Optional. Date when restrictions will be lifted for the user; Unix time. If user is
 	// restricted for more than 366 days or less than 30 seconds from the current time, they are considered to be
-	// restricted forever
+	// restricted forever.
 	UntilDate int64 `json:"until_date,omitempty"`
 }
 
 // RestrictChatMember - Use this method to restrict a user in a supergroup. The bot must be an administrator
 // in the supergroup for this to work and must have the appropriate administrator rights. Pass True for all
 // permissions to lift restrictions from a user. Returns True on success.
-func (b *Bot) RestrictChatMember(params *RestrictChatMemberParams) error {
-	err := b.performRequest("restrictChatMember", params)
+func (b *Bot) RestrictChatMember(ctx context.Context, params *RestrictChatMemberParams) error {
+	err := b.performRequest(ctx, "restrictChatMember", params)
 	if err != nil {
-		return fmt.Errorf("telego: restrictChatMember(): %w", err)
+		return fmt.Errorf("telego: restrictChatMember: %w", err)
 	}
-
 	return nil
 }
 
 // PromoteChatMemberParams - Represents parameters of promoteChatMember method.
 type PromoteChatMemberParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -1912,8 +2534,8 @@ type PromoteChatMemberParams struct {
 	IsAnonymous *bool `json:"is_anonymous,omitempty"`
 
 	// CanManageChat - Optional. Pass True if the administrator can access the chat event log, get boost list,
-	// see hidden supergroup and channel members, report spam messages and ignore slow mode. Implied by any other
-	// administrator privilege.
+	// see hidden supergroup and channel members, report spam messages, ignore slow mode, and send messages to the
+	// chat without paying Telegram Stars. Implied by any other administrator privilege.
 	CanManageChat *bool `json:"can_manage_chat,omitempty"`
 
 	// CanDeleteMessages - Optional. Pass True if the administrator can delete messages of other users
@@ -1923,7 +2545,8 @@ type PromoteChatMemberParams struct {
 	CanManageVideoChats *bool `json:"can_manage_video_chats,omitempty"`
 
 	// CanRestrictMembers - Optional. Pass True if the administrator can restrict, ban or unban chat members, or
-	// access supergroup statistics
+	// access supergroup statistics. For backward compatibility, defaults to True for promotions of channel
+	// administrators.
 	CanRestrictMembers *bool `json:"can_restrict_members,omitempty"`
 
 	// CanPromoteMembers - Optional. Pass True if the administrator can add new administrators with a subset of
@@ -1947,8 +2570,8 @@ type PromoteChatMemberParams struct {
 	// CanDeleteStories - Optional. Pass True if the administrator can delete stories posted by other users
 	CanDeleteStories *bool `json:"can_delete_stories,omitempty"`
 
-	// CanPostMessages - Optional. Pass True if the administrator can post messages in the channel, or access
-	// channel statistics; for channels only
+	// CanPostMessages - Optional. Pass True if the administrator can post messages in the channel, approve
+	// suggested posts, or access channel statistics; for channels only
 	CanPostMessages *bool `json:"can_post_messages,omitempty"`
 
 	// CanEditMessages - Optional. Pass True if the administrator can edit messages of other users and can pin
@@ -1961,24 +2584,35 @@ type PromoteChatMemberParams struct {
 	// CanManageTopics - Optional. Pass True if the user is allowed to create, rename, close, and reopen forum
 	// topics; for supergroups only
 	CanManageTopics *bool `json:"can_manage_topics,omitempty"`
+
+	// CanManageDirectMessages - Optional. Pass True if the administrator can manage direct messages within the
+	// channel and decline suggested posts; for channels only
+	CanManageDirectMessages *bool `json:"can_manage_direct_messages,omitempty"`
+
+	// CanManageTags - Optional. Pass True if the administrator can edit the tags of regular members; for groups
+	// and supergroups only
+	CanManageTags *bool `json:"can_manage_tags,omitempty"`
+
+	// CanSendWelcomeMessages - Optional. Pass True if the administrator can manage chat welcome messages or
+	// directly send them in the case of bots
+	CanSendWelcomeMessages *bool `json:"can_send_welcome_messages,omitempty"`
 }
 
 // PromoteChatMember - Use this method to promote or demote a user in a supergroup or a channel. The bot must
 // be an administrator in the chat for this to work and must have the appropriate administrator rights. Pass
 // False for all boolean parameters to demote a user. Returns True on success.
-func (b *Bot) PromoteChatMember(params *PromoteChatMemberParams) error {
-	err := b.performRequest("promoteChatMember", params)
+func (b *Bot) PromoteChatMember(ctx context.Context, params *PromoteChatMemberParams) error {
+	err := b.performRequest(ctx, "promoteChatMember", params)
 	if err != nil {
-		return fmt.Errorf("telego: promoteChatMember(): %w", err)
+		return fmt.Errorf("telego: promoteChatMember: %w", err)
 	}
-
 	return nil
 }
 
 // SetChatAdministratorCustomTitleParams - Represents parameters of setChatAdministratorCustomTitle method.
 type SetChatAdministratorCustomTitleParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -1990,19 +2624,41 @@ type SetChatAdministratorCustomTitleParams struct {
 
 // SetChatAdministratorCustomTitle - Use this method to set a custom title for an administrator in a
 // supergroup promoted by the bot. Returns True on success.
-func (b *Bot) SetChatAdministratorCustomTitle(params *SetChatAdministratorCustomTitleParams) error {
-	err := b.performRequest("setChatAdministratorCustomTitle", params)
+func (b *Bot) SetChatAdministratorCustomTitle(ctx context.Context, params *SetChatAdministratorCustomTitleParams) error {
+	err := b.performRequest(ctx, "setChatAdministratorCustomTitle", params)
 	if err != nil {
-		return fmt.Errorf("telego: setChatAdministratorCustomTitle(): %w", err)
+		return fmt.Errorf("telego: setChatAdministratorCustomTitle: %w", err)
 	}
+	return nil
+}
 
+// SetChatMemberTagParams - Represents parameters of setChatMemberTag method.
+type SetChatMemberTagParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// UserID - Unique identifier of the target user
+	UserID int64 `json:"user_id"`
+
+	// Tag - Optional. New tag for the member; 0-16 characters, emoji are not allowed
+	Tag string `json:"tag,omitempty"`
+}
+
+// SetChatMemberTag - Use this method to set a tag for a regular member in a group or a supergroup. The bot
+// must be an administrator in the chat for this to work and must have the can_manage_tags administrator right.
+// Returns True on success.
+func (b *Bot) SetChatMemberTag(ctx context.Context, params *SetChatMemberTagParams) error {
+	err := b.performRequest(ctx, "setChatMemberTag", params)
+	if err != nil {
+		return fmt.Errorf("telego: setChatMemberTag: %w", err)
+	}
 	return nil
 }
 
 // BanChatSenderChatParams - Represents parameters of banChatSenderChat method.
 type BanChatSenderChatParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// SenderChatID - Unique identifier of the target sender chat
@@ -2013,19 +2669,17 @@ type BanChatSenderChatParams struct {
 // unbanned (https://core.telegram.org/bots/api#unbanchatsenderchat), the owner of the banned chat won't be able
 // to send messages on behalf of any of their channels. The bot must be an administrator in the supergroup or
 // channel for this to work and must have the appropriate administrator rights. Returns True on success.
-func (b *Bot) BanChatSenderChat(params *BanChatSenderChatParams) error {
-	err := b.performRequest("banChatSenderChat", params)
+func (b *Bot) BanChatSenderChat(ctx context.Context, params *BanChatSenderChatParams) error {
+	err := b.performRequest(ctx, "banChatSenderChat", params)
 	if err != nil {
-		return fmt.Errorf("telego: banChatSenderChat(): %w", err)
+		return fmt.Errorf("telego: banChatSenderChat: %w", err)
 	}
-
 	return nil
 }
 
 // UnbanChatSenderChatParams - Represents parameters of unbanChatSenderChat method.
 type UnbanChatSenderChatParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// SenderChatID - Unique identifier of the target sender chat
@@ -2035,19 +2689,18 @@ type UnbanChatSenderChatParams struct {
 // UnbanChatSenderChat - Use this method to unban a previously banned channel chat in a supergroup or
 // channel. The bot must be an administrator for this to work and must have the appropriate administrator
 // rights. Returns True on success.
-func (b *Bot) UnbanChatSenderChat(params *UnbanChatSenderChatParams) error {
-	err := b.performRequest("unbanChatSenderChat", params)
+func (b *Bot) UnbanChatSenderChat(ctx context.Context, params *UnbanChatSenderChatParams) error {
+	err := b.performRequest(ctx, "unbanChatSenderChat", params)
 	if err != nil {
-		return fmt.Errorf("telego: unbanChatSenderChat(): %w", err)
+		return fmt.Errorf("telego: unbanChatSenderChat: %w", err)
 	}
-
 	return nil
 }
 
 // SetChatPermissionsParams - Represents parameters of setChatPermissions method.
 type SetChatPermissionsParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// Permissions - A JSON-serialized object for new default chat permissions
@@ -2063,39 +2716,35 @@ type SetChatPermissionsParams struct {
 // SetChatPermissions - Use this method to set default chat permissions for all members. The bot must be an
 // administrator in the group or a supergroup for this to work and must have the can_restrict_members
 // administrator rights. Returns True on success.
-func (b *Bot) SetChatPermissions(params *SetChatPermissionsParams) error {
-	err := b.performRequest("setChatPermissions", params)
+func (b *Bot) SetChatPermissions(ctx context.Context, params *SetChatPermissionsParams) error {
+	err := b.performRequest(ctx, "setChatPermissions", params)
 	if err != nil {
-		return fmt.Errorf("telego: setChatPermissions(): %w", err)
+		return fmt.Errorf("telego: setChatPermissions: %w", err)
 	}
-
 	return nil
 }
 
 // ExportChatInviteLinkParams - Represents parameters of exportChatInviteLink method.
 type ExportChatInviteLinkParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 }
 
 // ExportChatInviteLink - Use this method to generate a new primary invite link for a chat; any previously
 // generated primary link is revoked. The bot must be an administrator in the chat for this to work and must
 // have the appropriate administrator rights. Returns the new invite link as String on success.
-func (b *Bot) ExportChatInviteLink(params *ExportChatInviteLinkParams) (*string, error) {
+func (b *Bot) ExportChatInviteLink(ctx context.Context, params *ExportChatInviteLinkParams) (*string, error) {
 	var inviteLink *string
-	err := b.performRequest("exportChatInviteLink", params, &inviteLink)
+	err := b.performRequest(ctx, "exportChatInviteLink", params, &inviteLink)
 	if err != nil {
-		return nil, fmt.Errorf("telego: exportChatInviteLink(): %w", err)
+		return nil, fmt.Errorf("telego: exportChatInviteLink: %w", err)
 	}
-
 	return inviteLink, nil
 }
 
 // CreateChatInviteLinkParams - Represents parameters of createChatInviteLink method.
 type CreateChatInviteLinkParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// Name - Optional. Invite link name; 0-32 characters
@@ -2109,7 +2758,7 @@ type CreateChatInviteLinkParams struct {
 	MemberLimit int `json:"member_limit,omitempty"`
 
 	// CreatesJoinRequest - Optional. True, if users joining the chat via the link need to be approved by chat
-	// administrators. If True, member_limit can't be specified
+	// administrators. If True, member_limit can't be specified.
 	CreatesJoinRequest bool `json:"creates_join_request,omitempty"`
 }
 
@@ -2117,20 +2766,18 @@ type CreateChatInviteLinkParams struct {
 // administrator in the chat for this to work and must have the appropriate administrator rights. The link can
 // be revoked using the method revokeChatInviteLink (https://core.telegram.org/bots/api#revokechatinvitelink).
 // Returns the new invite link as ChatInviteLink (https://core.telegram.org/bots/api#chatinvitelink) object.
-func (b *Bot) CreateChatInviteLink(params *CreateChatInviteLinkParams) (*ChatInviteLink, error) {
+func (b *Bot) CreateChatInviteLink(ctx context.Context, params *CreateChatInviteLinkParams) (*ChatInviteLink, error) {
 	var chatInviteLink *ChatInviteLink
-	err := b.performRequest("createChatInviteLink", params, &chatInviteLink)
+	err := b.performRequest(ctx, "createChatInviteLink", params, &chatInviteLink)
 	if err != nil {
-		return nil, fmt.Errorf("telego: createChatInviteLink(): %w", err)
+		return nil, fmt.Errorf("telego: createChatInviteLink: %w", err)
 	}
-
 	return chatInviteLink, nil
 }
 
 // EditChatInviteLinkParams - Represents parameters of editChatInviteLink method.
 type EditChatInviteLinkParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// InviteLink - The invite link to edit
@@ -2147,27 +2794,26 @@ type EditChatInviteLinkParams struct {
 	MemberLimit int `json:"member_limit,omitempty"`
 
 	// CreatesJoinRequest - Optional. True, if users joining the chat via the link need to be approved by chat
-	// administrators. If True, member_limit can't be specified
+	// administrators. If True, member_limit can't be specified.
 	CreatesJoinRequest bool `json:"creates_join_request,omitempty"`
 }
 
 // EditChatInviteLink - Use this method to edit a non-primary invite link created by the bot. The bot must be
 // an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the
 // edited invite link as a ChatInviteLink (https://core.telegram.org/bots/api#chatinvitelink) object.
-func (b *Bot) EditChatInviteLink(params *EditChatInviteLinkParams) (*ChatInviteLink, error) {
+func (b *Bot) EditChatInviteLink(ctx context.Context, params *EditChatInviteLinkParams) (*ChatInviteLink, error) {
 	var chatInviteLink *ChatInviteLink
-	err := b.performRequest("editChatInviteLink", params, &chatInviteLink)
+	err := b.performRequest(ctx, "editChatInviteLink", params, &chatInviteLink)
 	if err != nil {
-		return nil, fmt.Errorf("telego: editChatInviteLink(): %w", err)
+		return nil, fmt.Errorf("telego: editChatInviteLink: %w", err)
 	}
-
 	return chatInviteLink, nil
 }
 
 // CreateChatSubscriptionInviteLinkParams - Represents parameters of createChatSubscriptionInviteLink method.
 type CreateChatSubscriptionInviteLinkParams struct {
-	// ChatID - Unique identifier for the target channel chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target channel chat or username of the target channel in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// Name - Optional. Invite link name; 0-32 characters
@@ -2178,7 +2824,7 @@ type CreateChatSubscriptionInviteLinkParams struct {
 	SubscriptionPeriod int64 `json:"subscription_period"`
 
 	// SubscriptionPrice - The amount of Telegram Stars a user must pay initially and after each subsequent
-	// subscription period to be a member of the chat; 1-2500
+	// subscription period to be a member of the chat; 1-10000
 	SubscriptionPrice int `json:"subscription_price"`
 }
 
@@ -2188,22 +2834,18 @@ type CreateChatSubscriptionInviteLinkParams struct {
 // editChatSubscriptionInviteLink (https://core.telegram.org/bots/api#editchatsubscriptioninvitelink) or revoked
 // using the method revokeChatInviteLink (https://core.telegram.org/bots/api#revokechatinvitelink). Returns the
 // new invite link as a ChatInviteLink (https://core.telegram.org/bots/api#chatinvitelink) object.
-func (b *Bot) CreateChatSubscriptionInviteLink(
-	params *CreateChatSubscriptionInviteLinkParams,
-) (*ChatInviteLink, error) {
+func (b *Bot) CreateChatSubscriptionInviteLink(ctx context.Context, params *CreateChatSubscriptionInviteLinkParams) (*ChatInviteLink, error) {
 	var chatInviteLink *ChatInviteLink
-	err := b.performRequest("createChatSubscriptionInviteLink", params, &chatInviteLink)
+	err := b.performRequest(ctx, "createChatSubscriptionInviteLink", params, &chatInviteLink)
 	if err != nil {
-		return nil, fmt.Errorf("telego: createChatSubscriptionInviteLink(): %w", err)
+		return nil, fmt.Errorf("telego: createChatSubscriptionInviteLink: %w", err)
 	}
-
 	return chatInviteLink, nil
 }
 
 // EditChatSubscriptionInviteLinkParams - Represents parameters of editChatSubscriptionInviteLink method.
 type EditChatSubscriptionInviteLinkParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// InviteLink - The invite link to edit
@@ -2216,20 +2858,18 @@ type EditChatSubscriptionInviteLinkParams struct {
 // EditChatSubscriptionInviteLink - Use this method to edit a subscription invite link created by the bot.
 // The bot must have the can_invite_users administrator rights. Returns the edited invite link as a
 // ChatInviteLink (https://core.telegram.org/bots/api#chatinvitelink) object.
-func (b *Bot) EditChatSubscriptionInviteLink(params *EditChatSubscriptionInviteLinkParams) (*ChatInviteLink, error) {
+func (b *Bot) EditChatSubscriptionInviteLink(ctx context.Context, params *EditChatSubscriptionInviteLinkParams) (*ChatInviteLink, error) {
 	var chatInviteLink *ChatInviteLink
-	err := b.performRequest("editChatSubscriptionInviteLink", params, &chatInviteLink)
+	err := b.performRequest(ctx, "editChatSubscriptionInviteLink", params, &chatInviteLink)
 	if err != nil {
-		return nil, fmt.Errorf("telego: editChatSubscriptionInviteLink(): %w", err)
+		return nil, fmt.Errorf("telego: editChatSubscriptionInviteLink: %w", err)
 	}
-
 	return chatInviteLink, nil
 }
 
 // RevokeChatInviteLinkParams - Represents parameters of revokeChatInviteLink method.
 type RevokeChatInviteLinkParams struct {
-	// ChatID - Unique identifier of the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier of the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// InviteLink - The invite link to revoke
@@ -2240,20 +2880,18 @@ type RevokeChatInviteLinkParams struct {
 // revoked, a new link is automatically generated. The bot must be an administrator in the chat for this to work
 // and must have the appropriate administrator rights. Returns the revoked invite link as ChatInviteLink
 // (https://core.telegram.org/bots/api#chatinvitelink) object.
-func (b *Bot) RevokeChatInviteLink(params *RevokeChatInviteLinkParams) (*ChatInviteLink, error) {
+func (b *Bot) RevokeChatInviteLink(ctx context.Context, params *RevokeChatInviteLinkParams) (*ChatInviteLink, error) {
 	var chatInviteLink *ChatInviteLink
-	err := b.performRequest("revokeChatInviteLink", params, &chatInviteLink)
+	err := b.performRequest(ctx, "revokeChatInviteLink", params, &chatInviteLink)
 	if err != nil {
-		return nil, fmt.Errorf("telego: revokeChatInviteLink(): %w", err)
+		return nil, fmt.Errorf("telego: revokeChatInviteLink: %w", err)
 	}
-
 	return chatInviteLink, nil
 }
 
 // ApproveChatJoinRequestParams - Represents parameters of approveChatJoinRequest method.
 type ApproveChatJoinRequestParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -2262,19 +2900,17 @@ type ApproveChatJoinRequestParams struct {
 
 // ApproveChatJoinRequest - Use this method to approve a chat join request. The bot must be an administrator
 // in the chat for this to work and must have the can_invite_users administrator right. Returns True on success.
-func (b *Bot) ApproveChatJoinRequest(params *ApproveChatJoinRequestParams) error {
-	err := b.performRequest("approveChatJoinRequest", params)
+func (b *Bot) ApproveChatJoinRequest(ctx context.Context, params *ApproveChatJoinRequestParams) error {
+	err := b.performRequest(ctx, "approveChatJoinRequest", params)
 	if err != nil {
-		return fmt.Errorf("telego: approveChatJoinRequest(): %w", err)
+		return fmt.Errorf("telego: approveChatJoinRequest: %w", err)
 	}
-
 	return nil
 }
 
 // DeclineChatJoinRequestParams - Represents parameters of declineChatJoinRequest method.
 type DeclineChatJoinRequestParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -2283,19 +2919,67 @@ type DeclineChatJoinRequestParams struct {
 
 // DeclineChatJoinRequest - Use this method to decline a chat join request. The bot must be an administrator
 // in the chat for this to work and must have the can_invite_users administrator right. Returns True on success.
-func (b *Bot) DeclineChatJoinRequest(params *DeclineChatJoinRequestParams) error {
-	err := b.performRequest("declineChatJoinRequest", params)
+func (b *Bot) DeclineChatJoinRequest(ctx context.Context, params *DeclineChatJoinRequestParams) error {
+	err := b.performRequest(ctx, "declineChatJoinRequest", params)
 	if err != nil {
-		return fmt.Errorf("telego: declineChatJoinRequest(): %w", err)
+		return fmt.Errorf("telego: declineChatJoinRequest: %w", err)
 	}
+	return nil
+}
 
+// AnswerChatJoinRequestQueryParams - Represents parameters of answerChatJoinRequestQuery method.
+type AnswerChatJoinRequestQueryParams struct {
+	// ChatJoinRequestQueryID - Unique identifier of the join request query
+	ChatJoinRequestQueryID string `json:"chat_join_request_query_id"`
+
+	// Result - Result of the query. Must be either “approve” to allow the user to join the chat,
+	// “decline” to disallow the user to join the chat, or “queue” to leave the decision to other
+	// administrators.
+	Result string `json:"result"`
+}
+
+// Join request resuls.
+const (
+	JoinRequestApprove = "approve"
+	JoinRequestDecline = "decline"
+	JoinRequestQueue   = "queue"
+)
+
+// AnswerChatJoinRequestQuery - Use this method to process a received chat join request query. Returns True
+// on success.
+func (b *Bot) AnswerChatJoinRequestQuery(ctx context.Context, params *AnswerChatJoinRequestQueryParams) error {
+	err := b.performRequest(ctx, "answerChatJoinRequestQuery", params)
+	if err != nil {
+		return fmt.Errorf("telego: answerChatJoinRequestQuery: %w", err)
+	}
+	return nil
+}
+
+// SendChatJoinRequestWebAppParams - Represents parameters of sendChatJoinRequestWebApp method.
+type SendChatJoinRequestWebAppParams struct {
+	// ChatJoinRequestQueryID - Unique identifier of the join request query
+	ChatJoinRequestQueryID string `json:"chat_join_request_query_id"`
+
+	// WebAppURL - An HTTPS URL of a Web App to be opened with additional data as specified in Initializing Web
+	// Apps (https://core.telegram.org/bots/webapps#initializing-mini-apps)
+	WebAppURL string `json:"web_app_url"`
+}
+
+// SendChatJoinRequestWebApp - Use this method to process a received chat join request query by showing a
+// Mini App to the user before deciding the outcome. Call answerChatJoinRequestQuery
+// (https://core.telegram.org/bots/api#answerchatjoinrequestquery) to resolve the join request query based on
+// the user interaction with the Mini App. Returns True on success.
+func (b *Bot) SendChatJoinRequestWebApp(ctx context.Context, params *SendChatJoinRequestWebAppParams) error {
+	err := b.performRequest(ctx, "sendChatJoinRequestWebApp", params)
+	if err != nil {
+		return fmt.Errorf("telego: sendChatJoinRequestWebApp: %w", err)
+	}
 	return nil
 }
 
 // SetChatPhotoParams - Represents parameters of setChatPhoto method.
 type SetChatPhotoParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// Photo - New chat photo, uploaded using multipart/form-data
@@ -2311,38 +2995,34 @@ func (p *SetChatPhotoParams) fileParameters() map[string]ta.NamedReader {
 // SetChatPhoto - Use this method to set a new profile photo for the chat. Photos can't be changed for
 // private chats. The bot must be an administrator in the chat for this to work and must have the appropriate
 // administrator rights. Returns True on success.
-func (b *Bot) SetChatPhoto(params *SetChatPhotoParams) error {
-	err := b.performRequest("setChatPhoto", params)
+func (b *Bot) SetChatPhoto(ctx context.Context, params *SetChatPhotoParams) error {
+	err := b.performRequest(ctx, "setChatPhoto", params)
 	if err != nil {
-		return fmt.Errorf("telego: setChatPhoto(): %w", err)
+		return fmt.Errorf("telego: setChatPhoto: %w", err)
 	}
-
 	return nil
 }
 
 // DeleteChatPhotoParams - Represents parameters of deleteChatPhoto method.
 type DeleteChatPhotoParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 }
 
 // DeleteChatPhoto - Use this method to delete a chat photo. Photos can't be changed for private chats. The
 // bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
 // Returns True on success.
-func (b *Bot) DeleteChatPhoto(params *DeleteChatPhotoParams) error {
-	err := b.performRequest("deleteChatPhoto", params)
+func (b *Bot) DeleteChatPhoto(ctx context.Context, params *DeleteChatPhotoParams) error {
+	err := b.performRequest(ctx, "deleteChatPhoto", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteChatPhoto(): %w", err)
+		return fmt.Errorf("telego: deleteChatPhoto: %w", err)
 	}
-
 	return nil
 }
 
 // SetChatTitleParams - Represents parameters of setChatTitle method.
 type SetChatTitleParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// Title - New chat title, 1-128 characters
@@ -2352,19 +3032,17 @@ type SetChatTitleParams struct {
 // SetChatTitle - Use this method to change the title of a chat. Titles can't be changed for private chats.
 // The bot must be an administrator in the chat for this to work and must have the appropriate administrator
 // rights. Returns True on success.
-func (b *Bot) SetChatTitle(params *SetChatTitleParams) error {
-	err := b.performRequest("setChatTitle", params)
+func (b *Bot) SetChatTitle(ctx context.Context, params *SetChatTitleParams) error {
+	err := b.performRequest(ctx, "setChatTitle", params)
 	if err != nil {
-		return fmt.Errorf("telego: setChatTitle(): %w", err)
+		return fmt.Errorf("telego: setChatTitle: %w", err)
 	}
-
 	return nil
 }
 
 // SetChatDescriptionParams - Represents parameters of setChatDescription method.
 type SetChatDescriptionParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// Description - Optional. New chat description, 0-255 characters
@@ -2374,12 +3052,11 @@ type SetChatDescriptionParams struct {
 // SetChatDescription - Use this method to change the description of a group, a supergroup or a channel. The
 // bot must be an administrator in the chat for this to work and must have the appropriate administrator rights.
 // Returns True on success.
-func (b *Bot) SetChatDescription(params *SetChatDescriptionParams) error {
-	err := b.performRequest("setChatDescription", params)
+func (b *Bot) SetChatDescription(ctx context.Context, params *SetChatDescriptionParams) error {
+	err := b.performRequest(ctx, "setChatDescription", params)
 	if err != nil {
-		return fmt.Errorf("telego: setChatDescription(): %w", err)
+		return fmt.Errorf("telego: setChatDescription: %w", err)
 	}
-
 	return nil
 }
 
@@ -2389,8 +3066,7 @@ type PinChatMessageParams struct {
 	// message will be pinned
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageID - Identifier of a message to pin
@@ -2401,16 +3077,15 @@ type PinChatMessageParams struct {
 	DisableNotification bool `json:"disable_notification,omitempty"`
 }
 
-// PinChatMessage - Use this method to add a message to the list of pinned messages in a chat. If the chat is
-// not a private chat, the bot must be an administrator in the chat for this to work and must have the
-// 'can_pin_messages' administrator right in a supergroup or 'can_edit_messages' administrator right in a
-// channel. Returns True on success.
-func (b *Bot) PinChatMessage(params *PinChatMessageParams) error {
-	err := b.performRequest("pinChatMessage", params)
+// PinChatMessage - Use this method to add a message to the list of pinned messages in a chat. In private
+// chats and channel direct messages chats, all non-service messages can be pinned. Conversely, the bot must be
+// an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to pin messages in groups
+// and channels respectively. Returns True on success.
+func (b *Bot) PinChatMessage(ctx context.Context, params *PinChatMessageParams) error {
+	err := b.performRequest(ctx, "pinChatMessage", params)
 	if err != nil {
-		return fmt.Errorf("telego: pinChatMessage(): %w", err)
+		return fmt.Errorf("telego: pinChatMessage: %w", err)
 	}
-
 	return nil
 }
 
@@ -2420,8 +3095,7 @@ type UnpinChatMessageParams struct {
 	// message will be unpinned
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageID - Optional. Identifier of the message to unpin. Required if business_connection_id is
@@ -2429,91 +3103,89 @@ type UnpinChatMessageParams struct {
 	MessageID int `json:"message_id,omitempty"`
 }
 
-// UnpinChatMessage - Use this method to remove a message from the list of pinned messages in a chat. If the
-// chat is not a private chat, the bot must be an administrator in the chat for this to work and must have the
-// 'can_pin_messages' administrator right in a supergroup or 'can_edit_messages' administrator right in a
-// channel. Returns True on success.
-func (b *Bot) UnpinChatMessage(params *UnpinChatMessageParams) error {
-	err := b.performRequest("unpinChatMessage", params)
+// UnpinChatMessage - Use this method to remove a message from the list of pinned messages in a chat. In
+// private chats and channel direct messages chats, all messages can be unpinned. Conversely, the bot must be an
+// administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin messages in groups
+// and channels respectively. Returns True on success.
+func (b *Bot) UnpinChatMessage(ctx context.Context, params *UnpinChatMessageParams) error {
+	err := b.performRequest(ctx, "unpinChatMessage", params)
 	if err != nil {
-		return fmt.Errorf("telego: unpinChatMessage(): %w", err)
+		return fmt.Errorf("telego: unpinChatMessage: %w", err)
 	}
-
 	return nil
 }
 
 // UnpinAllChatMessagesParams - Represents parameters of unpinAllChatMessages method.
 type UnpinAllChatMessagesParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 }
 
-// UnpinAllChatMessages - Use this method to clear the list of pinned messages in a chat. If the chat is not
-// a private chat, the bot must be an administrator in the chat for this to work and must have the
-// 'can_pin_messages' administrator right in a supergroup or 'can_edit_messages' administrator right in a
-// channel. Returns True on success.
-func (b *Bot) UnpinAllChatMessages(params *UnpinAllChatMessagesParams) error {
-	err := b.performRequest("unpinAllChatMessages", params)
+// UnpinAllChatMessages - Use this method to clear the list of pinned messages in a chat. In private chats
+// and channel direct messages chats, no additional rights are required to unpin all pinned messages.
+// Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages'
+// right to unpin all pinned messages in groups and channels respectively. Returns True on success.
+func (b *Bot) UnpinAllChatMessages(ctx context.Context, params *UnpinAllChatMessagesParams) error {
+	err := b.performRequest(ctx, "unpinAllChatMessages", params)
 	if err != nil {
-		return fmt.Errorf("telego: unpinAllChatMessages(): %w", err)
+		return fmt.Errorf("telego: unpinAllChatMessages: %w", err)
 	}
-
 	return nil
 }
 
 // LeaveChatParams - Represents parameters of leaveChat method.
 type LeaveChatParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel (in the
-	// format @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel in the
+	// format @username. Channel direct messages chats aren't supported; leave the corresponding channel instead.
 	ChatID ChatID `json:"chat_id"`
 }
 
 // LeaveChat - Use this method for your bot to leave a group, supergroup or channel. Returns True on success.
-func (b *Bot) LeaveChat(params *LeaveChatParams) error {
-	err := b.performRequest("leaveChat", params)
+func (b *Bot) LeaveChat(ctx context.Context, params *LeaveChatParams) error {
+	err := b.performRequest(ctx, "leaveChat", params)
 	if err != nil {
-		return fmt.Errorf("telego: leaveChat(): %w", err)
+		return fmt.Errorf("telego: leaveChat: %w", err)
 	}
-
 	return nil
 }
 
 // GetChatParams - Represents parameters of getChat method.
 type GetChatParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel (in the
-	// format @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel in the
+	// format @username
 	ChatID ChatID `json:"chat_id"`
 }
 
 // GetChat - Use this method to get up-to-date information about the chat. Returns a ChatFullInfo
 // (https://core.telegram.org/bots/api#chatfullinfo) object on success.
-func (b *Bot) GetChat(params *GetChatParams) (*ChatFullInfo, error) {
+func (b *Bot) GetChat(ctx context.Context, params *GetChatParams) (*ChatFullInfo, error) {
 	var chatFullInfo *ChatFullInfo
-	err := b.performRequest("getChat", params, &chatFullInfo)
+	err := b.performRequest(ctx, "getChat", params, &chatFullInfo)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getChat(): %w", err)
+		return nil, fmt.Errorf("telego: getChat: %w", err)
 	}
-
 	return chatFullInfo, nil
 }
 
 // GetChatAdministratorsParams - Represents parameters of getChatAdministrators method.
 type GetChatAdministratorsParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel (in the
-	// format @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel in the
+	// format @username
 	ChatID ChatID `json:"chat_id"`
+
+	// ReturnBots - Optional. Pass True to additionally receive all bots that are administrators of the chat. By
+	// default, bots other than the current bot are omitted.
+	ReturnBots bool `json:"return_bots,omitempty"`
 }
 
-// GetChatAdministrators - Use this method to get a list of administrators in a chat, which aren't bots.
-// Returns an Array of ChatMember (https://core.telegram.org/bots/api#chatmember) objects.
-func (b *Bot) GetChatAdministrators(params *GetChatAdministratorsParams) ([]ChatMember, error) {
+// GetChatAdministrators - Use this method to get a list of administrators in a chat. Returns an Array of
+// ChatMember (https://core.telegram.org/bots/api#chatmember) objects.
+func (b *Bot) GetChatAdministrators(ctx context.Context, params *GetChatAdministratorsParams) ([]ChatMember, error) {
 	var chatMembersData []chatMemberData
-	err := b.performRequest("getChatAdministrators", params, &chatMembersData)
+	err := b.performRequest(ctx, "getChatAdministrators", params, &chatMembersData)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getChatAdministrators(): %w", err)
+		return nil, fmt.Errorf("telego: getChatAdministrators: %w", err)
 	}
-
 	chatMembers := make([]ChatMember, len(chatMembersData))
 	for i, d := range chatMembersData {
 		chatMembers[i] = d.Data
@@ -2523,26 +3195,25 @@ func (b *Bot) GetChatAdministrators(params *GetChatAdministratorsParams) ([]Chat
 
 // GetChatMemberCountParams - Represents parameters of getChatMemberCount method.
 type GetChatMemberCountParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel (in the
-	// format @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel in the
+	// format @username
 	ChatID ChatID `json:"chat_id"`
 }
 
-// GetChatMemberCount - Use this method to get the number of members in a chat. Returns Int on success.
-func (b *Bot) GetChatMemberCount(params *GetChatMemberCountParams) (*int, error) {
+// GetChatMemberCount - Use this method to get the number of members in a chat. Returns Integer on success.
+func (b *Bot) GetChatMemberCount(ctx context.Context, params *GetChatMemberCountParams) (*int, error) {
 	var chatMemberCount *int
-	err := b.performRequest("getChatMemberCount", params, &chatMemberCount)
+	err := b.performRequest(ctx, "getChatMemberCount", params, &chatMemberCount)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getChatMemberCount(): %w", err)
+		return nil, fmt.Errorf("telego: getChatMemberCount: %w", err)
 	}
-
 	return chatMemberCount, nil
 }
 
 // GetChatMemberParams - Represents parameters of getChatMember method.
 type GetChatMemberParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel (in the
-	// format @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup or channel in the
+	// format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -2552,20 +3223,52 @@ type GetChatMemberParams struct {
 // GetChatMember - Use this method to get information about a member of a chat. The method is only guaranteed
 // to work for other users if the bot is an administrator in the chat. Returns a ChatMember
 // (https://core.telegram.org/bots/api#chatmember) object on success.
-func (b *Bot) GetChatMember(params *GetChatMemberParams) (ChatMember, error) {
+func (b *Bot) GetChatMember(ctx context.Context, params *GetChatMemberParams) (ChatMember, error) {
 	var memberData chatMemberData
-	err := b.performRequest("getChatMember", params, &memberData)
+	err := b.performRequest(ctx, "getChatMember", params, &memberData)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getChatMember(): %w", err)
+		return nil, fmt.Errorf("telego: getChatMember: %w", err)
 	}
-
 	return memberData.Data, nil
+}
+
+// GetChatShareThemeBackdrops - Use this method to get the list of backdrops, which can be used as the
+// background of a theme of the screen for sharing a link to a user or a chat. Requires no parameters. Returns a
+// ChatShareThemeBackdrops (https://core.telegram.org/bots/api#chatsharethemebackdrops) object.
+func (b *Bot) GetChatShareThemeBackdrops(ctx context.Context) (*ChatShareThemeBackdrops, error) {
+	var chatShareThemeBackdrops *ChatShareThemeBackdrops
+	err := b.performRequest(ctx, "getChatShareThemeBackdrops", nil, &chatShareThemeBackdrops)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getChatShareThemeBackdrops: %w", err)
+	}
+	return chatShareThemeBackdrops, nil
+}
+
+// GetUserPersonalChatMessagesParams - Represents parameters of getUserPersonalChatMessages method.
+type GetUserPersonalChatMessagesParams struct {
+	// UserID - Unique identifier for the target user
+	UserID int64 `json:"user_id"`
+
+	// Limit - The maximum number of messages to return; 1-20
+	Limit int `json:"limit"`
+}
+
+// GetUserPersonalChatMessages - Use this method to get the last messages from the personal chat (i.e., the
+// chat currently added to their profile) of a given user. On success, an Array of Message
+// (https://core.telegram.org/bots/api#message) objects is returned.
+func (b *Bot) GetUserPersonalChatMessages(ctx context.Context, params *GetUserPersonalChatMessagesParams) ([]Message, error) {
+	var messages []Message
+	err := b.performRequest(ctx, "getUserPersonalChatMessages", params, &messages)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getUserPersonalChatMessages: %w", err)
+	}
+	return messages, nil
 }
 
 // SetChatStickerSetParams - Represents parameters of setChatStickerSet method.
 type SetChatStickerSetParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// StickerSetName - Name of the sticker set to be set as the group sticker set
@@ -2576,19 +3279,18 @@ type SetChatStickerSetParams struct {
 // administrator in the chat for this to work and must have the appropriate administrator rights. Use the field
 // can_set_sticker_set optionally returned in getChat (https://core.telegram.org/bots/api#getchat) requests to
 // check if the bot can use this method. Returns True on success.
-func (b *Bot) SetChatStickerSet(params *SetChatStickerSetParams) error {
-	err := b.performRequest("setChatStickerSet", params)
+func (b *Bot) SetChatStickerSet(ctx context.Context, params *SetChatStickerSetParams) error {
+	err := b.performRequest(ctx, "setChatStickerSet", params)
 	if err != nil {
-		return fmt.Errorf("telego: setChatStickerSet(): %w", err)
+		return fmt.Errorf("telego: setChatStickerSet: %w", err)
 	}
-
 	return nil
 }
 
 // DeleteChatStickerSetParams - Represents parameters of deleteChatStickerSet method.
 type DeleteChatStickerSetParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 }
 
@@ -2596,32 +3298,30 @@ type DeleteChatStickerSetParams struct {
 // administrator in the chat for this to work and must have the appropriate administrator rights. Use the field
 // can_set_sticker_set optionally returned in getChat (https://core.telegram.org/bots/api#getchat) requests to
 // check if the bot can use this method. Returns True on success.
-func (b *Bot) DeleteChatStickerSet(params *DeleteChatStickerSetParams) error {
-	err := b.performRequest("deleteChatStickerSet", params)
+func (b *Bot) DeleteChatStickerSet(ctx context.Context, params *DeleteChatStickerSetParams) error {
+	err := b.performRequest(ctx, "deleteChatStickerSet", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteChatStickerSet(): %w", err)
+		return fmt.Errorf("telego: deleteChatStickerSet: %w", err)
 	}
-
 	return nil
 }
 
 // GetForumTopicIconStickers - Use this method to get custom emoji stickers, which can be used as a forum
 // topic icon by any user. Requires no parameters. Returns an Array of Sticker
 // (https://core.telegram.org/bots/api#sticker) objects.
-func (b *Bot) GetForumTopicIconStickers() ([]Sticker, error) {
+func (b *Bot) GetForumTopicIconStickers(ctx context.Context) ([]Sticker, error) {
 	var stickers []Sticker
-	err := b.performRequest("getForumTopicIconStickers", nil, &stickers)
+	err := b.performRequest(ctx, "getForumTopicIconStickers", nil, &stickers)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getForumTopicIconStickers(): %w", err)
+		return nil, fmt.Errorf("telego: getForumTopicIconStickers: %w", err)
 	}
-
 	return stickers, nil
 }
 
 // CreateForumTopicParams - Represents parameters of createForumTopic method.
 type CreateForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// Name - Topic name, 1-128 characters
@@ -2629,7 +3329,7 @@ type CreateForumTopicParams struct {
 
 	// IconColor - Optional. Color of the topic icon in RGB format. Currently, must be one of 7322096
 	// (0x6FB9F0), 16766590 (0xFFD67E), 13338331 (0xCB86DB), 9367192 (0x8EEE98), 16749490 (0xFF93B2), or 16478047
-	// (0xFB6F5F)
+	// (0xFB6F5F).
 	IconColor int `json:"icon_color,omitempty"`
 
 	// IconCustomEmojiID - Optional. Unique identifier of the custom emoji shown as the topic icon. Use
@@ -2638,55 +3338,57 @@ type CreateForumTopicParams struct {
 	IconCustomEmojiID string `json:"icon_custom_emoji_id,omitempty"`
 }
 
-// CreateForumTopic - Use this method to create a topic in a forum supergroup chat. The bot must be an
-// administrator in the chat for this to work and must have the can_manage_topics administrator rights. Returns
-// information about the created topic as a ForumTopic (https://core.telegram.org/bots/api#forumtopic) object.
-func (b *Bot) CreateForumTopic(params *CreateForumTopicParams) (*ForumTopic, error) {
+// CreateForumTopic - Use this method to create a topic in a forum supergroup chat or a private chat with a
+// user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must
+// have the can_manage_topics administrator right. In the case of a private chat, a link to the topic can be
+// created in the format https://t.me/<bot_username>/<message_thread_id>; the link opens the topic only for the
+// user. Returns information about the created topic as a ForumTopic
+// (https://core.telegram.org/bots/api#forumtopic) object.
+func (b *Bot) CreateForumTopic(ctx context.Context, params *CreateForumTopicParams) (*ForumTopic, error) {
 	var forumTopic *ForumTopic
-	err := b.performRequest("createForumTopic", params, &forumTopic)
+	err := b.performRequest(ctx, "createForumTopic", params, &forumTopic)
 	if err != nil {
-		return nil, fmt.Errorf("telego: createForumTopic(): %w", err)
+		return nil, fmt.Errorf("telego: createForumTopic: %w", err)
 	}
-
 	return forumTopic, nil
 }
 
 // EditForumTopicParams - Represents parameters of editForumTopic method.
 type EditForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageThreadID - Unique identifier for the target message thread of the forum topic
 	MessageThreadID int `json:"message_thread_id"`
 
 	// Name - Optional. New topic name, 0-128 characters. If not specified or empty, the current name of the
-	// topic will be kept
+	// topic will be kept.
 	Name string `json:"name,omitempty"`
 
 	// IconCustomEmojiID - Optional. New unique identifier of the custom emoji shown as the topic icon. Use
 	// getForumTopicIconStickers (https://core.telegram.org/bots/api#getforumtopiciconstickers) to get all allowed
 	// custom emoji identifiers. Pass an empty string to remove the icon. If not specified, the current icon will be
-	// kept
+	// kept.
 	IconCustomEmojiID *string `json:"icon_custom_emoji_id,omitempty"`
 }
 
-// EditForumTopic - Use this method to edit name and icon of a topic in a forum supergroup chat. The bot must
-// be an administrator in the chat for this to work and must have the can_manage_topics administrator rights,
-// unless it is the creator of the topic. Returns True on success.
-func (b *Bot) EditForumTopic(params *EditForumTopicParams) error {
-	err := b.performRequest("editForumTopic", params)
+// EditForumTopic - Use this method to edit name and icon of a topic in a forum supergroup chat or a private
+// chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to
+// work and must have the can_manage_topics administrator rights, unless it is the creator of the topic. Returns
+// True on success.
+func (b *Bot) EditForumTopic(ctx context.Context, params *EditForumTopicParams) error {
+	err := b.performRequest(ctx, "editForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: editForumTopic(): %w", err)
+		return fmt.Errorf("telego: editForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // CloseForumTopicParams - Represents parameters of closeForumTopic method.
 type CloseForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageThreadID - Unique identifier for the target message thread of the forum topic
@@ -2696,19 +3398,18 @@ type CloseForumTopicParams struct {
 // CloseForumTopic - Use this method to close an open topic in a forum supergroup chat. The bot must be an
 // administrator in the chat for this to work and must have the can_manage_topics administrator rights, unless
 // it is the creator of the topic. Returns True on success.
-func (b *Bot) CloseForumTopic(params *CloseForumTopicParams) error {
-	err := b.performRequest("closeForumTopic", params)
+func (b *Bot) CloseForumTopic(ctx context.Context, params *CloseForumTopicParams) error {
+	err := b.performRequest(ctx, "closeForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: closeForumTopic(): %w", err)
+		return fmt.Errorf("telego: closeForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // ReopenForumTopicParams - Represents parameters of reopenForumTopic method.
 type ReopenForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageThreadID - Unique identifier for the target message thread of the forum topic
@@ -2718,19 +3419,18 @@ type ReopenForumTopicParams struct {
 // ReopenForumTopic - Use this method to reopen a closed topic in a forum supergroup chat. The bot must be an
 // administrator in the chat for this to work and must have the can_manage_topics administrator rights, unless
 // it is the creator of the topic. Returns True on success.
-func (b *Bot) ReopenForumTopic(params *ReopenForumTopicParams) error {
-	err := b.performRequest("reopenForumTopic", params)
+func (b *Bot) ReopenForumTopic(ctx context.Context, params *ReopenForumTopicParams) error {
+	err := b.performRequest(ctx, "reopenForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: reopenForumTopic(): %w", err)
+		return fmt.Errorf("telego: reopenForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // DeleteForumTopicParams - Represents parameters of deleteForumTopic method.
 type DeleteForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageThreadID - Unique identifier for the target message thread of the forum topic
@@ -2738,43 +3438,43 @@ type DeleteForumTopicParams struct {
 }
 
 // DeleteForumTopic - Use this method to delete a forum topic along with all its messages in a forum
-// supergroup chat. The bot must be an administrator in the chat for this to work and must have the
-// can_delete_messages administrator rights. Returns True on success.
-func (b *Bot) DeleteForumTopic(params *DeleteForumTopicParams) error {
-	err := b.performRequest("deleteForumTopic", params)
+// supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an
+// administrator in the chat for this to work and must have the can_delete_messages administrator rights.
+// Returns True on success.
+func (b *Bot) DeleteForumTopic(ctx context.Context, params *DeleteForumTopicParams) error {
+	err := b.performRequest(ctx, "deleteForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteForumTopic(): %w", err)
+		return fmt.Errorf("telego: deleteForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // UnpinAllForumTopicMessagesParams - Represents parameters of unpinAllForumTopicMessages method.
 type UnpinAllForumTopicMessagesParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageThreadID - Unique identifier for the target message thread of the forum topic
 	MessageThreadID int `json:"message_thread_id"`
 }
 
-// UnpinAllForumTopicMessages - Use this method to clear the list of pinned messages in a forum topic. The
-// bot must be an administrator in the chat for this to work and must have the can_pin_messages administrator
-// right in the supergroup. Returns True on success.
-func (b *Bot) UnpinAllForumTopicMessages(params *UnpinAllForumTopicMessagesParams) error {
-	err := b.performRequest("unpinAllForumTopicMessages", params)
+// UnpinAllForumTopicMessages - Use this method to clear the list of pinned messages in a forum topic in a
+// forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an
+// administrator in the chat for this to work and must have the can_pin_messages administrator right in the
+// supergroup. Returns True on success.
+func (b *Bot) UnpinAllForumTopicMessages(ctx context.Context, params *UnpinAllForumTopicMessagesParams) error {
+	err := b.performRequest(ctx, "unpinAllForumTopicMessages", params)
 	if err != nil {
-		return fmt.Errorf("telego: unpinAllForumTopicMessages(): %w", err)
+		return fmt.Errorf("telego: unpinAllForumTopicMessages: %w", err)
 	}
-
 	return nil
 }
 
 // EditGeneralForumTopicParams - Represents parameters of editGeneralForumTopic method.
 type EditGeneralForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 
 	// Name - New topic name, 1-128 characters
@@ -2784,108 +3484,102 @@ type EditGeneralForumTopicParams struct {
 // EditGeneralForumTopic - Use this method to edit the name of the 'General' topic in a forum supergroup
 // chat. The bot must be an administrator in the chat for this to work and must have the can_manage_topics
 // administrator rights. Returns True on success.
-func (b *Bot) EditGeneralForumTopic(params *EditGeneralForumTopicParams) error {
-	err := b.performRequest("editGeneralForumTopic", params)
+func (b *Bot) EditGeneralForumTopic(ctx context.Context, params *EditGeneralForumTopicParams) error {
+	err := b.performRequest(ctx, "editGeneralForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: editGeneralForumTopic(): %w", err)
+		return fmt.Errorf("telego: editGeneralForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // CloseGeneralForumTopicParams - Represents parameters of closeGeneralForumTopic method.
 type CloseGeneralForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 }
 
 // CloseGeneralForumTopic - Use this method to close an open 'General' topic in a forum supergroup chat. The
 // bot must be an administrator in the chat for this to work and must have the can_manage_topics administrator
 // rights. Returns True on success.
-func (b *Bot) CloseGeneralForumTopic(params *CloseGeneralForumTopicParams) error {
-	err := b.performRequest("closeGeneralForumTopic", params)
+func (b *Bot) CloseGeneralForumTopic(ctx context.Context, params *CloseGeneralForumTopicParams) error {
+	err := b.performRequest(ctx, "closeGeneralForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: closeGeneralForumTopic(): %w", err)
+		return fmt.Errorf("telego: closeGeneralForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // ReopenGeneralForumTopicParams - Represents parameters of reopenGeneralForumTopic method.
 type ReopenGeneralForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 }
 
 // ReopenGeneralForumTopic - Use this method to reopen a closed 'General' topic in a forum supergroup chat.
 // The bot must be an administrator in the chat for this to work and must have the can_manage_topics
 // administrator rights. The topic will be automatically unhidden if it was hidden. Returns True on success.
-func (b *Bot) ReopenGeneralForumTopic(params *ReopenGeneralForumTopicParams) error {
-	err := b.performRequest("reopenGeneralForumTopic", params)
+func (b *Bot) ReopenGeneralForumTopic(ctx context.Context, params *ReopenGeneralForumTopicParams) error {
+	err := b.performRequest(ctx, "reopenGeneralForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: reopenGeneralForumTopic(): %w", err)
+		return fmt.Errorf("telego: reopenGeneralForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // HideGeneralForumTopicParams - Represents parameters of hideGeneralForumTopic method.
 type HideGeneralForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 }
 
 // HideGeneralForumTopic - Use this method to hide the 'General' topic in a forum supergroup chat. The bot
 // must be an administrator in the chat for this to work and must have the can_manage_topics administrator
 // rights. The topic will be automatically closed if it was open. Returns True on success.
-func (b *Bot) HideGeneralForumTopic(params *HideGeneralForumTopicParams) error {
-	err := b.performRequest("hideGeneralForumTopic", params)
+func (b *Bot) HideGeneralForumTopic(ctx context.Context, params *HideGeneralForumTopicParams) error {
+	err := b.performRequest(ctx, "hideGeneralForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: hideGeneralForumTopic(): %w", err)
+		return fmt.Errorf("telego: hideGeneralForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // UnhideGeneralForumTopicParams - Represents parameters of unhideGeneralForumTopic method.
 type UnhideGeneralForumTopicParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 }
 
 // UnhideGeneralForumTopic - Use this method to unhide the 'General' topic in a forum supergroup chat. The
 // bot must be an administrator in the chat for this to work and must have the can_manage_topics administrator
 // rights. Returns True on success.
-func (b *Bot) UnhideGeneralForumTopic(params *UnhideGeneralForumTopicParams) error {
-	err := b.performRequest("unhideGeneralForumTopic", params)
+func (b *Bot) UnhideGeneralForumTopic(ctx context.Context, params *UnhideGeneralForumTopicParams) error {
+	err := b.performRequest(ctx, "unhideGeneralForumTopic", params)
 	if err != nil {
-		return fmt.Errorf("telego: unhideGeneralForumTopic(): %w", err)
+		return fmt.Errorf("telego: unhideGeneralForumTopic: %w", err)
 	}
-
 	return nil
 }
 
 // UnpinAllGeneralForumTopicMessagesParams - Represents parameters of unpinAllGeneralForumTopicMessages
 // method.
 type UnpinAllGeneralForumTopicMessagesParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target supergroup (in the format
-	// @supergroup_username)
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
 	ChatID ChatID `json:"chat_id"`
 }
 
 // UnpinAllGeneralForumTopicMessages - Use this method to clear the list of pinned messages in a General
 // forum topic. The bot must be an administrator in the chat for this to work and must have the can_pin_messages
 // administrator right in the supergroup. Returns True on success.
-func (b *Bot) UnpinAllGeneralForumTopicMessages(params *UnpinAllGeneralForumTopicMessagesParams) error {
-	err := b.performRequest("unpinAllGeneralForumTopicMessages", params)
+func (b *Bot) UnpinAllGeneralForumTopicMessages(ctx context.Context, params *UnpinAllGeneralForumTopicMessagesParams) error {
+	err := b.performRequest(ctx, "unpinAllGeneralForumTopicMessages", params)
 	if err != nil {
-		return fmt.Errorf("telego: unpinAllGeneralForumTopicMessages(): %w", err)
+		return fmt.Errorf("telego: unpinAllGeneralForumTopicMessages: %w", err)
 	}
-
 	return nil
 }
 
@@ -2895,11 +3589,11 @@ type AnswerCallbackQueryParams struct {
 	CallbackQueryID string `json:"callback_query_id"`
 
 	// Text - Optional. Text of the notification. If not specified, nothing will be shown to the user, 0-200
-	// characters
+	// characters.
 	Text string `json:"text,omitempty"`
 
 	// ShowAlert - Optional. If True, an alert will be shown by the client instead of a notification at the top
-	// of the chat screen. Defaults to false.
+	// of the chat screen. Defaults to False.
 	ShowAlert bool `json:"show_alert,omitempty"`
 
 	// URL - Optional. URL that will be opened by the user's client. If you have created a Game
@@ -2910,7 +3604,7 @@ type AnswerCallbackQueryParams struct {
 	URL string `json:"url,omitempty"`
 
 	// CacheTime - Optional. The maximum amount of time in seconds that the result of the callback query may be
-	// cached client-side. Telegram apps will support caching starting in version 3.14. Defaults to 0.
+	// cached client-side. Defaults to 0.
 	CacheTime int `json:"cache_time,omitempty"`
 }
 
@@ -2920,18 +3614,59 @@ type AnswerCallbackQueryParams struct {
 // Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first
 // create a game for your bot via @BotFather (https://t.me/botfather) and accept the terms. Otherwise, you may
 // use links like t.me/your_bot?start=XXXX that open your bot with a parameter.
-func (b *Bot) AnswerCallbackQuery(params *AnswerCallbackQueryParams) error {
-	err := b.performRequest("answerCallbackQuery", params)
+func (b *Bot) AnswerCallbackQuery(ctx context.Context, params *AnswerCallbackQueryParams) error {
+	err := b.performRequest(ctx, "answerCallbackQuery", params)
 	if err != nil {
-		return fmt.Errorf("telego: answerCallbackQuery(): %w", err)
+		return fmt.Errorf("telego: answerCallbackQuery: %w", err)
 	}
-
 	return nil
+}
+
+// AnswerWidgetQueryParams - Represents parameters of answerWidgetQuery method.
+type AnswerWidgetQueryParams struct {
+	// WidgetQueryID - Unique identifier for the query to be answered
+	WidgetQueryID string `json:"widget_query_id"`
+
+	// Data - Optional. Data to be returned to the widget, 0-1024 bytes
+	Data string `json:"data,omitempty"`
+}
+
+// AnswerWidgetQuery - Use this method to send an answer to a query from a widget. The query must be answered
+// within 15 seconds. The answer is received only by the widget that sent the query and doesn't change data of
+// the widget; use editMessageWidgetData (https://core.telegram.org/bots/api#editmessagewidgetdata) or
+// editSharedWidgetData (https://core.telegram.org/bots/api#editsharedwidgetdata) to change it. On success, True
+// is returned.
+func (b *Bot) AnswerWidgetQuery(ctx context.Context, params *AnswerWidgetQueryParams) error {
+	err := b.performRequest(ctx, "answerWidgetQuery", params)
+	if err != nil {
+		return fmt.Errorf("telego: answerWidgetQuery: %w", err)
+	}
+	return nil
+}
+
+// AnswerGuestQueryParams - Represents parameters of answerGuestQuery method.
+type AnswerGuestQueryParams struct {
+	// GuestQueryID - Unique identifier for the query to be answered
+	GuestQueryID string `json:"guest_query_id"`
+
+	// Result - A JSON-serialized object describing the message to be sent
+	Result InlineQueryResult `json:"result"`
+}
+
+// AnswerGuestQuery - Use this method to reply to a received guest message. On success, a SentGuestMessage
+// (https://core.telegram.org/bots/api#sentguestmessage) object is returned.
+func (b *Bot) AnswerGuestQuery(ctx context.Context, params *AnswerGuestQueryParams) (*SentGuestMessage, error) {
+	var sentGuestMessage *SentGuestMessage
+	err := b.performRequest(ctx, "answerGuestQuery", params, &sentGuestMessage)
+	if err != nil {
+		return nil, fmt.Errorf("telego: answerGuestQuery: %w", err)
+	}
+	return sentGuestMessage, nil
 }
 
 // GetUserChatBoostsParams - Represents parameters of getUserChatBoosts method.
 type GetUserChatBoostsParams struct {
-	// ChatID - Unique identifier for the chat or username of the channel (in the format @channel_username)
+	// ChatID - Unique identifier for the chat or username of the channel in the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// UserID - Unique identifier of the target user
@@ -2941,13 +3676,12 @@ type GetUserChatBoostsParams struct {
 // GetUserChatBoosts - Use this method to get the list of boosts added to a chat by a user. Requires
 // administrator rights in the chat. Returns a UserChatBoosts
 // (https://core.telegram.org/bots/api#userchatboosts) object.
-func (b *Bot) GetUserChatBoosts(params *GetUserChatBoostsParams) (*UserChatBoosts, error) {
+func (b *Bot) GetUserChatBoosts(ctx context.Context, params *GetUserChatBoostsParams) (*UserChatBoosts, error) {
 	var userChatBoosts *UserChatBoosts
-	err := b.performRequest("getUserChatBoosts", params, &userChatBoosts)
+	err := b.performRequest(ctx, "getUserChatBoosts", params, &userChatBoosts)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getUserChatBoosts(): %w", err)
+		return nil, fmt.Errorf("telego: getUserChatBoosts: %w", err)
 	}
-
 	return userChatBoosts, nil
 }
 
@@ -2960,14 +3694,88 @@ type GetBusinessConnectionParams struct {
 // GetBusinessConnection - Use this method to get information about the connection of the bot with a business
 // account. Returns a BusinessConnection (https://core.telegram.org/bots/api#businessconnection) object on
 // success.
-func (b *Bot) GetBusinessConnection(params *GetBusinessConnectionParams) (*BusinessConnection, error) {
+func (b *Bot) GetBusinessConnection(ctx context.Context, params *GetBusinessConnectionParams) (*BusinessConnection, error) {
 	var businessConnection *BusinessConnection
-	err := b.performRequest("getBusinessConnection", params, &businessConnection)
+	err := b.performRequest(ctx, "getBusinessConnection", params, &businessConnection)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getBusinessConnection(): %w", err)
+		return nil, fmt.Errorf("telego: getBusinessConnection: %w", err)
 	}
-
 	return businessConnection, nil
+}
+
+// GetManagedBotTokenParams - Represents parameters of getManagedBotToken method.
+type GetManagedBotTokenParams struct {
+	// UserID - User identifier of the managed bot whose token will be returned
+	UserID int64 `json:"user_id"`
+}
+
+// GetManagedBotToken - Use this method to get the token of a managed bot. Returns the token as String on
+// success.
+func (b *Bot) GetManagedBotToken(ctx context.Context, params *GetManagedBotTokenParams) (*string, error) {
+	var token *string
+	err := b.performRequest(ctx, "getManagedBotToken", params, &token)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getManagedBotToken: %w", err)
+	}
+	return token, nil
+}
+
+// ReplaceManagedBotTokenParams - Represents parameters of replaceManagedBotToken method.
+type ReplaceManagedBotTokenParams struct {
+	// UserID - User identifier of the managed bot whose token will be replaced
+	UserID int64 `json:"user_id"`
+}
+
+// ReplaceManagedBotToken - Use this method to revoke the current token of a managed bot and generate a new
+// one. Returns the new token as String on success.
+func (b *Bot) ReplaceManagedBotToken(ctx context.Context, params *ReplaceManagedBotTokenParams) (*string, error) {
+	var token *string
+	err := b.performRequest(ctx, "replaceManagedBotToken", params, &token)
+	if err != nil {
+		return nil, fmt.Errorf("telego: replaceManagedBotToken: %w", err)
+	}
+	return token, nil
+}
+
+// GetManagedBotAccessSettingsParams - Represents parameters of getManagedBotAccessSettings method.
+type GetManagedBotAccessSettingsParams struct {
+	// UserID - User identifier of the managed bot whose access settings will be returned
+	UserID int64 `json:"user_id"`
+}
+
+// GetManagedBotAccessSettings - Use this method to get the access settings of a managed bot. Returns a
+// BotAccessSettings (https://core.telegram.org/bots/api#botaccesssettings) object on success.
+func (b *Bot) GetManagedBotAccessSettings(ctx context.Context, params *GetManagedBotAccessSettingsParams) (*BotAccessSettings, error) {
+	var botAccessSettings *BotAccessSettings
+	err := b.performRequest(ctx, "getManagedBotAccessSettings", params, &botAccessSettings)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getManagedBotAccessSettings: %w", err)
+	}
+	return botAccessSettings, nil
+}
+
+// SetManagedBotAccessSettingsParams - Represents parameters of setManagedBotAccessSettings method.
+type SetManagedBotAccessSettingsParams struct {
+	// UserID - User identifier of the managed bot whose access settings will be changed
+	UserID int64 `json:"user_id"`
+
+	// IsAccessRestricted - Pass True if only selected users can access the bot. The bot's owner can always
+	// access it.
+	IsAccessRestricted bool `json:"is_access_restricted"`
+
+	// AddedUserIDs - Optional. A JSON-serialized list of up to 10 identifiers of users who will have access to
+	// the bot in addition to its owner. Ignored if is_access_restricted is False.
+	AddedUserIDs []int64 `json:"added_user_ids,omitempty"`
+}
+
+// SetManagedBotAccessSettings - Use this method to change the access settings of a managed bot. Returns True
+// on success.
+func (b *Bot) SetManagedBotAccessSettings(ctx context.Context, params *SetManagedBotAccessSettingsParams) error {
+	err := b.performRequest(ctx, "setManagedBotAccessSettings", params)
+	if err != nil {
+		return fmt.Errorf("telego: setManagedBotAccessSettings: %w", err)
+	}
+	return nil
 }
 
 // SetMyCommandsParams - Represents parameters of setMyCommands method.
@@ -2981,19 +3789,18 @@ type SetMyCommandsParams struct {
 	Scope BotCommandScope `json:"scope,omitempty"`
 
 	// LanguageCode - Optional. A two-letter ISO 639-1 language code. If empty, commands will be applied to all
-	// users from the given scope, for whose language there are no dedicated commands
+	// users from the given scope, for whose language there are no dedicated commands.
 	LanguageCode string `json:"language_code,omitempty"`
 }
 
 // SetMyCommands - Use this method to change the list of the bot's commands. See this manual
 // (https://core.telegram.org/bots/features#commands) for more details about bot commands. Returns True on
 // success.
-func (b *Bot) SetMyCommands(params *SetMyCommandsParams) error {
-	err := b.performRequest("setMyCommands", params)
+func (b *Bot) SetMyCommands(ctx context.Context, params *SetMyCommandsParams) error {
+	err := b.performRequest(ctx, "setMyCommands", params)
 	if err != nil {
-		return fmt.Errorf("telego: setMyCommands(): %w", err)
+		return fmt.Errorf("telego: setMyCommands: %w", err)
 	}
-
 	return nil
 }
 
@@ -3004,7 +3811,7 @@ type DeleteMyCommandsParams struct {
 	Scope BotCommandScope `json:"scope,omitempty"`
 
 	// LanguageCode - Optional. A two-letter ISO 639-1 language code. If empty, commands will be applied to all
-	// users from the given scope, for whose language there are no dedicated commands
+	// users from the given scope, for whose language there are no dedicated commands.
 	LanguageCode string `json:"language_code,omitempty"`
 }
 
@@ -3012,12 +3819,11 @@ type DeleteMyCommandsParams struct {
 // language. After deletion, higher level commands
 // (https://core.telegram.org/bots/api#determining-list-of-commands) will be shown to affected users. Returns
 // True on success.
-func (b *Bot) DeleteMyCommands(params *DeleteMyCommandsParams) error {
-	err := b.performRequest("deleteMyCommands", params)
+func (b *Bot) DeleteMyCommands(ctx context.Context, params *DeleteMyCommandsParams) error {
+	err := b.performRequest(ctx, "deleteMyCommands", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteMyCommands(): %w", err)
+		return fmt.Errorf("telego: deleteMyCommands: %w", err)
 	}
-
 	return nil
 }
 
@@ -3034,13 +3840,12 @@ type GetMyCommandsParams struct {
 // GetMyCommands - Use this method to get the current list of the bot's commands for the given scope and user
 // language. Returns an Array of BotCommand (https://core.telegram.org/bots/api#botcommand) objects. If commands
 // aren't set, an empty list is returned.
-func (b *Bot) GetMyCommands(params *GetMyCommandsParams) ([]BotCommand, error) {
+func (b *Bot) GetMyCommands(ctx context.Context, params *GetMyCommandsParams) ([]BotCommand, error) {
 	var botCommands []BotCommand
-	err := b.performRequest("getMyCommands", params, &botCommands)
+	err := b.performRequest(ctx, "getMyCommands", params, &botCommands)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getMyCommands(): %w", err)
+		return nil, fmt.Errorf("telego: getMyCommands: %w", err)
 	}
-
 	return botCommands, nil
 }
 
@@ -3056,12 +3861,11 @@ type SetMyNameParams struct {
 }
 
 // SetMyName - Use this method to change the bot's name. Returns True on success.
-func (b *Bot) SetMyName(params *SetMyNameParams) error {
-	err := b.performRequest("setMyName", params)
+func (b *Bot) SetMyName(ctx context.Context, params *SetMyNameParams) error {
+	err := b.performRequest(ctx, "setMyName", params)
 	if err != nil {
-		return fmt.Errorf("telego: setMyName(): %w", err)
+		return fmt.Errorf("telego: setMyName: %w", err)
 	}
-
 	return nil
 }
 
@@ -3073,13 +3877,12 @@ type GetMyNameParams struct {
 
 // GetMyName - Use this method to get the current bot name for the given user language. Returns BotName
 // (https://core.telegram.org/bots/api#botname) on success.
-func (b *Bot) GetMyName(params *GetMyNameParams) (*BotName, error) {
+func (b *Bot) GetMyName(ctx context.Context, params *GetMyNameParams) (*BotName, error) {
 	var botName *BotName
-	err := b.performRequest("getMyName", params, &botName)
+	err := b.performRequest(ctx, "getMyName", params, &botName)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getMyName(): %w", err)
+		return nil, fmt.Errorf("telego: getMyName: %w", err)
 	}
-
 	return botName, nil
 }
 
@@ -3096,12 +3899,11 @@ type SetMyDescriptionParams struct {
 
 // SetMyDescription - Use this method to change the bot's description, which is shown in the chat with the
 // bot if the chat is empty. Returns True on success.
-func (b *Bot) SetMyDescription(params *SetMyDescriptionParams) error {
-	err := b.performRequest("setMyDescription", params)
+func (b *Bot) SetMyDescription(ctx context.Context, params *SetMyDescriptionParams) error {
+	err := b.performRequest(ctx, "setMyDescription", params)
 	if err != nil {
-		return fmt.Errorf("telego: setMyDescription(): %w", err)
+		return fmt.Errorf("telego: setMyDescription: %w", err)
 	}
-
 	return nil
 }
 
@@ -3113,13 +3915,12 @@ type GetMyDescriptionParams struct {
 
 // GetMyDescription - Use this method to get the current bot description for the given user language. Returns
 // BotDescription (https://core.telegram.org/bots/api#botdescription) on success.
-func (b *Bot) GetMyDescription(params *GetMyDescriptionParams) (*BotDescription, error) {
+func (b *Bot) GetMyDescription(ctx context.Context, params *GetMyDescriptionParams) (*BotDescription, error) {
 	var botDescription *BotDescription
-	err := b.performRequest("getMyDescription", params, &botDescription)
+	err := b.performRequest(ctx, "getMyDescription", params, &botDescription)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getMyDescription(): %w", err)
+		return nil, fmt.Errorf("telego: getMyDescription: %w", err)
 	}
-
 	return botDescription, nil
 }
 
@@ -3136,12 +3937,11 @@ type SetMyShortDescriptionParams struct {
 
 // SetMyShortDescription - Use this method to change the bot's short description, which is shown on the bot's
 // profile page and is sent together with the link when users share the bot. Returns True on success.
-func (b *Bot) SetMyShortDescription(params *SetMyShortDescriptionParams) error {
-	err := b.performRequest("setMyShortDescription", params)
+func (b *Bot) SetMyShortDescription(ctx context.Context, params *SetMyShortDescriptionParams) error {
+	err := b.performRequest(ctx, "setMyShortDescription", params)
 	if err != nil {
-		return fmt.Errorf("telego: setMyShortDescription(): %w", err)
+		return fmt.Errorf("telego: setMyShortDescription: %w", err)
 	}
-
 	return nil
 }
 
@@ -3153,54 +3953,76 @@ type GetMyShortDescriptionParams struct {
 
 // GetMyShortDescription - Use this method to get the current bot short description for the given user
 // language. Returns BotShortDescription (https://core.telegram.org/bots/api#botshortdescription) on success.
-func (b *Bot) GetMyShortDescription(params *GetMyShortDescriptionParams) (*BotShortDescription, error) {
+func (b *Bot) GetMyShortDescription(ctx context.Context, params *GetMyShortDescriptionParams) (*BotShortDescription, error) {
 	var botShortDescription *BotShortDescription
-	err := b.performRequest("getMyShortDescription", params, &botShortDescription)
+	err := b.performRequest(ctx, "getMyShortDescription", params, &botShortDescription)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getMyShortDescription(): %w", err)
+		return nil, fmt.Errorf("telego: getMyShortDescription: %w", err)
 	}
-
 	return botShortDescription, nil
+}
+
+// SetMyProfilePhotoParams - Represents parameters of setMyProfilePhoto method.
+type SetMyProfilePhotoParams struct {
+	// Photo - The new profile photo to set
+	Photo InputProfilePhoto `json:"photo"`
+}
+
+// SetMyProfilePhoto - Changes the profile photo of the bot. Returns True on success.
+func (b *Bot) SetMyProfilePhoto(ctx context.Context, params *SetMyProfilePhotoParams) error {
+	err := b.performRequest(ctx, "setMyProfilePhoto", params)
+	if err != nil {
+		return fmt.Errorf("telego: setMyProfilePhoto: %w", err)
+	}
+	return nil
+}
+
+// RemoveMyProfilePhoto - Removes the profile photo of the bot. Requires no parameters. Returns True on
+// success.
+func (b *Bot) RemoveMyProfilePhoto(ctx context.Context) error {
+	err := b.performRequest(ctx, "removeMyProfilePhoto", nil)
+	if err != nil {
+		return fmt.Errorf("telego: removeMyProfilePhoto: %w", err)
+	}
+	return nil
 }
 
 // SetChatMenuButtonParams - Represents parameters of setChatMenuButton method.
 type SetChatMenuButtonParams struct {
-	// ChatID - Optional. Unique identifier for the target private chat. If not specified, default bot's menu
-	// button will be changed
+	// ChatID - Optional. Unique identifier for the target private chat. If not specified, the bot's default
+	// menu button will be changed.
 	ChatID int64 `json:"chat_id,omitempty"`
 
 	// MenuButton - Optional. A JSON-serialized object for the bot's new menu button. Defaults to
-	// MenuButtonDefault (https://core.telegram.org/bots/api#menubuttondefault)
+	// MenuButtonDefault (https://core.telegram.org/bots/api#menubuttondefault).
 	MenuButton MenuButton `json:"menu_button,omitempty"`
 }
 
 // SetChatMenuButton - Use this method to change the bot's menu button in a private chat, or the default menu
 // button. Returns True on success.
-func (b *Bot) SetChatMenuButton(params *SetChatMenuButtonParams) error {
-	err := b.performRequest("setChatMenuButton", params)
+func (b *Bot) SetChatMenuButton(ctx context.Context, params *SetChatMenuButtonParams) error {
+	err := b.performRequest(ctx, "setChatMenuButton", params)
 	if err != nil {
-		return fmt.Errorf("telego: setChatMenuButton(): %w", err)
+		return fmt.Errorf("telego: setChatMenuButton: %w", err)
 	}
-
 	return nil
 }
 
 // GetChatMenuButtonParams - Represents parameters of getChatMenuButton method.
 type GetChatMenuButtonParams struct {
-	// ChatID - Optional. Unique identifier for the target private chat. If not specified, default bot's menu
-	// button will be returned
+	// ChatID - Optional. Unique identifier for the target private chat. If not specified, the bot's default
+	// menu button will be returned.
 	ChatID int64 `json:"chat_id,omitempty"`
 }
 
 // GetChatMenuButton - Use this method to get the current value of the bot's menu button in a private chat,
 // or the default menu button. Returns MenuButton (https://core.telegram.org/bots/api#menubutton) on success.
-func (b *Bot) GetChatMenuButton(params *GetChatMenuButtonParams) (MenuButton, error) {
+func (b *Bot) GetChatMenuButton(ctx context.Context, params *GetChatMenuButtonParams) (MenuButton, error) {
 	var menuButton menuButtonData
-	err := b.performRequest("getChatMenuButton", params, &menuButton)
+	err := b.performRequest(ctx, "getChatMenuButton", params, &menuButton)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getChatMenuButton(): %w", err)
+		return nil, fmt.Errorf("telego: getChatMenuButton: %w", err)
 	}
-
 	return menuButton.Data, nil
 }
 
@@ -3218,12 +4040,11 @@ type SetMyDefaultAdministratorRightsParams struct {
 // SetMyDefaultAdministratorRights - Use this method to change the default administrator rights requested by
 // the bot when it's added as an administrator to groups or channels. These rights will be suggested to users,
 // but they are free to modify the list before adding the bot. Returns True on success.
-func (b *Bot) SetMyDefaultAdministratorRights(params *SetMyDefaultAdministratorRightsParams) error {
-	err := b.performRequest("setMyDefaultAdministratorRights", params)
+func (b *Bot) SetMyDefaultAdministratorRights(ctx context.Context, params *SetMyDefaultAdministratorRightsParams) error {
+	err := b.performRequest(ctx, "setMyDefaultAdministratorRights", params)
 	if err != nil {
-		return fmt.Errorf("telego: setMyDefaultAdministratorRights(): %w", err)
+		return fmt.Errorf("telego: setMyDefaultAdministratorRights: %w", err)
 	}
-
 	return nil
 }
 
@@ -3236,16 +4057,898 @@ type GetMyDefaultAdministratorRightsParams struct {
 
 // GetMyDefaultAdministratorRights - Use this method to get the current default administrator rights of the
 // bot. Returns ChatAdministratorRights (https://core.telegram.org/bots/api#chatadministratorrights) on success.
-func (b *Bot) GetMyDefaultAdministratorRights(
-	params *GetMyDefaultAdministratorRightsParams,
-) (*ChatAdministratorRights, error) {
+func (b *Bot) GetMyDefaultAdministratorRights(ctx context.Context, params *GetMyDefaultAdministratorRightsParams) (*ChatAdministratorRights, error) {
 	var chatAdministratorRights *ChatAdministratorRights
-	err := b.performRequest("getMyDefaultAdministratorRights", params, &chatAdministratorRights)
+	err := b.performRequest(ctx, "getMyDefaultAdministratorRights", params, &chatAdministratorRights)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getMyDefaultAdministratorRights(): %w", err)
+		return nil, fmt.Errorf("telego: getMyDefaultAdministratorRights: %w", err)
 	}
-
 	return chatAdministratorRights, nil
+}
+
+// GetAvailableGifts - Returns the list of gifts that can be sent by the bot to users and channel chats.
+// Requires no parameters. Returns a Gifts (https://core.telegram.org/bots/api#gifts) object.
+func (b *Bot) GetAvailableGifts(ctx context.Context) (*Gifts, error) {
+	var gifts *Gifts
+	err := b.performRequest(ctx, "getAvailableGifts", nil, &gifts)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getAvailableGifts: %w", err)
+	}
+	return gifts, nil
+}
+
+// SendGiftParams - Represents parameters of sendGift method.
+type SendGiftParams struct {
+	// UserID - Optional. Required if chat_id is not specified. Unique identifier of the target user who will
+	// receive the gift.
+	UserID int64 `json:"user_id,omitempty"`
+
+	// ChatID - Optional. Required if user_id is not specified. Unique identifier for the chat that will receive
+	// the gift or username of the channel in the format @username.
+	ChatID ChatID `json:"chat_id,omitzero"`
+
+	// GiftID - Identifier of the gift; limited gifts can't be sent to channel chats
+	GiftID string `json:"gift_id"`
+
+	// PayForUpgrade - Optional. Pass True to pay for the gift upgrade from the bot's balance, thereby making
+	// the upgrade free for the receiver
+	PayForUpgrade bool `json:"pay_for_upgrade,omitempty"`
+
+	// Text - Optional. Text that will be shown along with the gift; 0-128 characters
+	Text string `json:"text,omitempty"`
+
+	// TextParseMode - Optional. Mode for parsing entities in the text. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than “bold”,
+	// “italic”, “underline”, “strikethrough”, “spoiler”, “custom_emoji”, and “date_time”
+	// are ignored.
+	TextParseMode string `json:"text_parse_mode,omitempty"`
+
+	// TextEntities - Optional. A JSON-serialized list of special entities that appear in the gift text. It can
+	// be specified instead of text_parse_mode. Entities other than “bold”, “italic”, “underline”,
+	// “strikethrough”, “spoiler”, “custom_emoji”, and “date_time” are ignored.
+	TextEntities []MessageEntity `json:"text_entities,omitempty"`
+}
+
+// SendGift - Sends a gift to the given user or channel chat. The gift can't be converted to Telegram Stars
+// by the receiver. Returns True on success.
+func (b *Bot) SendGift(ctx context.Context, params *SendGiftParams) error {
+	err := b.performRequest(ctx, "sendGift", params)
+	if err != nil {
+		return fmt.Errorf("telego: sendGift: %w", err)
+	}
+	return nil
+}
+
+// GiftPremiumSubscriptionParams - Represents parameters of giftPremiumSubscription method.
+type GiftPremiumSubscriptionParams struct {
+	// UserID - Unique identifier of the target user who will receive a Telegram Premium subscription
+	UserID int64 `json:"user_id"`
+
+	// MonthCount - Number of months the Telegram Premium subscription will be active for the user; must be one
+	// of 3, 6, or 12
+	MonthCount int `json:"month_count"`
+
+	// StarCount - Number of Telegram Stars to pay for the Telegram Premium subscription; must be 1000 for 3
+	// months, 1500 for 6 months, and 2500 for 12 months
+	StarCount int `json:"star_count"`
+
+	// Text - Optional. Text that will be shown along with the service message about the subscription; 0-128
+	// characters
+	Text string `json:"text,omitempty"`
+
+	// TextParseMode - Optional. Mode for parsing entities in the text. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than “bold”,
+	// “italic”, “underline”, “strikethrough”, “spoiler”, “custom_emoji”, and “date_time”
+	// are ignored.
+	TextParseMode string `json:"text_parse_mode,omitempty"`
+
+	// TextEntities - Optional. A JSON-serialized list of special entities that appear in the gift text. It can
+	// be specified instead of text_parse_mode. Entities other than “bold”, “italic”, “underline”,
+	// “strikethrough”, “spoiler”, “custom_emoji”, and “date_time” are ignored.
+	TextEntities []MessageEntity `json:"text_entities,omitempty"`
+}
+
+// GiftPremiumSubscription - Gifts a Telegram Premium subscription to the given user. Returns True on
+// success.
+func (b *Bot) GiftPremiumSubscription(ctx context.Context, params *GiftPremiumSubscriptionParams) error {
+	err := b.performRequest(ctx, "giftPremiumSubscription", params)
+	if err != nil {
+		return fmt.Errorf("telego: giftPremiumSubscription: %w", err)
+	}
+	return nil
+}
+
+// VerifyUserParams - Represents parameters of verifyUser method.
+type VerifyUserParams struct {
+	// UserID - Unique identifier of the target user
+	UserID int64 `json:"user_id"`
+
+	// CustomDescription - Optional. Custom description for the verification; 0-70 characters. Must be empty if
+	// the organization isn't allowed to provide a custom verification description.
+	CustomDescription string `json:"custom_description,omitempty"`
+
+	// CustomDescriptionParseMode - Optional. Mode for parsing entities in the custom description. See
+	// formatting options (https://core.telegram.org/bots/api#formatting-options) for more details. Only
+	// “text_link” entities are supported.
+	CustomDescriptionParseMode string `json:"custom_description_parse_mode,omitempty"`
+
+	// CustomDescriptionEntities - Optional. A JSON-serialized list of special entities that appear in the
+	// custom description, which can be specified instead of custom_description_parse_mode. Only “text_link”
+	// entities are supported.
+	CustomDescriptionEntities []MessageEntity `json:"custom_description_entities,omitempty"`
+}
+
+// VerifyUser - Verifies a user on behalf of the organization
+// (https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns True on
+// success.
+func (b *Bot) VerifyUser(ctx context.Context, params *VerifyUserParams) error {
+	err := b.performRequest(ctx, "verifyUser", params)
+	if err != nil {
+		return fmt.Errorf("telego: verifyUser: %w", err)
+	}
+	return nil
+}
+
+// VerifyChatParams - Represents parameters of verifyChat method.
+type VerifyChatParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username. Channel direct messages chats can't be verified.
+	ChatID ChatID `json:"chat_id"`
+
+	// CustomDescription - Optional. Custom description for the verification; 0-70 characters. Must be empty if
+	// the organization isn't allowed to provide a custom verification description.
+	CustomDescription string `json:"custom_description,omitempty"`
+
+	// CustomDescriptionParseMode - Optional. Mode for parsing entities in the custom description. See
+	// formatting options (https://core.telegram.org/bots/api#formatting-options) for more details. Only
+	// “text_link” entities are supported.
+	CustomDescriptionParseMode string `json:"custom_description_parse_mode,omitempty"`
+
+	// CustomDescriptionEntities - Optional. A JSON-serialized list of special entities that appear in the
+	// custom description, which can be specified instead of custom_description_parse_mode. Only “text_link”
+	// entities are supported.
+	CustomDescriptionEntities []MessageEntity `json:"custom_description_entities,omitempty"`
+}
+
+// VerifyChat - Verifies a chat on behalf of the organization
+// (https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns True on
+// success.
+func (b *Bot) VerifyChat(ctx context.Context, params *VerifyChatParams) error {
+	err := b.performRequest(ctx, "verifyChat", params)
+	if err != nil {
+		return fmt.Errorf("telego: verifyChat: %w", err)
+	}
+	return nil
+}
+
+// RemoveUserVerificationParams - Represents parameters of removeUserVerification method.
+type RemoveUserVerificationParams struct {
+	// UserID - Unique identifier of the target user
+	UserID int64 `json:"user_id"`
+}
+
+// RemoveUserVerification - Removes verification from a user who is currently verified on behalf of the
+// organization (https://telegram.org/verify#third-party-verification) represented by the bot. Returns True on
+// success.
+func (b *Bot) RemoveUserVerification(ctx context.Context, params *RemoveUserVerificationParams) error {
+	err := b.performRequest(ctx, "removeUserVerification", params)
+	if err != nil {
+		return fmt.Errorf("telego: removeUserVerification: %w", err)
+	}
+	return nil
+}
+
+// RemoveChatVerificationParams - Represents parameters of removeChatVerification method.
+type RemoveChatVerificationParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target bot or channel in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+}
+
+// RemoveChatVerification - Removes verification from a chat that is currently verified on behalf of the
+// organization (https://telegram.org/verify#third-party-verification) represented by the bot. Returns True on
+// success.
+func (b *Bot) RemoveChatVerification(ctx context.Context, params *RemoveChatVerificationParams) error {
+	err := b.performRequest(ctx, "removeChatVerification", params)
+	if err != nil {
+		return fmt.Errorf("telego: removeChatVerification: %w", err)
+	}
+	return nil
+}
+
+// ReadBusinessMessageParams - Represents parameters of readBusinessMessage method.
+type ReadBusinessMessageParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection on behalf of which to read the
+	// message
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// ChatID - Unique identifier of the chat in which the message was received. The chat must have been active
+	// in the last 24 hours.
+	ChatID int64 `json:"chat_id"`
+
+	// MessageID - Unique identifier of the message to mark as read
+	MessageID int `json:"message_id"`
+}
+
+// ReadBusinessMessage - Marks incoming message as read on behalf of a business account. Requires the
+// can_read_messages business bot right. Returns True on success.
+func (b *Bot) ReadBusinessMessage(ctx context.Context, params *ReadBusinessMessageParams) error {
+	err := b.performRequest(ctx, "readBusinessMessage", params)
+	if err != nil {
+		return fmt.Errorf("telego: readBusinessMessage: %w", err)
+	}
+	return nil
+}
+
+// DeleteBusinessMessagesParams - Represents parameters of deleteBusinessMessages method.
+type DeleteBusinessMessagesParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection on behalf of which to delete the
+	// messages
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// MessageIDs - A JSON-serialized list of 1-100 identifiers of messages to delete. All messages must be from
+	// the same chat. See deleteMessage (https://core.telegram.org/bots/api#deletemessage) for limitations on which
+	// messages can be deleted.
+	MessageIDs []int `json:"message_ids"`
+}
+
+// DeleteBusinessMessages - Delete messages on behalf of a business account. Requires the
+// can_delete_sent_messages business bot right to delete messages sent by the bot itself, or the
+// can_delete_all_messages business bot right to delete any message. Returns True on success.
+func (b *Bot) DeleteBusinessMessages(ctx context.Context, params *DeleteBusinessMessagesParams) error {
+	err := b.performRequest(ctx, "deleteBusinessMessages", params)
+	if err != nil {
+		return fmt.Errorf("telego: deleteBusinessMessages: %w", err)
+	}
+	return nil
+}
+
+// SetBusinessAccountNameParams - Represents parameters of setBusinessAccountName method.
+type SetBusinessAccountNameParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// FirstName - The new value of the first name for the business account; 1-64 characters
+	FirstName string `json:"first_name"`
+
+	// LastName - Optional. The new value of the last name for the business account; 0-64 characters
+	LastName string `json:"last_name,omitempty"`
+}
+
+// SetBusinessAccountName - Changes the first and last name of a managed business account. Requires the
+// can_change_name business bot right. Returns True on success.
+func (b *Bot) SetBusinessAccountName(ctx context.Context, params *SetBusinessAccountNameParams) error {
+	err := b.performRequest(ctx, "setBusinessAccountName", params)
+	if err != nil {
+		return fmt.Errorf("telego: setBusinessAccountName: %w", err)
+	}
+	return nil
+}
+
+// SetBusinessAccountUsernameParams - Represents parameters of setBusinessAccountUsername method.
+type SetBusinessAccountUsernameParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// Username - Optional. The new value of the username for the business account; 0-32 characters
+	Username string `json:"username,omitempty"`
+}
+
+// SetBusinessAccountUsername - Changes the username of a managed business account. Requires the
+// can_change_username business bot right. Returns True on success.
+func (b *Bot) SetBusinessAccountUsername(ctx context.Context, params *SetBusinessAccountUsernameParams) error {
+	err := b.performRequest(ctx, "setBusinessAccountUsername", params)
+	if err != nil {
+		return fmt.Errorf("telego: setBusinessAccountUsername: %w", err)
+	}
+	return nil
+}
+
+// SetBusinessAccountBioParams - Represents parameters of setBusinessAccountBio method.
+type SetBusinessAccountBioParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// Bio - Optional. The new value of the bio for the business account; 0-140 characters
+	Bio string `json:"bio,omitempty"`
+}
+
+// SetBusinessAccountBio - Changes the bio of a managed business account. Requires the can_change_bio
+// business bot right. Returns True on success.
+func (b *Bot) SetBusinessAccountBio(ctx context.Context, params *SetBusinessAccountBioParams) error {
+	err := b.performRequest(ctx, "setBusinessAccountBio", params)
+	if err != nil {
+		return fmt.Errorf("telego: setBusinessAccountBio: %w", err)
+	}
+	return nil
+}
+
+// SetBusinessAccountProfilePhotoParams - Represents parameters of setBusinessAccountProfilePhoto method.
+type SetBusinessAccountProfilePhotoParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// Photo - The new profile photo to set
+	Photo InputProfilePhoto `json:"photo"`
+
+	// IsPublic - Optional. Pass True to set the public photo, which will be visible even if the main photo is
+	// hidden by the business account's privacy settings. An account can have only one public photo.
+	IsPublic bool `json:"is_public,omitempty"`
+}
+
+// SetBusinessAccountProfilePhoto - Changes the profile photo of a managed business account. Requires the
+// can_edit_profile_photo business bot right. Returns True on success.
+func (b *Bot) SetBusinessAccountProfilePhoto(ctx context.Context, params *SetBusinessAccountProfilePhotoParams) error {
+	err := b.performRequest(ctx, "setBusinessAccountProfilePhoto", params)
+	if err != nil {
+		return fmt.Errorf("telego: setBusinessAccountProfilePhoto: %w", err)
+	}
+	return nil
+}
+
+// RemoveBusinessAccountProfilePhotoParams - Represents parameters of removeBusinessAccountProfilePhoto
+// method.
+type RemoveBusinessAccountProfilePhotoParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// IsPublic - Optional. Pass True to remove the public photo, which is visible even if the main photo is
+	// hidden by the business account's privacy settings. After the main photo is removed, the previous profile
+	// photo (if present) becomes the main photo.
+	IsPublic bool `json:"is_public,omitempty"`
+}
+
+// RemoveBusinessAccountProfilePhoto - Removes the current profile photo of a managed business account.
+// Requires the can_edit_profile_photo business bot right. Returns True on success.
+func (b *Bot) RemoveBusinessAccountProfilePhoto(ctx context.Context, params *RemoveBusinessAccountProfilePhotoParams) error {
+	err := b.performRequest(ctx, "removeBusinessAccountProfilePhoto", params)
+	if err != nil {
+		return fmt.Errorf("telego: removeBusinessAccountProfilePhoto: %w", err)
+	}
+	return nil
+}
+
+// SetBusinessAccountGiftSettingsParams - Represents parameters of setBusinessAccountGiftSettings method.
+type SetBusinessAccountGiftSettingsParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// ShowGiftButton - Pass True if a button for sending a gift to the user or by the business account must
+	// always be shown in the input field
+	ShowGiftButton bool `json:"show_gift_button"`
+
+	// AcceptedGiftTypes - Types of gifts accepted by the business account
+	AcceptedGiftTypes AcceptedGiftTypes `json:"accepted_gift_types"`
+}
+
+// SetBusinessAccountGiftSettings - Changes the privacy settings pertaining to incoming gifts in a managed
+// business account. Requires the can_change_gift_settings business bot right. Returns True on success.
+func (b *Bot) SetBusinessAccountGiftSettings(ctx context.Context, params *SetBusinessAccountGiftSettingsParams) error {
+	err := b.performRequest(ctx, "setBusinessAccountGiftSettings", params)
+	if err != nil {
+		return fmt.Errorf("telego: setBusinessAccountGiftSettings: %w", err)
+	}
+	return nil
+}
+
+// GetBusinessAccountStarBalanceParams - Represents parameters of getBusinessAccountStarBalance method.
+type GetBusinessAccountStarBalanceParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+}
+
+// GetBusinessAccountStarBalance - Returns the amount of Telegram Stars owned by a managed business account.
+// Requires the can_view_gifts_and_stars business bot right. Returns StarAmount
+// (https://core.telegram.org/bots/api#staramount) on success.
+func (b *Bot) GetBusinessAccountStarBalance(ctx context.Context, params *GetBusinessAccountStarBalanceParams) (*StarAmount, error) {
+	var starAmount *StarAmount
+	err := b.performRequest(ctx, "getBusinessAccountStarBalance", params, &starAmount)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getBusinessAccountStarBalance: %w", err)
+	}
+	return starAmount, nil
+}
+
+// TransferBusinessAccountStarsParams - Represents parameters of transferBusinessAccountStars method.
+type TransferBusinessAccountStarsParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// StarCount - Number of Telegram Stars to transfer; 1-10000
+	StarCount int `json:"star_count"`
+}
+
+// TransferBusinessAccountStars - Transfers Telegram Stars from the business account balance to the bot's
+// balance. Requires the can_transfer_stars business bot right. Returns True on success.
+func (b *Bot) TransferBusinessAccountStars(ctx context.Context, params *TransferBusinessAccountStarsParams) error {
+	err := b.performRequest(ctx, "transferBusinessAccountStars", params)
+	if err != nil {
+		return fmt.Errorf("telego: transferBusinessAccountStars: %w", err)
+	}
+	return nil
+}
+
+// GetBusinessAccountGiftsParams - Represents parameters of getBusinessAccountGifts method.
+type GetBusinessAccountGiftsParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// ExcludeUnsaved - Optional. Pass True to exclude gifts that aren't saved to the account's profile page
+	ExcludeUnsaved bool `json:"exclude_unsaved,omitempty"`
+
+	// ExcludeSaved - Optional. Pass True to exclude gifts that are saved to the account's profile page
+	ExcludeSaved bool `json:"exclude_saved,omitempty"`
+
+	// ExcludeUnlimited - Optional. Pass True to exclude gifts that can be purchased an unlimited number of
+	// times
+	ExcludeUnlimited bool `json:"exclude_unlimited,omitempty"`
+
+	// ExcludeLimitedUpgradable - Optional. Pass True to exclude gifts that can be purchased a limited number of
+	// times and can be upgraded to unique
+	ExcludeLimitedUpgradable bool `json:"exclude_limited_upgradable,omitempty"`
+
+	// ExcludeLimitedNonUpgradable - Optional. Pass True to exclude gifts that can be purchased a limited number
+	// of times and can't be upgraded to unique
+	ExcludeLimitedNonUpgradable bool `json:"exclude_limited_non_upgradable,omitempty"`
+
+	// ExcludeUnique - Optional. Pass True to exclude unique gifts
+	ExcludeUnique bool `json:"exclude_unique,omitempty"`
+
+	// ExcludeFromBlockchain - Optional. Pass True to exclude gifts that were assigned from the TON blockchain
+	// and can't be resold or transferred in Telegram
+	ExcludeFromBlockchain bool `json:"exclude_from_blockchain,omitempty"`
+
+	// SortByPrice - Optional. Pass True to sort results by gift price instead of send date. Sorting is applied
+	// before pagination.
+	SortByPrice bool `json:"sort_by_price,omitempty"`
+
+	// Offset - Optional. Offset of the first entry to return as received from the previous request; use empty
+	// string to get the first chunk of results
+	Offset string `json:"offset,omitempty"`
+
+	// Limit - Optional. The maximum number of gifts to be returned; 1-100. Defaults to 100.
+	Limit int `json:"limit,omitempty"`
+}
+
+// GetBusinessAccountGifts - Returns the gifts received and owned by a managed business account. Requires the
+// can_view_gifts_and_stars business bot right. Returns OwnedGifts
+// (https://core.telegram.org/bots/api#ownedgifts) on success.
+func (b *Bot) GetBusinessAccountGifts(ctx context.Context, params *GetBusinessAccountGiftsParams) (*OwnedGifts, error) {
+	var ownedGifts *OwnedGifts
+	err := b.performRequest(ctx, "getBusinessAccountGifts", params, &ownedGifts)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getBusinessAccountGifts: %w", err)
+	}
+	return ownedGifts, nil
+}
+
+// GetUserGiftsParams - Represents parameters of getUserGifts method.
+type GetUserGiftsParams struct {
+	// UserID - Unique identifier of the user
+	UserID int64 `json:"user_id"`
+
+	// ExcludeUnlimited - Optional. Pass True to exclude gifts that can be purchased an unlimited number of
+	// times
+	ExcludeUnlimited bool `json:"exclude_unlimited,omitempty"`
+
+	// ExcludeLimitedUpgradable - Optional. Pass True to exclude gifts that can be purchased a limited number of
+	// times and can be upgraded to unique
+	ExcludeLimitedUpgradable bool `json:"exclude_limited_upgradable,omitempty"`
+
+	// ExcludeLimitedNonUpgradable - Optional. Pass True to exclude gifts that can be purchased a limited number
+	// of times and can't be upgraded to unique
+	ExcludeLimitedNonUpgradable bool `json:"exclude_limited_non_upgradable,omitempty"`
+
+	// ExcludeFromBlockchain - Optional. Pass True to exclude gifts that were assigned from the TON blockchain
+	// and can't be resold or transferred in Telegram
+	ExcludeFromBlockchain bool `json:"exclude_from_blockchain,omitempty"`
+
+	// ExcludeUnique - Optional. Pass True to exclude unique gifts
+	ExcludeUnique bool `json:"exclude_unique,omitempty"`
+
+	// SortByPrice - Optional. Pass True to sort results by gift price instead of send date. Sorting is applied
+	// before pagination.
+	SortByPrice bool `json:"sort_by_price,omitempty"`
+
+	// Offset - Optional. Offset of the first entry to return as received from the previous request; use an
+	// empty string to get the first chunk of results
+	Offset string `json:"offset,omitempty"`
+
+	// Limit - Optional. The maximum number of gifts to be returned; 1-100. Defaults to 100.
+	Limit int `json:"limit,omitempty"`
+}
+
+// GetUserGifts - Returns the gifts owned and hosted by a user. Returns OwnedGifts
+// (https://core.telegram.org/bots/api#ownedgifts) on success.
+func (b *Bot) GetUserGifts(ctx context.Context, params *GetUserGiftsParams) (*OwnedGifts, error) {
+	var ownedGifts *OwnedGifts
+	err := b.performRequest(ctx, "getUserGifts", params, &ownedGifts)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getUserGifts: %w", err)
+	}
+	return ownedGifts, nil
+}
+
+// GetChatGiftsParams - Represents parameters of getChatGifts method.
+type GetChatGiftsParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target channel in the format @username
+	ChatID ChatID `json:"chat_id"`
+
+	// ExcludeUnsaved - Optional. Pass True to exclude gifts that aren't saved to the chat's profile page.
+	// Always True, unless the bot has the can_post_messages administrator right in the channel.
+	ExcludeUnsaved bool `json:"exclude_unsaved,omitempty"`
+
+	// ExcludeSaved - Optional. Pass True to exclude gifts that are saved to the chat's profile page. Always
+	// False, unless the bot has the can_post_messages administrator right in the channel.
+	ExcludeSaved bool `json:"exclude_saved,omitempty"`
+
+	// ExcludeUnlimited - Optional. Pass True to exclude gifts that can be purchased an unlimited number of
+	// times
+	ExcludeUnlimited bool `json:"exclude_unlimited,omitempty"`
+
+	// ExcludeLimitedUpgradable - Optional. Pass True to exclude gifts that can be purchased a limited number of
+	// times and can be upgraded to unique
+	ExcludeLimitedUpgradable bool `json:"exclude_limited_upgradable,omitempty"`
+
+	// ExcludeLimitedNonUpgradable - Optional. Pass True to exclude gifts that can be purchased a limited number
+	// of times and can't be upgraded to unique
+	ExcludeLimitedNonUpgradable bool `json:"exclude_limited_non_upgradable,omitempty"`
+
+	// ExcludeFromBlockchain - Optional. Pass True to exclude gifts that were assigned from the TON blockchain
+	// and can't be resold or transferred in Telegram
+	ExcludeFromBlockchain bool `json:"exclude_from_blockchain,omitempty"`
+
+	// ExcludeUnique - Optional. Pass True to exclude unique gifts
+	ExcludeUnique bool `json:"exclude_unique,omitempty"`
+
+	// SortByPrice - Optional. Pass True to sort results by gift price instead of send date. Sorting is applied
+	// before pagination.
+	SortByPrice bool `json:"sort_by_price,omitempty"`
+
+	// Offset - Optional. Offset of the first entry to return as received from the previous request; use an
+	// empty string to get the first chunk of results
+	Offset string `json:"offset,omitempty"`
+
+	// Limit - Optional. The maximum number of gifts to be returned; 1-100. Defaults to 100.
+	Limit int `json:"limit,omitempty"`
+}
+
+// GetChatGifts - Returns the gifts owned by a chat. Returns OwnedGifts
+// (https://core.telegram.org/bots/api#ownedgifts) on success.
+func (b *Bot) GetChatGifts(ctx context.Context, params *GetChatGiftsParams) (*OwnedGifts, error) {
+	var ownedGifts *OwnedGifts
+	err := b.performRequest(ctx, "getChatGifts", params, &ownedGifts)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getChatGifts: %w", err)
+	}
+	return ownedGifts, nil
+}
+
+// GetUniqueGiftParams - Represents parameters of getUniqueGift method.
+type GetUniqueGiftParams struct {
+	// Name - Unique name of the gift
+	Name string `json:"name"`
+}
+
+// GetUniqueGift - Use this method to get information about a unique gift by its name. Returns a UniqueGift
+// (https://core.telegram.org/bots/api#uniquegift) object on success.
+func (b *Bot) GetUniqueGift(ctx context.Context, params *GetUniqueGiftParams) (*UniqueGift, error) {
+	var uniqueGift *UniqueGift
+	err := b.performRequest(ctx, "getUniqueGift", params, &uniqueGift)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getUniqueGift: %w", err)
+	}
+	return uniqueGift, nil
+}
+
+// ConvertGiftToStarsParams - Represents parameters of convertGiftToStars method.
+type ConvertGiftToStarsParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// OwnedGiftID - Unique identifier of the regular gift that should be converted to Telegram Stars
+	OwnedGiftID string `json:"owned_gift_id"`
+}
+
+// ConvertGiftToStars - Converts a given regular gift to Telegram Stars. Requires the
+// can_convert_gifts_to_stars business bot right. Returns True on success.
+func (b *Bot) ConvertGiftToStars(ctx context.Context, params *ConvertGiftToStarsParams) error {
+	err := b.performRequest(ctx, "convertGiftToStars", params)
+	if err != nil {
+		return fmt.Errorf("telego: convertGiftToStars: %w", err)
+	}
+	return nil
+}
+
+// UpgradeGiftParams - Represents parameters of upgradeGift method.
+type UpgradeGiftParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// OwnedGiftID - Unique identifier of the regular gift that should be upgraded to a unique one
+	OwnedGiftID string `json:"owned_gift_id"`
+
+	// KeepOriginalDetails - Optional. Pass True to keep the original gift text, sender and receiver in the
+	// upgraded gift
+	KeepOriginalDetails bool `json:"keep_original_details,omitempty"`
+
+	// StarCount - Optional. The amount of Telegram Stars that will be paid for the upgrade from the business
+	// account balance. If gift.prepaid_upgrade_star_count > 0, then pass 0, otherwise, the can_transfer_stars
+	// business bot right is required and gift.upgrade_star_count must be passed.
+	StarCount int `json:"star_count,omitempty"`
+}
+
+// UpgradeGift - Upgrades a given regular gift to a unique gift. Requires the can_transfer_and_upgrade_gifts
+// business bot right. Additionally requires the can_transfer_stars business bot right if the upgrade is paid.
+// Returns True on success.
+func (b *Bot) UpgradeGift(ctx context.Context, params *UpgradeGiftParams) error {
+	err := b.performRequest(ctx, "upgradeGift", params)
+	if err != nil {
+		return fmt.Errorf("telego: upgradeGift: %w", err)
+	}
+	return nil
+}
+
+// TransferGiftParams - Represents parameters of transferGift method.
+type TransferGiftParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// OwnedGiftID - Unique identifier of the regular gift that should be transferred
+	OwnedGiftID string `json:"owned_gift_id"`
+
+	// NewOwnerChatID - Unique identifier of the chat which will own the gift. The chat must be active in the
+	// last 24 hours.
+	NewOwnerChatID int64 `json:"new_owner_chat_id"`
+
+	// StarCount - Optional. The amount of Telegram Stars that will be paid for the transfer from the business
+	// account balance. If positive, then the can_transfer_stars business bot right is required.
+	StarCount int `json:"star_count,omitempty"`
+}
+
+// TransferGift - Transfers an owned unique gift to another user. Requires the can_transfer_and_upgrade_gifts
+// business bot right. Requires can_transfer_stars business bot right if the transfer is paid. Returns True on
+// success.
+func (b *Bot) TransferGift(ctx context.Context, params *TransferGiftParams) error {
+	err := b.performRequest(ctx, "transferGift", params)
+	if err != nil {
+		return fmt.Errorf("telego: transferGift: %w", err)
+	}
+	return nil
+}
+
+// DeleteBusinessAccountGiftParams - Represents parameters of deleteBusinessAccountGift method.
+type DeleteBusinessAccountGiftParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// OwnedGiftID - Unique identifier of the regular gift that should be deleted
+	OwnedGiftID string `json:"owned_gift_id"`
+}
+
+// DeleteBusinessAccountGift - Deletes a regular gift owned by a managed business account without receiving
+// Telegram Stars for it. Requires the can_convert_gifts_to_stars business bot right. The gift can be deleted
+// only if it isn't limited (the field total_count of the Gift (https://core.telegram.org/bots/api#gift) is
+// omitted) and wasn't refunded. Returns True on success.
+func (b *Bot) DeleteBusinessAccountGift(ctx context.Context, params *DeleteBusinessAccountGiftParams) error {
+	err := b.performRequest(ctx, "deleteBusinessAccountGift", params)
+	if err != nil {
+		return fmt.Errorf("telego: deleteBusinessAccountGift: %w", err)
+	}
+	return nil
+}
+
+// PostStoryParams - Represents parameters of postStory method.
+type PostStoryParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// Content - Content of the story
+	Content InputStoryContent `json:"content"`
+
+	// ActivePeriod - Period after which the story is moved to the archive, in seconds; must be one of 6 * 3600,
+	// 12 * 3600, 86400, or 2 * 86400
+	ActivePeriod int `json:"active_period"`
+
+	// Caption - Optional. Caption of the story, 0-2048 characters after entities parsing
+	Caption string `json:"caption,omitempty"`
+
+	// ParseMode - Optional. Mode for parsing entities in the story caption. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// CaptionEntities - Optional. A JSON-serialized list of special entities that appear in the caption, which
+	// can be specified instead of parse_mode
+	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+
+	// Areas - Optional. A JSON-serialized list of clickable areas to be shown on the story
+	Areas []StoryArea `json:"areas,omitempty"`
+
+	// PostToChatPage - Optional. Pass True to keep the story accessible after it expires
+	PostToChatPage bool `json:"post_to_chat_page,omitempty"`
+
+	// ProtectContent - Optional. Pass True if the content of the story must be protected from forwarding and
+	// screenshotting
+	ProtectContent bool `json:"protect_content,omitempty"`
+}
+
+// PostStory - Posts a story on behalf of a managed business account. Requires the can_manage_stories
+// business bot right. Returns Story (https://core.telegram.org/bots/api#story) on success.
+func (b *Bot) PostStory(ctx context.Context, params *PostStoryParams) (*Story, error) {
+	var story *Story
+	err := b.performRequest(ctx, "postStory", params, &story)
+	if err != nil {
+		return nil, fmt.Errorf("telego: postStory: %w", err)
+	}
+	return story, nil
+}
+
+// RepostStoryParams - Represents parameters of repostStory method.
+type RepostStoryParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// FromChatID - Unique identifier of the chat which posted the story that should be reposted
+	FromChatID int `json:"from_chat_id"`
+
+	// FromStoryID - Unique identifier of the story that should be reposted
+	FromStoryID int `json:"from_story_id"`
+
+	// ActivePeriod - Period after which the story is moved to the archive, in seconds; must be one of 6 * 3600,
+	// 12 * 3600, 86400, or 2 * 86400
+	ActivePeriod int `json:"active_period"`
+
+	// PostToChatPage - Optional. Pass True to keep the story accessible after it expires
+	PostToChatPage bool `json:"post_to_chat_page,omitempty"`
+
+	// ProtectContent - Optional. Pass True if the content of the story must be protected from forwarding and
+	// screenshotting
+	ProtectContent bool `json:"protect_content,omitempty"`
+}
+
+// RepostStory - Reposts a story on behalf of a business account from another business account. Both business
+// accounts must be managed by the same bot, and the story on the source account must have been posted (or
+// reposted) by the bot. Requires the can_manage_stories business bot right for both business accounts. Returns
+// Story (https://core.telegram.org/bots/api#story) on success.
+func (b *Bot) RepostStory(ctx context.Context, params *RepostStoryParams) (*Story, error) {
+	var story *Story
+	err := b.performRequest(ctx, "repostStory", params, &story)
+	if err != nil {
+		return nil, fmt.Errorf("telego: repostStory: %w", err)
+	}
+	return story, nil
+}
+
+// EditStoryParams - Represents parameters of editStory method.
+type EditStoryParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// StoryID - Unique identifier of the story to edit
+	StoryID int `json:"story_id"`
+
+	// Content - Content of the story
+	Content InputStoryContent `json:"content"`
+
+	// Caption - Optional. Caption of the story, 0-2048 characters after entities parsing
+	Caption string `json:"caption,omitempty"`
+
+	// ParseMode - Optional. Mode for parsing entities in the story caption. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// CaptionEntities - Optional. A JSON-serialized list of special entities that appear in the caption, which
+	// can be specified instead of parse_mode
+	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+
+	// Areas - Optional. A JSON-serialized list of clickable areas to be shown on the story
+	Areas []StoryArea `json:"areas,omitempty"`
+}
+
+// EditStory - Edits a story previously posted by the bot on behalf of a managed business account. Requires
+// the can_manage_stories business bot right. Returns Story (https://core.telegram.org/bots/api#story) on
+// success.
+func (b *Bot) EditStory(ctx context.Context, params *EditStoryParams) (*Story, error) {
+	var story *Story
+	err := b.performRequest(ctx, "editStory", params, &story)
+	if err != nil {
+		return nil, fmt.Errorf("telego: editStory: %w", err)
+	}
+	return story, nil
+}
+
+// DeleteStoryParams - Represents parameters of deleteStory method.
+type DeleteStoryParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// StoryID - Unique identifier of the story to delete
+	StoryID int `json:"story_id"`
+}
+
+// DeleteStory - Deletes a story previously posted by the bot on behalf of a managed business account.
+// Requires the can_manage_stories business bot right. Returns True on success.
+func (b *Bot) DeleteStory(ctx context.Context, params *DeleteStoryParams) error {
+	err := b.performRequest(ctx, "deleteStory", params)
+	if err != nil {
+		return fmt.Errorf("telego: deleteStory: %w", err)
+	}
+	return nil
+}
+
+// AnswerWebAppQueryParams - Represents parameters of answerWebAppQuery method.
+type AnswerWebAppQueryParams struct {
+	// WebAppQueryID - Unique identifier for the query to be answered
+	WebAppQueryID string `json:"web_app_query_id"`
+
+	// Result - A JSON-serialized object describing the message to be sent
+	Result InlineQueryResult `json:"result"`
+}
+
+// AnswerWebAppQuery - Use this method to set the result of an interaction with a Web App
+// (https://core.telegram.org/bots/webapps) and send a corresponding message on behalf of the user to the chat
+// from which the query originated. On success, a SentWebAppMessage
+// (https://core.telegram.org/bots/api#sentwebappmessage) object is returned.
+func (b *Bot) AnswerWebAppQuery(ctx context.Context, params *AnswerWebAppQueryParams) (*SentWebAppMessage, error) {
+	var sentWebAppMessage *SentWebAppMessage
+	err := b.performRequest(ctx, "answerWebAppQuery", params, &sentWebAppMessage)
+	if err != nil {
+		return nil, fmt.Errorf("telego: answerWebAppQuery: %w", err)
+	}
+	return sentWebAppMessage, nil
+}
+
+// SavePreparedInlineMessageParams - Represents parameters of savePreparedInlineMessage method.
+type SavePreparedInlineMessageParams struct {
+	// UserID - Unique identifier of the target user that can use the prepared message
+	UserID int64 `json:"user_id"`
+
+	// Result - A JSON-serialized object describing the message to be sent
+	Result InlineQueryResult `json:"result"`
+
+	// AllowUserChats - Optional. Pass True if the message can be sent to private chats with users
+	AllowUserChats bool `json:"allow_user_chats,omitempty"`
+
+	// AllowBotChats - Optional. Pass True if the message can be sent to private chats with bots
+	AllowBotChats bool `json:"allow_bot_chats,omitempty"`
+
+	// AllowGroupChats - Optional. Pass True if the message can be sent to group and supergroup chats
+	AllowGroupChats bool `json:"allow_group_chats,omitempty"`
+
+	// AllowChannelChats - Optional. Pass True if the message can be sent to channel chats
+	AllowChannelChats bool `json:"allow_channel_chats,omitempty"`
+}
+
+// SavePreparedInlineMessage - Stores a message that can be sent by a user of a Mini App. Returns a
+// PreparedInlineMessage (https://core.telegram.org/bots/api#preparedinlinemessage) object.
+func (b *Bot) SavePreparedInlineMessage(ctx context.Context, params *SavePreparedInlineMessageParams) (*PreparedInlineMessage, error) {
+	var preparedInlineMessage *PreparedInlineMessage
+	err := b.performRequest(ctx, "savePreparedInlineMessage", params, &preparedInlineMessage)
+	if err != nil {
+		return nil, fmt.Errorf("telego: savePreparedInlineMessage: %w", err)
+	}
+	return preparedInlineMessage, nil
+}
+
+// SavePreparedKeyboardButtonParams - Represents parameters of savePreparedKeyboardButton method.
+type SavePreparedKeyboardButtonParams struct {
+	// UserID - Unique identifier of the target user that can use the button
+	UserID int64 `json:"user_id"`
+
+	// Button - A JSON-serialized object describing the button to be saved. The button must be of the type
+	// request_users, request_chat, or request_managed_bot.
+	Button KeyboardButton `json:"button"`
+}
+
+// SavePreparedKeyboardButton - Stores a keyboard button that can be used by a user within a Mini App.
+// Returns a PreparedKeyboardButton (https://core.telegram.org/bots/api#preparedkeyboardbutton) object.
+func (b *Bot) SavePreparedKeyboardButton(ctx context.Context, params *SavePreparedKeyboardButtonParams) (*PreparedKeyboardButton, error) {
+	var preparedKeyboardButton *PreparedKeyboardButton
+	err := b.performRequest(ctx, "savePreparedKeyboardButton", params, &preparedKeyboardButton)
+	if err != nil {
+		return nil, fmt.Errorf("telego: savePreparedKeyboardButton: %w", err)
+	}
+	return preparedKeyboardButton, nil
 }
 
 // EditMessageTextParams - Represents parameters of editMessageText method.
@@ -3255,18 +4958,19 @@ type EditMessageTextParams struct {
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
 	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
-	// or username of the target channel (in the format @channel_username)
-	ChatID ChatID `json:"chat_id,omitempty"`
+	// or username of the target bot, supergroup, or channel in the format @username.
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit
+	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit.
 	MessageID int `json:"message_id,omitempty"`
 
 	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
-	// inline message
+	// inline message.
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 
-	// Text - New text of the message, 1-4096 characters after entities parsing
-	Text string `json:"text"`
+	// Text - Optional. New text of the message, 1-4096 characters after entity parsing; required if
+	// rich_message isn't specified
+	Text string `json:"text,omitempty"`
 
 	// ParseMode - Optional. Mode for parsing entities in the message text. See formatting options
 	// (https://core.telegram.org/bots/api#formatting-options) for more details.
@@ -3279,24 +4983,53 @@ type EditMessageTextParams struct {
 	// LinkPreviewOptions - Optional. Link preview generation options for the message
 	LinkPreviewOptions *LinkPreviewOptions `json:"link_preview_options,omitempty"`
 
+	// RichMessage - Optional. New rich content of the message; required if text isn't specified. Direct upload
+	// of new files and explicit upload of files by a URL isn't supported when an inline message is edited.
+	RichMessage *InputRichMessage `json:"rich_message,omitempty"`
+
 	// ReplyMarkup - Optional. A JSON-serialized object for an inline keyboard
-	// (https://core.telegram.org/bots/features#inline-keyboards).
+	// (https://core.telegram.org/bots/features#inline-keyboards)
 	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
-// EditMessageText - Use this method to edit text and game (https://core.telegram.org/bots/api#games)
+func (p *EditMessageTextParams) fileParameters() map[string]ta.NamedReader {
+	fp := make(map[string]ta.NamedReader)
+
+	if p.RichMessage != nil {
+		for _, block := range p.RichMessage.Blocks {
+			for _, v := range block.fileParameters() {
+				if isNil(v) {
+					continue
+				}
+				fp[v.Name()] = v
+			}
+		}
+
+		for _, m := range p.RichMessage.Media {
+			for _, v := range m.Media.fileParameters() {
+				if isNil(v) {
+					continue
+				}
+				fp[v.Name()] = v
+			}
+		}
+	}
+
+	return fp
+}
+
+// EditMessageText - Use this method to edit text, rich and game (https://core.telegram.org/bots/api#games)
 // messages. On success, if the edited message is not an inline message, the edited Message
 // (https://core.telegram.org/bots/api#message) is returned, otherwise True is returned. Note that business
 // messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48
 // hours from the time they were sent.
-func (b *Bot) EditMessageText(params *EditMessageTextParams) (*Message, error) {
+func (b *Bot) EditMessageText(ctx context.Context, params *EditMessageTextParams) (*Message, error) {
 	var message *Message
 	var success *bool
-	err := b.performRequest("editMessageText", params, &message, &success)
+	err := b.performRequest(ctx, "editMessageText", params, &message, &success)
 	if err != nil {
-		return nil, fmt.Errorf("telego: editMessageText(): %w", err)
+		return nil, fmt.Errorf("telego: editMessageText: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -3307,14 +5040,14 @@ type EditMessageCaptionParams struct {
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
 	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
-	// or username of the target channel (in the format @channel_username)
-	ChatID ChatID `json:"chat_id,omitempty"`
+	// or username of the target bot, supergroup, or channel in the format @username.
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit
+	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit.
 	MessageID int `json:"message_id,omitempty"`
 
 	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
-	// inline message
+	// inline message.
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 
 	// Caption - Optional. New caption of the message, 0-1024 characters after entities parsing
@@ -3328,12 +5061,12 @@ type EditMessageCaptionParams struct {
 	// can be specified instead of parse_mode
 	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
 
-	// ShowCaptionAboveMedia - Optional. Pass True, if the caption must be shown above the message media.
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the message media.
 	// Supported only for animation, photo and video messages.
 	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
 
 	// ReplyMarkup - Optional. A JSON-serialized object for an inline keyboard
-	// (https://core.telegram.org/bots/features#inline-keyboards).
+	// (https://core.telegram.org/bots/features#inline-keyboards)
 	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -3341,14 +5074,13 @@ type EditMessageCaptionParams struct {
 // not an inline message, the edited Message (https://core.telegram.org/bots/api#message) is returned, otherwise
 // True is returned. Note that business messages that were not sent by the bot and do not contain an inline
 // keyboard can only be edited within 48 hours from the time they were sent.
-func (b *Bot) EditMessageCaption(params *EditMessageCaptionParams) (*Message, error) {
+func (b *Bot) EditMessageCaption(ctx context.Context, params *EditMessageCaptionParams) (*Message, error) {
 	var message *Message
 	var success *bool
-	err := b.performRequest("editMessageCaption", params, &message, &success)
+	err := b.performRequest(ctx, "editMessageCaption", params, &message, &success)
 	if err != nil {
-		return nil, fmt.Errorf("telego: editMessageCaption(): %w", err)
+		return nil, fmt.Errorf("telego: editMessageCaption: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -3359,21 +5091,21 @@ type EditMessageMediaParams struct {
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
 	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
-	// or username of the target channel (in the format @channel_username)
-	ChatID ChatID `json:"chat_id,omitempty"`
+	// or username of the target bot, supergroup, or channel in the format @username.
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit
+	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit.
 	MessageID int `json:"message_id,omitempty"`
 
 	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
-	// inline message
+	// inline message.
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 
-	// Media - A JSON-serialized object for a new media content of the message
+	// Media - A JSON-serialized object for the new media content of the message
 	Media InputMedia `json:"media"`
 
 	// ReplyMarkup - Optional. A JSON-serialized object for a new inline keyboard
-	// (https://core.telegram.org/bots/features#inline-keyboards).
+	// (https://core.telegram.org/bots/features#inline-keyboards)
 	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -3390,22 +5122,21 @@ func (p *EditMessageMediaParams) fileParameters() map[string]ta.NamedReader {
 	return fp
 }
 
-// EditMessageMedia - Use this method to edit animation, audio, document, photo, or video messages, or to add
-// media to text messages. If a message is part of a message album, then it can be edited only to an audio for
-// audio albums, only to a document for document albums and to a photo or a video otherwise. When an inline
-// message is edited, a new file can't be uploaded; use a previously uploaded file via its file_id or specify a
-// URL. On success, if the edited message is not an inline message, the edited Message
-// (https://core.telegram.org/bots/api#message) is returned, otherwise True is returned. Note that business
-// messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48
-// hours from the time they were sent.
-func (b *Bot) EditMessageMedia(params *EditMessageMediaParams) (*Message, error) {
+// EditMessageMedia - Use this method to edit animation, audio, document, live photo, photo, or video
+// messages, or to replace a text or a rich message with a media. If a message is part of a message album, then
+// it can be edited only to an audio for audio albums, only to a document for document albums and to a photo, a
+// live photo, or a video otherwise. When an inline message is edited, a new file can't be uploaded; use a
+// previously uploaded file via its file_id or specify a URL. On success, if the edited message is not an inline
+// message, the edited Message (https://core.telegram.org/bots/api#message) is returned, otherwise True is
+// returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can
+// only be edited within 48 hours from the time they were sent.
+func (b *Bot) EditMessageMedia(ctx context.Context, params *EditMessageMediaParams) (*Message, error) {
 	var message *Message
 	var success *bool
-	err := b.performRequest("editMessageMedia", params, &message, &success)
+	err := b.performRequest(ctx, "editMessageMedia", params, &message, &success)
 	if err != nil {
-		return nil, fmt.Errorf("telego: editMessageMedia(): %w", err)
+		return nil, fmt.Errorf("telego: editMessageMedia: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -3416,14 +5147,14 @@ type EditMessageLiveLocationParams struct {
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
 	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
-	// or username of the target channel (in the format @channel_username)
-	ChatID ChatID `json:"chat_id,omitempty"`
+	// or username of the target bot, supergroup, or channel in the format @username.
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit
+	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit.
 	MessageID int `json:"message_id,omitempty"`
 
 	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
-	// inline message
+	// inline message.
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 
 	// Latitude - Latitude of new location
@@ -3435,7 +5166,7 @@ type EditMessageLiveLocationParams struct {
 	// LivePeriod - Optional. New period in seconds during which the location can be updated, starting from the
 	// message send date. If 0x7FFFFFFF is specified, then the location can be updated forever. Otherwise, the new
 	// value must not exceed the current live_period by more than a day, and the live location expiration date must
-	// remain within the next 90 days. If not specified, then live_period remains unchanged
+	// remain within the next 90 days. If not specified, then live_period remains unchanged.
 	LivePeriod int `json:"live_period,omitempty"`
 
 	// HorizontalAccuracy - Optional. The radius of uncertainty for the location, measured in meters; 0-1500
@@ -3450,7 +5181,7 @@ type EditMessageLiveLocationParams struct {
 	ProximityAlertRadius int `json:"proximity_alert_radius,omitempty"`
 
 	// ReplyMarkup - Optional. A JSON-serialized object for a new inline keyboard
-	// (https://core.telegram.org/bots/features#inline-keyboards).
+	// (https://core.telegram.org/bots/features#inline-keyboards)
 	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -3459,14 +5190,13 @@ type EditMessageLiveLocationParams struct {
 // (https://core.telegram.org/bots/api#stopmessagelivelocation). On success, if the edited message is not an
 // inline message, the edited Message (https://core.telegram.org/bots/api#message) is returned, otherwise True
 // is returned.
-func (b *Bot) EditMessageLiveLocation(params *EditMessageLiveLocationParams) (*Message, error) {
+func (b *Bot) EditMessageLiveLocation(ctx context.Context, params *EditMessageLiveLocationParams) (*Message, error) {
 	var message *Message
 	var success *bool
-	err := b.performRequest("editMessageLiveLocation", params, &message, &success)
+	err := b.performRequest(ctx, "editMessageLiveLocation", params, &message, &success)
 	if err != nil {
-		return nil, fmt.Errorf("telego: editMessageLiveLocation(): %w", err)
+		return nil, fmt.Errorf("telego: editMessageLiveLocation: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -3477,34 +5207,121 @@ type StopMessageLiveLocationParams struct {
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
 	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
-	// or username of the target channel (in the format @channel_username)
-	ChatID ChatID `json:"chat_id,omitempty"`
+	// or username of the target bot, supergroup, or channel in the format @username.
+	ChatID ChatID `json:"chat_id,omitzero"`
 
 	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message with live
-	// location to stop
+	// location to stop.
 	MessageID int `json:"message_id,omitempty"`
 
 	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
-	// inline message
+	// inline message.
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 
 	// ReplyMarkup - Optional. A JSON-serialized object for a new inline keyboard
-	// (https://core.telegram.org/bots/features#inline-keyboards).
+	// (https://core.telegram.org/bots/features#inline-keyboards)
 	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
 // StopMessageLiveLocation - Use this method to stop updating a live location message before live_period
 // expires. On success, if the message is not an inline message, the edited Message
 // (https://core.telegram.org/bots/api#message) is returned, otherwise True is returned.
-func (b *Bot) StopMessageLiveLocation(params *StopMessageLiveLocationParams) (*Message, error) {
+func (b *Bot) StopMessageLiveLocation(ctx context.Context, params *StopMessageLiveLocationParams) (*Message, error) {
 	var message *Message
 	var success *bool
-	err := b.performRequest("stopMessageLiveLocation", params, &message, &success)
+	err := b.performRequest(ctx, "stopMessageLiveLocation", params, &message, &success)
 	if err != nil {
-		return nil, fmt.Errorf("telego: stopMessageLiveLocation(): %w", err)
+		return nil, fmt.Errorf("telego: stopMessageLiveLocation: %w", err)
 	}
-
 	return message, nil
+}
+
+// EditMessageChecklistParams - Represents parameters of editMessageChecklist method.
+type EditMessageChecklistParams struct {
+	// BusinessConnectionID - Unique identifier of the business connection on behalf of which the message will
+	// be sent
+	BusinessConnectionID string `json:"business_connection_id"`
+
+	// ChatID - Unique identifier for the target chat or username of the target bot in the format @username
+	ChatID ChatID `json:"chat_id"`
+
+	// MessageID - Unique identifier for the target message
+	MessageID int `json:"message_id"`
+
+	// Checklist - A JSON-serialized object for the new checklist
+	Checklist InputChecklist `json:"checklist"`
+
+	// ReplyMarkup - Optional. A JSON-serialized object for the new inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards) for the message
+	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+// EditMessageChecklist - Use this method to edit a checklist on behalf of a connected business account. On
+// success, the edited Message (https://core.telegram.org/bots/api#message) is returned.
+func (b *Bot) EditMessageChecklist(ctx context.Context, params *EditMessageChecklistParams) (*Message, error) {
+	var message *Message
+	err := b.performRequest(ctx, "editMessageChecklist", params, &message)
+	if err != nil {
+		return nil, fmt.Errorf("telego: editMessageChecklist: %w", err)
+	}
+	return message, nil
+}
+
+// EditMessageWidgetDataParams - Represents parameters of editMessageWidgetData method.
+type EditMessageWidgetDataParams struct {
+	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
+	// or username of the target supergroup in the format @username.
+	ChatID ChatID `json:"chat_id,omitzero"`
+
+	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message with the
+	// widget.
+	MessageID int `json:"message_id,omitempty"`
+
+	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
+	// inline message.
+	InlineMessageID string `json:"inline_message_id,omitempty"`
+
+	// PublicData - Optional. New public data of the widget, 0-1024 bytes; pass an empty string to remove the
+	// public data. If omitted, then the public data isn't changed.
+	PublicData string `json:"public_data,omitempty"`
+
+	// ChatData - Optional. New data of the widget, which is specific to the message, 0-1024 bytes; pass an
+	// empty string to remove the data. If omitted, then the data isn't changed.
+	ChatData string `json:"chat_data,omitempty"`
+}
+
+// EditMessageWidgetData - Use this method to edit data of a widget in a message sent by the bot or via the
+// bot (for inline bots). Public data of a shared widget can be changed at most once per second. On success,
+// True is returned.
+func (b *Bot) EditMessageWidgetData(ctx context.Context, params *EditMessageWidgetDataParams) error {
+	err := b.performRequest(ctx, "editMessageWidgetData", params)
+	if err != nil {
+		return fmt.Errorf("telego: editMessageWidgetData: %w", err)
+	}
+	return nil
+}
+
+// EditSharedWidgetDataParams - Represents parameters of editSharedWidgetData method.
+type EditSharedWidgetDataParams struct {
+	// WidgetID - Unique identifier of the shared widget
+	WidgetID string `json:"widget_id"`
+
+	// PublicData - New public data of the widget, 0-1024 bytes; pass an empty string to remove the public data
+	PublicData string `json:"public_data"`
+
+	// CacheTime - Optional. The maximum amount of time in seconds that the public data of the widget may be
+	// cached client-side; 5-3600. If omitted, then the current value is kept, which is 30 by default.
+	CacheTime int `json:"cache_time,omitempty"`
+}
+
+// EditSharedWidgetData - Use this method to edit public data of a shared widget created by the bot. A shared
+// widget can be edited at most once per second. On success, True is returned.
+func (b *Bot) EditSharedWidgetData(ctx context.Context, params *EditSharedWidgetDataParams) error {
+	err := b.performRequest(ctx, "editSharedWidgetData", params)
+	if err != nil {
+		return fmt.Errorf("telego: editSharedWidgetData: %w", err)
+	}
+	return nil
 }
 
 // EditMessageReplyMarkupParams - Represents parameters of editMessageReplyMarkup method.
@@ -3514,18 +5331,18 @@ type EditMessageReplyMarkupParams struct {
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
 	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
-	// or username of the target channel (in the format @channel_username)
-	ChatID ChatID `json:"chat_id,omitempty"`
+	// or username of the target bot, supergroup, or channel in the format @username.
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit
+	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the message to edit.
 	MessageID int `json:"message_id,omitempty"`
 
 	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
-	// inline message
+	// inline message.
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 
 	// ReplyMarkup - Optional. A JSON-serialized object for an inline keyboard
-	// (https://core.telegram.org/bots/features#inline-keyboards).
+	// (https://core.telegram.org/bots/features#inline-keyboards)
 	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -3533,14 +5350,13 @@ type EditMessageReplyMarkupParams struct {
 // edited message is not an inline message, the edited Message (https://core.telegram.org/bots/api#message) is
 // returned, otherwise True is returned. Note that business messages that were not sent by the bot and do not
 // contain an inline keyboard can only be edited within 48 hours from the time they were sent.
-func (b *Bot) EditMessageReplyMarkup(params *EditMessageReplyMarkupParams) (*Message, error) {
+func (b *Bot) EditMessageReplyMarkup(ctx context.Context, params *EditMessageReplyMarkupParams) (*Message, error) {
 	var message *Message
 	var success *bool
-	err := b.performRequest("editMessageReplyMarkup", params, &message, &success)
+	err := b.performRequest(ctx, "editMessageReplyMarkup", params, &message, &success)
 	if err != nil {
-		return nil, fmt.Errorf("telego: editMessageReplyMarkup(): %w", err)
+		return nil, fmt.Errorf("telego: editMessageReplyMarkup: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -3550,34 +5366,254 @@ type StopPollParams struct {
 	// message to be edited was sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageID - Identifier of the original message with the poll
 	MessageID int `json:"message_id"`
 
 	// ReplyMarkup - Optional. A JSON-serialized object for a new message inline keyboard
-	// (https://core.telegram.org/bots/features#inline-keyboards).
+	// (https://core.telegram.org/bots/features#inline-keyboards)
 	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
 // StopPoll - Use this method to stop a poll which was sent by the bot. On success, the stopped Poll
 // (https://core.telegram.org/bots/api#poll) is returned.
-func (b *Bot) StopPoll(params *StopPollParams) (*Poll, error) {
+func (b *Bot) StopPoll(ctx context.Context, params *StopPollParams) (*Poll, error) {
 	var poll *Poll
-	err := b.performRequest("stopPoll", params, &poll)
+	err := b.performRequest(ctx, "stopPoll", params, &poll)
 	if err != nil {
-		return nil, fmt.Errorf("telego: stopPoll(): %w", err)
+		return nil, fmt.Errorf("telego: stopPoll: %w", err)
+	}
+	return poll, nil
+}
+
+// EditEphemeralMessageTextParams - Represents parameters of editEphemeralMessageText method.
+type EditEphemeralMessageTextParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// ReceiverUserID - Identifier of the user who received the message
+	ReceiverUserID int64 `json:"receiver_user_id"`
+
+	// EphemeralMessageID - Identifier of the ephemeral message to edit
+	EphemeralMessageID int `json:"ephemeral_message_id"`
+
+	// Text - Optional. New text of the message, 1-4096 characters after entity parsing; required if
+	// rich_message isn't specified
+	Text string `json:"text,omitempty"`
+
+	// ParseMode - Optional. Mode for parsing entities in the message text. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// Entities - Optional. A JSON-serialized list of special entities that appear in message text, which can be
+	// specified instead of parse_mode
+	Entities []MessageEntity `json:"entities,omitempty"`
+
+	// RichMessage - Optional. New rich content of the message; required if text isn't specified
+	RichMessage *InputRichMessage `json:"rich_message,omitempty"`
+
+	// LinkPreviewOptions - Optional. Link preview generation options for the message
+	LinkPreviewOptions *LinkPreviewOptions `json:"link_preview_options,omitempty"`
+
+	// ReplyMarkup - Optional. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards)
+	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+func (p *EditEphemeralMessageTextParams) fileParameters() map[string]ta.NamedReader {
+	fp := make(map[string]ta.NamedReader)
+
+	if p.RichMessage != nil {
+		for _, block := range p.RichMessage.Blocks {
+			for _, v := range block.fileParameters() {
+				if isNil(v) {
+					continue
+				}
+				fp[v.Name()] = v
+			}
+		}
+
+		for _, m := range p.RichMessage.Media {
+			for _, v := range m.Media.fileParameters() {
+				if isNil(v) {
+					continue
+				}
+				fp[v.Name()] = v
+			}
+		}
 	}
 
-	return poll, nil
+	return fp
+}
+
+// EditEphemeralMessageText - Use this method to edit an ephemeral text or rich message. Note that it is not
+// guaranteed that the user will receive the message edit event, especially if they are offline. On success,
+// True is returned.
+func (b *Bot) EditEphemeralMessageText(ctx context.Context, params *EditEphemeralMessageTextParams) error {
+	err := b.performRequest(ctx, "editEphemeralMessageText", params)
+	if err != nil {
+		return fmt.Errorf("telego: editEphemeralMessageText: %w", err)
+	}
+	return nil
+}
+
+// EditEphemeralMessageMediaParams - Represents parameters of editEphemeralMessageMedia method.
+type EditEphemeralMessageMediaParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// ReceiverUserID - Identifier of the user who received the message
+	ReceiverUserID int64 `json:"receiver_user_id"`
+
+	// EphemeralMessageID - Identifier of the ephemeral message to edit
+	EphemeralMessageID int `json:"ephemeral_message_id"`
+
+	// Media - A JSON-serialized object for the new media content of the message
+	Media InputMedia `json:"media"`
+
+	// ReplyMarkup - Optional. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards)
+	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+// EditEphemeralMessageMedia - Use this method to edit the media of an ephemeral message. Note that it is not
+// guaranteed that the user will receive the message edit event, especially if they are offline. On success,
+// True is returned.
+func (b *Bot) EditEphemeralMessageMedia(ctx context.Context, params *EditEphemeralMessageMediaParams) error {
+	err := b.performRequest(ctx, "editEphemeralMessageMedia", params)
+	if err != nil {
+		return fmt.Errorf("telego: editEphemeralMessageMedia: %w", err)
+	}
+	return nil
+}
+
+// EditEphemeralMessageCaptionParams - Represents parameters of editEphemeralMessageCaption method.
+type EditEphemeralMessageCaptionParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// ReceiverUserID - Identifier of the user who received the message
+	ReceiverUserID int64 `json:"receiver_user_id"`
+
+	// EphemeralMessageID - Identifier of the ephemeral message to edit
+	EphemeralMessageID int `json:"ephemeral_message_id"`
+
+	// Caption - Optional. New caption of the message, 0-1024 characters after entities parsing
+	Caption string `json:"caption,omitempty"`
+
+	// ParseMode - Optional. Mode for parsing entities in the message caption. See formatting options
+	// (https://core.telegram.org/bots/api#formatting-options) for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// CaptionEntities - Optional. A JSON-serialized list of special entities that appear in the caption, which
+	// can be specified instead of parse_mode
+	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
+
+	// ShowCaptionAboveMedia - Optional. Pass True if the caption must be shown above the message media.
+	// Supported only for animation, photo and video messages.
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
+
+	// ReplyMarkup - Optional. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards)
+	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+// EditEphemeralMessageCaption - Use this method to edit the caption of an ephemeral message. Note that it is
+// not guaranteed that the user will receive the message edit event, especially if they are offline. On success,
+// True is returned.
+func (b *Bot) EditEphemeralMessageCaption(ctx context.Context, params *EditEphemeralMessageCaptionParams) error {
+	err := b.performRequest(ctx, "editEphemeralMessageCaption", params)
+	if err != nil {
+		return fmt.Errorf("telego: editEphemeralMessageCaption: %w", err)
+	}
+	return nil
+}
+
+// EditEphemeralMessageReplyMarkupParams - Represents parameters of editEphemeralMessageReplyMarkup method.
+type EditEphemeralMessageReplyMarkupParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// ReceiverUserID - Identifier of the user who received the message
+	ReceiverUserID int64 `json:"receiver_user_id"`
+
+	// EphemeralMessageID - Identifier of the ephemeral message to edit
+	EphemeralMessageID int `json:"ephemeral_message_id"`
+
+	// ReplyMarkup - Optional. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards)
+	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+// EditEphemeralMessageReplyMarkup - Use this method to edit only the reply markup of an ephemeral message.
+// Note that it is not guaranteed that the user will receive the message edit event, especially if they are
+// offline. On success, True is returned.
+func (b *Bot) EditEphemeralMessageReplyMarkup(ctx context.Context, params *EditEphemeralMessageReplyMarkupParams) error {
+	err := b.performRequest(ctx, "editEphemeralMessageReplyMarkup", params)
+	if err != nil {
+		return fmt.Errorf("telego: editEphemeralMessageReplyMarkup: %w", err)
+	}
+	return nil
+}
+
+// ApproveSuggestedPostParams - Represents parameters of approveSuggestedPost method.
+type ApproveSuggestedPostParams struct {
+	// ChatID - Unique identifier for the target direct messages chat
+	ChatID int64 `json:"chat_id"`
+
+	// MessageID - Identifier of a suggested post message to approve
+	MessageID int `json:"message_id"`
+
+	// SendDate - Optional. Point in time (Unix timestamp) when the post is expected to be published; omit if
+	// the date has already been specified when the suggested post was created. If specified, then the date must be
+	// not more than 2678400 seconds (30 days) in the future.
+	SendDate int64 `json:"send_date,omitempty"`
+}
+
+// ApproveSuggestedPost - Use this method to approve a suggested post in a direct messages chat. The bot must
+// have the 'can_post_messages' administrator right in the corresponding channel chat. Returns True on success.
+func (b *Bot) ApproveSuggestedPost(ctx context.Context, params *ApproveSuggestedPostParams) error {
+	err := b.performRequest(ctx, "approveSuggestedPost", params)
+	if err != nil {
+		return fmt.Errorf("telego: approveSuggestedPost: %w", err)
+	}
+	return nil
+}
+
+// DeclineSuggestedPostParams - Represents parameters of declineSuggestedPost method.
+type DeclineSuggestedPostParams struct {
+	// ChatID - Unique identifier for the target direct messages chat
+	ChatID int64 `json:"chat_id"`
+
+	// MessageID - Identifier of a suggested post message to decline
+	MessageID int `json:"message_id"`
+
+	// Comment - Optional. Comment for the creator of the suggested post; 0-128 characters
+	Comment string `json:"comment,omitempty"`
+}
+
+// DeclineSuggestedPost - Use this method to decline a suggested post in a direct messages chat. The bot must
+// have the 'can_manage_direct_messages' administrator right in the corresponding channel chat. Returns True on
+// success.
+func (b *Bot) DeclineSuggestedPost(ctx context.Context, params *DeclineSuggestedPostParams) error {
+	err := b.performRequest(ctx, "declineSuggestedPost", params)
+	if err != nil {
+		return fmt.Errorf("telego: declineSuggestedPost: %w", err)
+	}
+	return nil
 }
 
 // DeleteMessageParams - Represents parameters of deleteMessage method.
 type DeleteMessageParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageID - Identifier of the message to delete
@@ -3593,37 +5629,115 @@ type DeleteMessageParams struct {
 // - Bots can delete incoming messages in private chats.
 // - Bots granted can_post_messages permissions can delete outgoing messages in channels.
 // - If the bot is an administrator of a group, it can delete any message there.
-// - If the bot has can_delete_messages permission in a supergroup or a channel, it can delete any message
-// there.
+// - If the bot has can_delete_messages administrator right in a supergroup or a channel, it can delete any
+// message there.
+// - If the bot has can_manage_direct_messages administrator right in a channel, it can delete any message in
+// the corresponding direct messages chat.
 // Returns True on success.
-func (b *Bot) DeleteMessage(params *DeleteMessageParams) error {
-	err := b.performRequest("deleteMessage", params)
+func (b *Bot) DeleteMessage(ctx context.Context, params *DeleteMessageParams) error {
+	err := b.performRequest(ctx, "deleteMessage", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteMessage(): %w", err)
+		return fmt.Errorf("telego: deleteMessage: %w", err)
 	}
-
 	return nil
 }
 
 // DeleteMessagesParams - Represents parameters of deleteMessages method.
 type DeleteMessagesParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
 	// MessageIDs - A JSON-serialized list of 1-100 identifiers of messages to delete. See deleteMessage
-	// (https://core.telegram.org/bots/api#deletemessage) for limitations on which messages can be deleted
+	// (https://core.telegram.org/bots/api#deletemessage) for limitations on which messages can be deleted.
 	MessageIDs []int `json:"message_ids"`
 }
 
 // DeleteMessages - Use this method to delete multiple messages simultaneously. If some of the specified
 // messages can't be found, they are skipped. Returns True on success.
-func (b *Bot) DeleteMessages(params *DeleteMessagesParams) error {
-	err := b.performRequest("deleteMessages", params)
+func (b *Bot) DeleteMessages(ctx context.Context, params *DeleteMessagesParams) error {
+	err := b.performRequest(ctx, "deleteMessages", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteMessages(): %w", err)
+		return fmt.Errorf("telego: deleteMessages: %w", err)
 	}
+	return nil
+}
 
+// DeleteEphemeralMessageParams - Represents parameters of deleteEphemeralMessage method.
+type DeleteEphemeralMessageParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// ReceiverUserID - Identifier of the user who received the message
+	ReceiverUserID int64 `json:"receiver_user_id"`
+
+	// EphemeralMessageID - Identifier of the ephemeral message to delete
+	EphemeralMessageID int `json:"ephemeral_message_id"`
+}
+
+// DeleteEphemeralMessage - Use this method to delete an ephemeral message. Note that it is not guaranteed
+// that the user will receive the message deletion event, especially if they are offline. Returns True on
+// success.
+func (b *Bot) DeleteEphemeralMessage(ctx context.Context, params *DeleteEphemeralMessageParams) error {
+	err := b.performRequest(ctx, "deleteEphemeralMessage", params)
+	if err != nil {
+		return fmt.Errorf("telego: deleteEphemeralMessage: %w", err)
+	}
+	return nil
+}
+
+// DeleteMessageReactionParams - Represents parameters of deleteMessageReaction method.
+type DeleteMessageReactionParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// MessageID - Identifier of the target message
+	MessageID int `json:"message_id"`
+
+	// UserID - Optional. Identifier of the user whose reaction will be removed, if the reaction was added by a
+	// user
+	UserID int64 `json:"user_id,omitempty"`
+
+	// ActorChatID - Optional. Identifier of the chat whose reaction will be removed, if the reaction was added
+	// by a chat
+	ActorChatID int64 `json:"actor_chat_id,omitempty"`
+}
+
+// DeleteMessageReaction - Use this method to remove a reaction from a message in a group or a supergroup
+// chat. The bot must have the 'can_delete_messages' administrator right in the chat. Returns True on success.
+func (b *Bot) DeleteMessageReaction(ctx context.Context, params *DeleteMessageReactionParams) error {
+	err := b.performRequest(ctx, "deleteMessageReaction", params)
+	if err != nil {
+		return fmt.Errorf("telego: deleteMessageReaction: %w", err)
+	}
+	return nil
+}
+
+// DeleteAllMessageReactionsParams - Represents parameters of deleteAllMessageReactions method.
+type DeleteAllMessageReactionsParams struct {
+	// ChatID - Unique identifier for the target chat or username of the target supergroup in the format
+	// @username
+	ChatID ChatID `json:"chat_id"`
+
+	// UserID - Optional. Identifier of the user whose reactions will be removed, if the reactions were added by
+	// a user
+	UserID int64 `json:"user_id,omitempty"`
+
+	// ActorChatID - Optional. Identifier of the chat whose reactions will be removed, if the reactions were
+	// added by a chat
+	ActorChatID int64 `json:"actor_chat_id,omitempty"`
+}
+
+// DeleteAllMessageReactions - Use this method to remove up to 10000 recent reactions in a group or a
+// supergroup chat added by a given user or chat. The bot must have the 'can_delete_messages' administrator
+// right in the chat. Returns True on success.
+func (b *Bot) DeleteAllMessageReactions(ctx context.Context, params *DeleteAllMessageReactionsParams) error {
+	err := b.performRequest(ctx, "deleteAllMessageReactions", params)
+	if err != nil {
+		return fmt.Errorf("telego: deleteAllMessageReactions: %w", err)
+	}
 	return nil
 }
 
@@ -3633,13 +5747,22 @@ type SendStickerParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
 
 	// Sticker - Sticker to send. Pass a file_id as String to send a file that exists on the Telegram servers
 	// (recommended), pass an HTTP URL as a String for Telegram to get a .WEBP sticker from the Internet, or upload
@@ -3660,12 +5783,17 @@ type SendStickerParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -3673,7 +5801,7 @@ type SendStickerParams struct {
 	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
 	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
 	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
-	// reply from the user
+	// reply from the user.
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
@@ -3686,13 +5814,12 @@ func (p *SendStickerParams) fileParameters() map[string]ta.NamedReader {
 // SendSticker - Use this method to send static .WEBP, animated (https://telegram.org/blog/animated-stickers)
 // .TGS, or video (https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the
 // sent Message (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendSticker(params *SendStickerParams) (*Message, error) {
+func (b *Bot) SendSticker(ctx context.Context, params *SendStickerParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendSticker", params, &message)
+	err := b.performRequest(ctx, "sendSticker", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendSticker(): %w", err)
+		return nil, fmt.Errorf("telego: sendSticker: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -3704,13 +5831,12 @@ type GetStickerSetParams struct {
 
 // GetStickerSet - Use this method to get a sticker set. On success, a StickerSet
 // (https://core.telegram.org/bots/api#stickerset) object is returned.
-func (b *Bot) GetStickerSet(params *GetStickerSetParams) (*StickerSet, error) {
+func (b *Bot) GetStickerSet(ctx context.Context, params *GetStickerSetParams) (*StickerSet, error) {
 	var stickerSet *StickerSet
-	err := b.performRequest("getStickerSet", params, &stickerSet)
+	err := b.performRequest(ctx, "getStickerSet", params, &stickerSet)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getStickerSet(): %w", err)
+		return nil, fmt.Errorf("telego: getStickerSet: %w", err)
 	}
-
 	return stickerSet, nil
 }
 
@@ -3723,13 +5849,12 @@ type GetCustomEmojiStickersParams struct {
 
 // GetCustomEmojiStickers - Use this method to get information about custom emoji stickers by their
 // identifiers. Returns an Array of Sticker (https://core.telegram.org/bots/api#sticker) objects.
-func (b *Bot) GetCustomEmojiStickers(params *GetCustomEmojiStickersParams) ([]Sticker, error) {
+func (b *Bot) GetCustomEmojiStickers(ctx context.Context, params *GetCustomEmojiStickersParams) ([]Sticker, error) {
 	var stickers []Sticker
-	err := b.performRequest("getCustomEmojiStickers", params, &stickers)
+	err := b.performRequest(ctx, "getCustomEmojiStickers", params, &stickers)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getCustomEmojiStickers(): %w", err)
+		return nil, fmt.Errorf("telego: getCustomEmojiStickers: %w", err)
 	}
-
 	return stickers, nil
 }
 
@@ -3765,13 +5890,12 @@ func (p *UploadStickerFileParams) fileParameters() map[string]ta.NamedReader {
 // (https://core.telegram.org/bots/api#addstickertoset), or replaceStickerInSet
 // (https://core.telegram.org/bots/api#replacestickerinset) methods (the file can be used multiple times).
 // Returns the uploaded File (https://core.telegram.org/bots/api#file) on success.
-func (b *Bot) UploadStickerFile(params *UploadStickerFileParams) (*File, error) {
+func (b *Bot) UploadStickerFile(ctx context.Context, params *UploadStickerFileParams) (*File, error) {
 	var file *File
-	err := b.performRequest("uploadStickerFile", params, &file)
+	err := b.performRequest(ctx, "uploadStickerFile", params, &file)
 	if err != nil {
-		return nil, fmt.Errorf("telego: uploadStickerFile(): %w", err)
+		return nil, fmt.Errorf("telego: uploadStickerFile: %w", err)
 	}
-
 	return file, nil
 }
 
@@ -3820,12 +5944,11 @@ func (p *CreateNewStickerSetParams) fileParameters() map[string]ta.NamedReader {
 
 // CreateNewStickerSet - Use this method to create a new sticker set owned by a user. The bot will be able to
 // edit the sticker set thus created. Returns True on success.
-func (b *Bot) CreateNewStickerSet(params *CreateNewStickerSetParams) error {
-	err := b.performRequest("createNewStickerSet", params)
+func (b *Bot) CreateNewStickerSet(ctx context.Context, params *CreateNewStickerSetParams) error {
+	err := b.performRequest(ctx, "createNewStickerSet", params)
 	if err != nil {
-		return fmt.Errorf("telego: createNewStickerSet(): %w", err)
+		return fmt.Errorf("telego: createNewStickerSet: %w", err)
 	}
-
 	return nil
 }
 
@@ -3856,12 +5979,11 @@ func (p *AddStickerToSetParams) fileParameters() map[string]ta.NamedReader {
 
 // AddStickerToSet - Use this method to add a new sticker to a set created by the bot. Emoji sticker sets can
 // have up to 200 stickers. Other sticker sets can have up to 120 stickers. Returns True on success.
-func (b *Bot) AddStickerToSet(params *AddStickerToSetParams) error {
-	err := b.performRequest("addStickerToSet", params)
+func (b *Bot) AddStickerToSet(ctx context.Context, params *AddStickerToSetParams) error {
+	err := b.performRequest(ctx, "addStickerToSet", params)
 	if err != nil {
-		return fmt.Errorf("telego: addStickerToSet(): %w", err)
+		return fmt.Errorf("telego: addStickerToSet: %w", err)
 	}
-
 	return nil
 }
 
@@ -3876,12 +5998,11 @@ type SetStickerPositionInSetParams struct {
 
 // SetStickerPositionInSet - Use this method to move a sticker in a set created by the bot to a specific
 // position. Returns True on success.
-func (b *Bot) SetStickerPositionInSet(params *SetStickerPositionInSetParams) error {
-	err := b.performRequest("setStickerPositionInSet", params)
+func (b *Bot) SetStickerPositionInSet(ctx context.Context, params *SetStickerPositionInSetParams) error {
+	err := b.performRequest(ctx, "setStickerPositionInSet", params)
 	if err != nil {
-		return fmt.Errorf("telego: setStickerPositionInSet(): %w", err)
+		return fmt.Errorf("telego: setStickerPositionInSet: %w", err)
 	}
-
 	return nil
 }
 
@@ -3893,12 +6014,11 @@ type DeleteStickerFromSetParams struct {
 
 // DeleteStickerFromSet - Use this method to delete a sticker from a set created by the bot. Returns True on
 // success.
-func (b *Bot) DeleteStickerFromSet(params *DeleteStickerFromSetParams) error {
-	err := b.performRequest("deleteStickerFromSet", params)
+func (b *Bot) DeleteStickerFromSet(ctx context.Context, params *DeleteStickerFromSetParams) error {
+	err := b.performRequest(ctx, "deleteStickerFromSet", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteStickerFromSet(): %w", err)
+		return fmt.Errorf("telego: deleteStickerFromSet: %w", err)
 	}
-
 	return nil
 }
 
@@ -3935,12 +6055,11 @@ func (p *ReplaceStickerInSetParams) fileParameters() map[string]ta.NamedReader {
 // (https://core.telegram.org/bots/api#deletestickerfromset), then addStickerToSet
 // (https://core.telegram.org/bots/api#addstickertoset), then setStickerPositionInSet
 // (https://core.telegram.org/bots/api#setstickerpositioninset). Returns True on success.
-func (b *Bot) ReplaceStickerInSet(params *ReplaceStickerInSetParams) error {
-	err := b.performRequest("replaceStickerInSet", params)
+func (b *Bot) ReplaceStickerInSet(ctx context.Context, params *ReplaceStickerInSetParams) error {
+	err := b.performRequest(ctx, "replaceStickerInSet", params)
 	if err != nil {
-		return fmt.Errorf("telego: replaceStickerInSet(): %w", err)
+		return fmt.Errorf("telego: replaceStickerInSet: %w", err)
 	}
-
 	return nil
 }
 
@@ -3955,12 +6074,11 @@ type SetStickerEmojiListParams struct {
 
 // SetStickerEmojiList - Use this method to change the list of emoji assigned to a regular or custom emoji
 // sticker. The sticker must belong to a sticker set created by the bot. Returns True on success.
-func (b *Bot) SetStickerEmojiList(params *SetStickerEmojiListParams) error {
-	err := b.performRequest("setStickerEmojiList", params)
+func (b *Bot) SetStickerEmojiList(ctx context.Context, params *SetStickerEmojiListParams) error {
+	err := b.performRequest(ctx, "setStickerEmojiList", params)
 	if err != nil {
-		return fmt.Errorf("telego: setStickerEmojiList(): %w", err)
+		return fmt.Errorf("telego: setStickerEmojiList: %w", err)
 	}
-
 	return nil
 }
 
@@ -3976,12 +6094,11 @@ type SetStickerKeywordsParams struct {
 
 // SetStickerKeywords - Use this method to change search keywords assigned to a regular or custom emoji
 // sticker. The sticker must belong to a sticker set created by the bot. Returns True on success.
-func (b *Bot) SetStickerKeywords(params *SetStickerKeywordsParams) error {
-	err := b.performRequest("setStickerKeywords", params)
+func (b *Bot) SetStickerKeywords(ctx context.Context, params *SetStickerKeywordsParams) error {
+	err := b.performRequest(ctx, "setStickerKeywords", params)
 	if err != nil {
-		return fmt.Errorf("telego: setStickerKeywords(): %w", err)
+		return fmt.Errorf("telego: setStickerKeywords: %w", err)
 	}
-
 	return nil
 }
 
@@ -3998,12 +6115,11 @@ type SetStickerMaskPositionParams struct {
 // SetStickerMaskPosition - Use this method to change the mask position
 // (https://core.telegram.org/bots/api#maskposition) of a mask sticker. The sticker must belong to a sticker set
 // that was created by the bot. Returns True on success.
-func (b *Bot) SetStickerMaskPosition(params *SetStickerMaskPositionParams) error {
-	err := b.performRequest("setStickerMaskPosition", params)
+func (b *Bot) SetStickerMaskPosition(ctx context.Context, params *SetStickerMaskPositionParams) error {
+	err := b.performRequest(ctx, "setStickerMaskPosition", params)
 	if err != nil {
-		return fmt.Errorf("telego: setStickerMaskPosition(): %w", err)
+		return fmt.Errorf("telego: setStickerMaskPosition: %w", err)
 	}
-
 	return nil
 }
 
@@ -4017,12 +6133,11 @@ type SetStickerSetTitleParams struct {
 }
 
 // SetStickerSetTitle - Use this method to set the title of a created sticker set. Returns True on success.
-func (b *Bot) SetStickerSetTitle(params *SetStickerSetTitleParams) error {
-	err := b.performRequest("setStickerSetTitle", params)
+func (b *Bot) SetStickerSetTitle(ctx context.Context, params *SetStickerSetTitleParams) error {
+	err := b.performRequest(ctx, "setStickerSetTitle", params)
 	if err != nil {
-		return fmt.Errorf("telego: setStickerSetTitle(): %w", err)
+		return fmt.Errorf("telego: setStickerSetTitle: %w", err)
 	}
-
 	return nil
 }
 
@@ -4065,12 +6180,11 @@ func (p *SetStickerSetThumbnailParams) fileParameters() map[string]ta.NamedReade
 
 // SetStickerSetThumbnail - Use this method to set the thumbnail of a regular or mask sticker set. The format
 // of the thumbnail file must match the format of the stickers in the set. Returns True on success.
-func (b *Bot) SetStickerSetThumbnail(params *SetStickerSetThumbnailParams) error {
-	err := b.performRequest("setStickerSetThumbnail", params)
+func (b *Bot) SetStickerSetThumbnail(ctx context.Context, params *SetStickerSetThumbnailParams) error {
+	err := b.performRequest(ctx, "setStickerSetThumbnail", params)
 	if err != nil {
-		return fmt.Errorf("telego: setStickerSetThumbnail(): %w", err)
+		return fmt.Errorf("telego: setStickerSetThumbnail: %w", err)
 	}
-
 	return nil
 }
 
@@ -4081,18 +6195,17 @@ type SetCustomEmojiStickerSetThumbnailParams struct {
 	Name string `json:"name"`
 
 	// CustomEmojiID - Optional. Custom emoji identifier of a sticker from the sticker set; pass an empty string
-	// to drop the thumbnail and use the first sticker as the thumbnail.
+	// to drop the thumbnail and use the first sticker as the thumbnail
 	CustomEmojiID string `json:"custom_emoji_id,omitempty"`
 }
 
 // SetCustomEmojiStickerSetThumbnail - Use this method to set the thumbnail of a custom emoji sticker set.
 // Returns True on success.
-func (b *Bot) SetCustomEmojiStickerSetThumbnail(params *SetCustomEmojiStickerSetThumbnailParams) error {
-	err := b.performRequest("setCustomEmojiStickerSetThumbnail", params)
+func (b *Bot) SetCustomEmojiStickerSetThumbnail(ctx context.Context, params *SetCustomEmojiStickerSetThumbnailParams) error {
+	err := b.performRequest(ctx, "setCustomEmojiStickerSetThumbnail", params)
 	if err != nil {
-		return fmt.Errorf("telego: setCustomEmojiStickerSetThumbnail(): %w", err)
+		return fmt.Errorf("telego: setCustomEmojiStickerSetThumbnail: %w", err)
 	}
-
 	return nil
 }
 
@@ -4104,143 +6217,168 @@ type DeleteStickerSetParams struct {
 
 // DeleteStickerSet - Use this method to delete a sticker set that was created by the bot. Returns True on
 // success.
-func (b *Bot) DeleteStickerSet(params *DeleteStickerSetParams) error {
-	err := b.performRequest("deleteStickerSet", params)
+func (b *Bot) DeleteStickerSet(ctx context.Context, params *DeleteStickerSetParams) error {
+	err := b.performRequest(ctx, "deleteStickerSet", params)
 	if err != nil {
-		return fmt.Errorf("telego: deleteStickerSet(): %w", err)
+		return fmt.Errorf("telego: deleteStickerSet: %w", err)
 	}
-
 	return nil
 }
 
-// GetAvailableGifts - Returns the list of gifts that can be sent by the bot to users. Requires no
-// parameters. Returns a Gifts (https://core.telegram.org/bots/api#gifts) object.
-func (b *Bot) GetAvailableGifts() (*Gifts, error) {
-	var gifts *Gifts
-	err := b.performRequest("getAvailableGifts", nil, &gifts)
-	if err != nil {
-		return nil, fmt.Errorf("telego: getAvailableGifts(): %w", err)
+// SendRichMessageParams - Represents parameters of sendRichMessage method.
+type SendRichMessageParams struct {
+	// BusinessConnectionID - Optional. Unique identifier of the business connection on behalf of which the
+	// message will be sent. Bot can send rich messages on behalf of a business account only if the corresponding
+	// user can send rich messages.
+	BusinessConnectionID string `json:"business_connection_id,omitempty"`
+
+	// ChatID - Optional. Unique identifier for the target chat or username of the target bot, supergroup, or
+	// channel in the format @username; required unless the message is sent as an ephemeral reply to a callback
+	// query
+	ChatID ChatID `json:"chat_id,omitzero"`
+
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
+	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
+
+	// EphemeralMessageParameters - Optional. A JSON-serialized object containing the parameters of the
+	// ephemeral message to send
+	EphemeralMessageParameters *EphemeralMessageParameters `json:"ephemeral_message_parameters,omitempty"`
+
+	// RichMessage - The message to be sent
+	RichMessage InputRichMessage `json:"rich_message"`
+
+	// DisableNotification - Optional. Sends the message silently
+	// (https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
+	DisableNotification bool `json:"disable_notification,omitempty"`
+
+	// ProtectContent - Optional. Protects the contents of the sent message from forwarding and saving
+	ProtectContent bool `json:"protect_content,omitempty"`
+
+	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
+	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
+	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
+
+	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
+	// private chats only
+	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
+
+	// ReplyParameters - Optional. Description of the message to reply to
+	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
+
+	// ReplyMarkup - Optional. Additional interface options. A JSON-serialized object for an inline keyboard
+	// (https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard
+	// (https://core.telegram.org/bots/features#keyboards), instructions to remove a reply keyboard or to force a
+	// reply from the user.
+	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
+}
+
+func (p *SendRichMessageParams) fileParameters() map[string]ta.NamedReader {
+	fp := make(map[string]ta.NamedReader)
+
+	for _, block := range p.RichMessage.Blocks {
+		for _, v := range block.fileParameters() {
+			if isNil(v) {
+				continue
+			}
+			fp[v.Name()] = v
+		}
 	}
 
-	return gifts, nil
-}
-
-// SendGiftParams - Represents parameters of sendGift method.
-type SendGiftParams struct {
-	// UserID - Unique identifier of the target user that will receive the gift
-	UserID int64 `json:"user_id"`
-
-	// GiftID - Identifier of the gift
-	GiftID string `json:"gift_id"`
-
-	// PayForUpgrade - Optional. Pass True to pay for the gift upgrade from the bot's balance, thereby making
-	// the upgrade free for the receiver
-	PayForUpgrade bool `json:"pay_for_upgrade,omitempty"`
-
-	// Text - Optional. Text that will be shown along with the gift; 0-255 characters
-	Text string `json:"text,omitempty"`
-
-	// TextParseMode - Optional. Mode for parsing entities in the text. See formatting options
-	// (https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than “bold”,
-	// “italic”, “underline”, “strikethrough”, “spoiler”, and “custom_emoji” are ignored.
-	TextParseMode string `json:"text_parse_mode,omitempty"`
-
-	// TextEntities - Optional. A JSON-serialized list of special entities that appear in the gift text. It can
-	// be specified instead of text_parse_mode. Entities other than “bold”, “italic”, “underline”,
-	// “strikethrough”, “spoiler”, and “custom_emoji” are ignored.
-	TextEntities []MessageEntity `json:"text_entities,omitempty"`
-}
-
-// SendGift - Sends a gift to the given user. The gift can't be converted to Telegram Stars by the user.
-// Returns True on success.
-func (b *Bot) SendGift(params *SendGiftParams) error {
-	err := b.performRequest("sendGift", params)
-	if err != nil {
-		return fmt.Errorf("telego: sendGift(): %w", err)
+	for _, media := range p.RichMessage.Media {
+		for _, v := range media.Media.fileParameters() {
+			if isNil(v) {
+				continue
+			}
+			fp[v.Name()] = v
+		}
 	}
 
-	return nil
+	return fp
 }
 
-// VerifyUserParams - Represents parameters of verifyUser method.
-type VerifyUserParams struct {
-	// UserID - Unique identifier of the target user
-	UserID int64 `json:"user_id"`
-
-	// CustomDescription - Optional. Custom description for the verification; 0-70 characters. Must be empty if
-	// the organization isn't allowed to provide a custom verification description.
-	CustomDescription string `json:"custom_description,omitempty"`
-}
-
-// VerifyUser - Verifies a user on behalf of the organization
-// (https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns True on
-// success.
-func (b *Bot) VerifyUser(params *VerifyUserParams) error {
-	err := b.performRequest("verifyUser", params)
+// SendRichMessage - Use this method to send rich messages. If the message contains a block with a media
+// element, then the bot must have the right to send the media to the chat. On success, the sent Message
+// (https://core.telegram.org/bots/api#message) is returned.
+func (b *Bot) SendRichMessage(ctx context.Context, params *SendRichMessageParams) (*Message, error) {
+	var message *Message
+	err := b.performRequest(ctx, "sendRichMessage", params, &message)
 	if err != nil {
-		return fmt.Errorf("telego: verifyUser(): %w", err)
+		return nil, fmt.Errorf("telego: sendRichMessage: %w", err)
+	}
+	return message, nil
+}
+
+// SendRichMessageDraftParams - Represents parameters of sendRichMessageDraft method.
+type SendRichMessageDraftParams struct {
+	// ChatID - Unique identifier for the target private chat
+	ChatID int64 `json:"chat_id"`
+
+	// MessageThreadID - Optional. Unique identifier for the target message thread
+	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DraftID - Unique identifier of the message draft; must be non-zero. Changes to drafts with the same
+	// identifier are animated. Otherwise, the draft is replaced without animation.
+	DraftID int `json:"draft_id"`
+
+	// RichMessage - The partial message to be streamed. Direct upload of new files and explicit upload of files
+	// by a URL isn't supported.
+	RichMessage InputRichMessage `json:"rich_message"`
+
+	// CanStop - Optional. Pass True to show the user a button to stop further drafts. The bot will receive an
+	// Update (https://core.telegram.org/bots/api#update) “stopped_message_generation” if the user presses the
+	// button.
+	CanStop bool `json:"can_stop,omitempty"`
+
+	// KeepOnStop - Optional. Pass True to keep the draft in the chat when the button is pressed. The draft will
+	// still disappear after a short time or if the bot sends a message. To fully preserve the partial draft, the
+	// bot should send it as a new message.
+	KeepOnStop bool `json:"keep_on_stop,omitempty"`
+}
+
+func (p *SendRichMessageDraftParams) fileParameters() map[string]ta.NamedReader {
+	fp := make(map[string]ta.NamedReader)
+
+	for _, block := range p.RichMessage.Blocks {
+		for _, v := range block.fileParameters() {
+			if isNil(v) {
+				continue
+			}
+			fp[v.Name()] = v
+		}
 	}
 
-	return nil
-}
-
-// VerifyChatParams - Represents parameters of verifyChat method.
-type VerifyChatParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
-
-	// CustomDescription - Optional. Custom description for the verification; 0-70 characters. Must be empty if
-	// the organization isn't allowed to provide a custom verification description.
-	CustomDescription string `json:"custom_description,omitempty"`
-}
-
-// VerifyChat - Verifies a chat on behalf of the organization
-// (https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns True on
-// success.
-func (b *Bot) VerifyChat(params *VerifyChatParams) error {
-	err := b.performRequest("verifyChat", params)
-	if err != nil {
-		return fmt.Errorf("telego: verifyChat(): %w", err)
+	for _, m := range p.RichMessage.Media {
+		for _, v := range m.Media.fileParameters() {
+			if isNil(v) {
+				continue
+			}
+			fp[v.Name()] = v
+		}
 	}
 
-	return nil
+	return fp
 }
 
-// RemoveUserVerificationParams - Represents parameters of removeUserVerification method.
-type RemoveUserVerificationParams struct {
-	// UserID - Unique identifier of the target user
-	UserID int64 `json:"user_id"`
-}
-
-// RemoveUserVerification - Removes verification from a user who is currently verified on behalf of the
-// organization (https://telegram.org/verify#third-party-verification) represented by the bot. Returns True on
-// success.
-func (b *Bot) RemoveUserVerification(params *RemoveUserVerificationParams) error {
-	err := b.performRequest("removeUserVerification", params)
+// SendRichMessageDraft - Use this method to stream a partial rich message to a user while the message is
+// being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once
+// the output is finalized, you must call sendRichMessage (https://core.telegram.org/bots/api#sendrichmessage)
+// with the complete message to persist it in the user's chat. Returns True on success.
+func (b *Bot) SendRichMessageDraft(ctx context.Context, params *SendRichMessageDraftParams) error {
+	err := b.performRequest(ctx, "sendRichMessageDraft", params)
 	if err != nil {
-		return fmt.Errorf("telego: removeUserVerification(): %w", err)
+		return fmt.Errorf("telego: sendRichMessageDraft: %w", err)
 	}
-
-	return nil
-}
-
-// RemoveChatVerificationParams - Represents parameters of removeChatVerification method.
-type RemoveChatVerificationParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
-	ChatID ChatID `json:"chat_id"`
-}
-
-// RemoveChatVerification - Removes verification from a chat that is currently verified on behalf of the
-// organization (https://telegram.org/verify#third-party-verification) represented by the bot. Returns True on
-// success.
-func (b *Bot) RemoveChatVerification(params *RemoveChatVerificationParams) error {
-	err := b.performRequest("removeChatVerification", params)
-	if err != nil {
-		return fmt.Errorf("telego: removeChatVerification(): %w", err)
-	}
-
 	return nil
 }
 
@@ -4249,7 +6387,7 @@ type AnswerInlineQueryParams struct {
 	// InlineQueryID - Unique identifier for the answered query
 	InlineQueryID string `json:"inline_query_id"`
 
-	// Results - A JSON-serialized array of results for the inline query
+	// Results - A JSON-serialized Array of results for the inline query
 	Results []InlineQueryResult `json:"results"`
 
 	// CacheTime - Optional. The maximum amount of time in seconds that the result of the inline query may be
@@ -4271,80 +6409,27 @@ type AnswerInlineQueryParams struct {
 
 // AnswerInlineQuery - Use this method to send answers to an inline query. On success, True is returned.
 // No more than 50 results per query are allowed.
-func (b *Bot) AnswerInlineQuery(params *AnswerInlineQueryParams) error {
-	err := b.performRequest("answerInlineQuery", params)
+func (b *Bot) AnswerInlineQuery(ctx context.Context, params *AnswerInlineQueryParams) error {
+	err := b.performRequest(ctx, "answerInlineQuery", params)
 	if err != nil {
-		return fmt.Errorf("telego: answerInlineQuery(): %w", err)
+		return fmt.Errorf("telego: answerInlineQuery: %w", err)
 	}
-
 	return nil
-}
-
-// AnswerWebAppQueryParams - Represents parameters of answerWebAppQuery method.
-type AnswerWebAppQueryParams struct {
-	// WebAppQueryID - Unique identifier for the query to be answered
-	WebAppQueryID string `json:"web_app_query_id"`
-
-	// Result - A JSON-serialized object describing the message to be sent
-	Result InlineQueryResult `json:"result"`
-}
-
-// AnswerWebAppQuery - Use this method to set the result of an interaction with a Web App
-// (https://core.telegram.org/bots/webapps) and send a corresponding message on behalf of the user to the chat
-// from which the query originated. On success, a SentWebAppMessage
-// (https://core.telegram.org/bots/api#sentwebappmessage) object is returned.
-func (b *Bot) AnswerWebAppQuery(params *AnswerWebAppQueryParams) (*SentWebAppMessage, error) {
-	var sentWebAppMessage *SentWebAppMessage
-	err := b.performRequest("answerWebAppQuery", params, &sentWebAppMessage)
-	if err != nil {
-		return nil, fmt.Errorf("telego: answerWebAppQuery(): %w", err)
-	}
-
-	return sentWebAppMessage, nil
-}
-
-// SavePreparedInlineMessageParams - Represents parameters of savePreparedInlineMessage method.
-type SavePreparedInlineMessageParams struct {
-	// UserID - Unique identifier of the target user that can use the prepared message
-	UserID int64 `json:"user_id"`
-
-	// Result - A JSON-serialized object describing the message to be sent
-	Result InlineQueryResult `json:"result"`
-
-	// AllowUserChats - Optional. Pass True if the message can be sent to private chats with users
-	AllowUserChats bool `json:"allow_user_chats,omitempty"`
-
-	// AllowBotChats - Optional. Pass True if the message can be sent to private chats with bots
-	AllowBotChats bool `json:"allow_bot_chats,omitempty"`
-
-	// AllowGroupChats - Optional. Pass True if the message can be sent to group and supergroup chats
-	AllowGroupChats bool `json:"allow_group_chats,omitempty"`
-
-	// AllowChannelChats - Optional. Pass True if the message can be sent to channel chats
-	AllowChannelChats bool `json:"allow_channel_chats,omitempty"`
-}
-
-// SavePreparedInlineMessage - Stores a message that can be sent by a user of a Mini App. Returns a
-// PreparedInlineMessage (https://core.telegram.org/bots/api#preparedinlinemessage) object.
-func (b *Bot) SavePreparedInlineMessage(params *SavePreparedInlineMessageParams) (*PreparedInlineMessage, error) {
-	var preparedInlineMessage *PreparedInlineMessage
-	err := b.performRequest("savePreparedInlineMessage", params, &preparedInlineMessage)
-	if err != nil {
-		return nil, fmt.Errorf("telego: savePreparedInlineMessage(): %w", err)
-	}
-
-	return preparedInlineMessage, nil
 }
 
 // SendInvoiceParams - Represents parameters of sendInvoice method.
 type SendInvoiceParams struct {
-	// ChatID - Unique identifier for the target chat or username of the target channel (in the format
-	// @channel_username)
+	// ChatID - Unique identifier for the target chat or username of the target bot, supergroup, or channel in
+	// the format @username
 	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
+
+	// DirectMessagesTopicID - Optional. Identifier of the direct messages topic to which the message will be
+	// sent; required if the message is sent to a direct messages chat
+	DirectMessagesTopicID int64 `json:"direct_messages_topic_id,omitempty"`
 
 	// Title - Product name, 1-32 characters
 	Title string `json:"title"`
@@ -4377,7 +6462,7 @@ type SendInvoiceParams struct {
 	// Not supported for payments in Telegram Stars (https://t.me/BotNews/90).
 	MaxTipAmount int `json:"max_tip_amount,omitempty"`
 
-	// SuggestedTipAmounts - Optional. A JSON-serialized array of suggested amounts of tips in the smallest
+	// SuggestedTipAmounts - Optional. A JSON-serialized Array of suggested amounts of tips in the smallest
 	// units of the currency (integer, not float/double). At most 4 suggested tip amounts can be specified. The
 	// suggested tip amounts must be positive, passed in a strictly increased order and must not exceed
 	// max_tip_amount.
@@ -4386,7 +6471,7 @@ type SendInvoiceParams struct {
 	// StartParameter - Optional. Unique deep-linking parameter. If left empty, forwarded copies of the sent
 	// message will have a Pay button, allowing multiple users to pay directly from the forwarded message, using the
 	// same invoice. If non-empty, forwarded copies of the sent message will have a URL button with a deep link to
-	// the bot (instead of a Pay button), with the value used as the start parameter
+	// the bot (instead of a Pay button), with the value used as the start parameter.
 	StartParameter string `json:"start_parameter,omitempty"`
 
 	// ProviderData - Optional. JSON-serialized data about the invoice, which will be shared with the payment
@@ -4443,12 +6528,17 @@ type SendInvoiceParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
 	// private chats only
 	MessageEffectID string `json:"message_effect_id,omitempty"`
+
+	// SuggestedPostParameters - Optional. A JSON-serialized object containing the parameters of the suggested
+	// post to send; for direct messages chats only. If the message is sent as a reply to another suggested post,
+	// then that suggested post is automatically declined.
+	SuggestedPostParameters *SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// ReplyParameters - Optional. Description of the message to reply to
 	ReplyParameters *ReplyParameters `json:"reply_parameters,omitempty"`
@@ -4461,13 +6551,12 @@ type SendInvoiceParams struct {
 
 // SendInvoice - Use this method to send invoices. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendInvoice(params *SendInvoiceParams) (*Message, error) {
+func (b *Bot) SendInvoice(ctx context.Context, params *SendInvoiceParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendInvoice", params, &message)
+	err := b.performRequest(ctx, "sendInvoice", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendInvoice(): %w", err)
+		return nil, fmt.Errorf("telego: sendInvoice: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -4505,7 +6594,7 @@ type CreateInvoiceLinkParams struct {
 	// payment. The currency must be set to “XTR” (Telegram Stars) if the parameter is used. Currently, it must
 	// always be 2592000 (30 days) if specified. Any number of subscriptions can be active for a given bot at the
 	// same time, including multiple concurrent subscriptions from the same user. Subscription price must no exceed
-	// 2500 Telegram Stars.
+	// 10000 Telegram Stars.
 	SubscriptionPeriod int64 `json:"subscription_period,omitempty"`
 
 	// MaxTipAmount - Optional. The maximum accepted amount for tips in the smallest units of the currency
@@ -4515,7 +6604,7 @@ type CreateInvoiceLinkParams struct {
 	// Not supported for payments in Telegram Stars (https://t.me/BotNews/90).
 	MaxTipAmount int `json:"max_tip_amount,omitempty"`
 
-	// SuggestedTipAmounts - Optional. A JSON-serialized array of suggested amounts of tips in the smallest
+	// SuggestedTipAmounts - Optional. A JSON-serialized Array of suggested amounts of tips in the smallest
 	// units of the currency (integer, not float/double). At most 4 suggested tip amounts can be specified. The
 	// suggested tip amounts must be positive, passed in a strictly increased order and must not exceed
 	// max_tip_amount.
@@ -4569,13 +6658,12 @@ type CreateInvoiceLinkParams struct {
 
 // CreateInvoiceLink - Use this method to create a link for an invoice. Returns the created invoice link as
 // String on success.
-func (b *Bot) CreateInvoiceLink(params *CreateInvoiceLinkParams) (*string, error) {
+func (b *Bot) CreateInvoiceLink(ctx context.Context, params *CreateInvoiceLinkParams) (*string, error) {
 	var invoiceLink *string
-	err := b.performRequest("createInvoiceLink", params, &invoiceLink)
+	err := b.performRequest(ctx, "createInvoiceLink", params, &invoiceLink)
 	if err != nil {
-		return nil, fmt.Errorf("telego: createInvoiceLink(): %w", err)
+		return nil, fmt.Errorf("telego: createInvoiceLink: %w", err)
 	}
-
 	return invoiceLink, nil
 }
 
@@ -4588,7 +6676,7 @@ type AnswerShippingQueryParams struct {
 	// example, if delivery to the specified address is not possible)
 	Ok bool `json:"ok"`
 
-	// ShippingOptions - Optional. Required if ok is True. A JSON-serialized array of available shipping
+	// ShippingOptions - Optional. Required if ok is True. A JSON-serialized Array of available shipping
 	// options.
 	ShippingOptions []ShippingOption `json:"shipping_options,omitempty"`
 
@@ -4601,12 +6689,11 @@ type AnswerShippingQueryParams struct {
 // AnswerShippingQuery - If you sent an invoice requesting a shipping address and the parameter is_flexible
 // was specified, the Bot API will send an Update (https://core.telegram.org/bots/api#update) with a
 // shipping_query field to the bot. Use this method to reply to shipping queries. On success, True is returned.
-func (b *Bot) AnswerShippingQuery(params *AnswerShippingQueryParams) error {
-	err := b.performRequest("answerShippingQuery", params)
+func (b *Bot) AnswerShippingQuery(ctx context.Context, params *AnswerShippingQueryParams) error {
+	err := b.performRequest(ctx, "answerShippingQuery", params)
 	if err != nil {
-		return fmt.Errorf("telego: answerShippingQuery(): %w", err)
+		return fmt.Errorf("telego: answerShippingQuery: %w", err)
 	}
-
 	return nil
 }
 
@@ -4630,13 +6717,23 @@ type AnswerPreCheckoutQueryParams struct {
 // the final confirmation in the form of an Update (https://core.telegram.org/bots/api#update) with the field
 // pre_checkout_query. Use this method to respond to such pre-checkout queries. On success, True is returned.
 // Note: The Bot API must receive an answer within 10 seconds after the pre-checkout query was sent.
-func (b *Bot) AnswerPreCheckoutQuery(params *AnswerPreCheckoutQueryParams) error {
-	err := b.performRequest("answerPreCheckoutQuery", params)
+func (b *Bot) AnswerPreCheckoutQuery(ctx context.Context, params *AnswerPreCheckoutQueryParams) error {
+	err := b.performRequest(ctx, "answerPreCheckoutQuery", params)
 	if err != nil {
-		return fmt.Errorf("telego: answerPreCheckoutQuery(): %w", err)
+		return fmt.Errorf("telego: answerPreCheckoutQuery: %w", err)
 	}
-
 	return nil
+}
+
+// GetMyStarBalance - A method to get the current Telegram Stars balance of the bot. Requires no parameters.
+// On success, returns a StarAmount (https://core.telegram.org/bots/api#staramount) object.
+func (b *Bot) GetMyStarBalance(ctx context.Context) (*StarAmount, error) {
+	var starAmount *StarAmount
+	err := b.performRequest(ctx, "getMyStarBalance", nil, &starAmount)
+	if err != nil {
+		return nil, fmt.Errorf("telego: getMyStarBalance: %w", err)
+	}
+	return starAmount, nil
 }
 
 // GetStarTransactionsParams - Represents parameters of getStarTransactions method.
@@ -4651,13 +6748,12 @@ type GetStarTransactionsParams struct {
 
 // GetStarTransactions - Returns the bot's Telegram Star transactions in chronological order. On success,
 // returns a StarTransactions (https://core.telegram.org/bots/api#startransactions) object.
-func (b *Bot) GetStarTransactions(params *GetStarTransactionsParams) (*StarTransactions, error) {
+func (b *Bot) GetStarTransactions(ctx context.Context, params *GetStarTransactionsParams) (*StarTransactions, error) {
 	var starTransactions *StarTransactions
-	err := b.performRequest("getStarTransactions", params, &starTransactions)
+	err := b.performRequest(ctx, "getStarTransactions", params, &starTransactions)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getStarTransactions(): %w", err)
+		return nil, fmt.Errorf("telego: getStarTransactions: %w", err)
 	}
-
 	return starTransactions, nil
 }
 
@@ -4672,12 +6768,11 @@ type RefundStarPaymentParams struct {
 
 // RefundStarPayment - Refunds a successful payment in Telegram Stars (https://t.me/BotNews/90). Returns True
 // on success.
-func (b *Bot) RefundStarPayment(params *RefundStarPaymentParams) error {
-	err := b.performRequest("refundStarPayment", params)
+func (b *Bot) RefundStarPayment(ctx context.Context, params *RefundStarPaymentParams) error {
+	err := b.performRequest(ctx, "refundStarPayment", params)
 	if err != nil {
-		return fmt.Errorf("telego: refundStarPayment(): %w", err)
+		return fmt.Errorf("telego: refundStarPayment: %w", err)
 	}
-
 	return nil
 }
 
@@ -4697,12 +6792,11 @@ type EditUserStarSubscriptionParams struct {
 
 // EditUserStarSubscription - Allows the bot to cancel or re-enable extension of a subscription paid in
 // Telegram Stars. Returns True on success.
-func (b *Bot) EditUserStarSubscription(params *EditUserStarSubscriptionParams) error {
-	err := b.performRequest("editUserStarSubscription", params)
+func (b *Bot) EditUserStarSubscription(ctx context.Context, params *EditUserStarSubscriptionParams) error {
+	err := b.performRequest(ctx, "editUserStarSubscription", params)
 	if err != nil {
-		return fmt.Errorf("telego: editUserStarSubscription(): %w", err)
+		return fmt.Errorf("telego: editUserStarSubscription: %w", err)
 	}
-
 	return nil
 }
 
@@ -4711,7 +6805,7 @@ type SetPassportDataErrorsParams struct {
 	// UserID - User identifier
 	UserID int64 `json:"user_id"`
 
-	// Errors - A JSON-serialized array describing the errors
+	// Errors - A JSON-serialized Array describing the errors
 	Errors []PassportElementError `json:"errors"`
 }
 
@@ -4722,12 +6816,11 @@ type SetPassportDataErrorsParams struct {
 // reason. For example, if a birthday date seems invalid, a submitted document is blurry, a scan shows evidence
 // of tampering, etc. Supply some details in the error message to make sure the user knows how to correct the
 // issues.
-func (b *Bot) SetPassportDataErrors(params *SetPassportDataErrorsParams) error {
-	err := b.performRequest("setPassportDataErrors", params)
+func (b *Bot) SetPassportDataErrors(ctx context.Context, params *SetPassportDataErrorsParams) error {
+	err := b.performRequest(ctx, "setPassportDataErrors", params)
 	if err != nil {
-		return fmt.Errorf("telego: setPassportDataErrors(): %w", err)
+		return fmt.Errorf("telego: setPassportDataErrors: %w", err)
 	}
-
 	return nil
 }
 
@@ -4737,12 +6830,12 @@ type SendGameParams struct {
 	// message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
 
-	// ChatID - Unique identifier for the target chat
-	// Note: Should be int64 not ChatID according to documentation (https://core.telegram.org/bots/api#sendgame)
-	ChatID int64 `json:"chat_id"`
+	// ChatID - Unique identifier for the target chat or username of the target bot in the format @username.
+	// Games can't be sent to channel direct messages chats and channel chats.
+	ChatID ChatID `json:"chat_id"`
 
-	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of the forum; for
-	// forum supergroups only
+	// MessageThreadID - Optional. Unique identifier for the target message thread (topic) of a forum; for forum
+	// supergroups and private chats of bots with forum topic mode enabled only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
 	// GameShortName - Short name of the game, serves as the unique identifier for the game. Set up your games
@@ -4758,7 +6851,7 @@ type SendGameParams struct {
 
 	// AllowPaidBroadcast - Optional. Pass True to allow up to 1000 messages per second, ignoring broadcasting
 	// limits (https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee
-	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+	// of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance.
 	AllowPaidBroadcast bool `json:"allow_paid_broadcast,omitempty"`
 
 	// MessageEffectID - Optional. Unique identifier of the message effect to be added to the message; for
@@ -4776,13 +6869,12 @@ type SendGameParams struct {
 
 // SendGame - Use this method to send a game. On success, the sent Message
 // (https://core.telegram.org/bots/api#message) is returned.
-func (b *Bot) SendGame(params *SendGameParams) (*Message, error) {
+func (b *Bot) SendGame(ctx context.Context, params *SendGameParams) (*Message, error) {
 	var message *Message
-	err := b.performRequest("sendGame", params, &message)
+	err := b.performRequest(ctx, "sendGame", params, &message)
 	if err != nil {
-		return nil, fmt.Errorf("telego: sendGame(): %w", err)
+		return nil, fmt.Errorf("telego: sendGame: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -4795,21 +6887,21 @@ type SetGameScoreParams struct {
 	Score int `json:"score"`
 
 	// Force - Optional. Pass True if the high score is allowed to decrease. This can be useful when fixing
-	// mistakes or banning cheaters
+	// mistakes or banning cheaters.
 	Force bool `json:"force,omitempty"`
 
 	// DisableEditMessage - Optional. Pass True if the game message should not be automatically edited to
 	// include the current scoreboard
 	DisableEditMessage bool `json:"disable_edit_message,omitempty"`
 
-	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
+	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat.
 	ChatID int64 `json:"chat_id,omitempty"`
 
-	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the sent message
+	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the sent message.
 	MessageID int `json:"message_id,omitempty"`
 
 	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
-	// inline message
+	// inline message.
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 }
 
@@ -4817,14 +6909,13 @@ type SetGameScoreParams struct {
 // the message is not an inline message, the Message (https://core.telegram.org/bots/api#message) is returned,
 // otherwise True is returned. Returns an error, if the new score is not greater than the user's current score
 // in the chat and force is False.
-func (b *Bot) SetGameScore(params *SetGameScoreParams) (*Message, error) {
+func (b *Bot) SetGameScore(ctx context.Context, params *SetGameScoreParams) (*Message, error) {
 	var message *Message
 	var success *bool
-	err := b.performRequest("setGameScore", params, &message, &success)
+	err := b.performRequest(ctx, "setGameScore", params, &message, &success)
 	if err != nil {
-		return nil, fmt.Errorf("telego: setGameScore(): %w", err)
+		return nil, fmt.Errorf("telego: setGameScore: %w", err)
 	}
-
 	return message, nil
 }
 
@@ -4833,14 +6924,14 @@ type GetGameHighScoresParams struct {
 	// UserID - Target user ID
 	UserID int64 `json:"user_id"`
 
-	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat
+	// ChatID - Optional. Required if inline_message_id is not specified. Unique identifier for the target chat.
 	ChatID int64 `json:"chat_id,omitempty"`
 
-	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the sent message
+	// MessageID - Optional. Required if inline_message_id is not specified. Identifier of the sent message.
 	MessageID int `json:"message_id,omitempty"`
 
 	// InlineMessageID - Optional. Required if chat_id and message_id are not specified. Identifier of the
-	// inline message
+	// inline message.
 	InlineMessageID string `json:"inline_message_id,omitempty"`
 }
 
@@ -4850,12 +6941,11 @@ type GetGameHighScoresParams struct {
 // This method will currently return scores for the target user, plus two of their closest neighbors on each
 // side. Will also return the top three users if the user and their neighbors are not among them. Please note
 // that this behavior is subject to change.
-func (b *Bot) GetGameHighScores(params *GetGameHighScoresParams) ([]GameHighScore, error) {
+func (b *Bot) GetGameHighScores(ctx context.Context, params *GetGameHighScoresParams) ([]GameHighScore, error) {
 	var gameHighScores []GameHighScore
-	err := b.performRequest("getGameHighScores", params, &gameHighScores)
+	err := b.performRequest(ctx, "getGameHighScores", params, &gameHighScores)
 	if err != nil {
-		return nil, fmt.Errorf("telego: getGameHighScores(): %w", err)
+		return nil, fmt.Errorf("telego: getGameHighScores: %w", err)
 	}
-
 	return gameHighScores, nil
 }
