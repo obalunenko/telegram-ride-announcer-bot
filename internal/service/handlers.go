@@ -178,24 +178,7 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 	log.WithField(ctx, "UserState", sess.UserState.State.String()).Debug("Current Session UserState")
 
-	// 1. Ask for trip name.
-
-	// 2. Ask for date and time
-
-	// 3. Ask for description
-
-	// 4. Ask for a track link. If not provided, ask for track file
-
-	// 5. Ask for a photo (optional)
-
-	// 6. Ask for confirmation
-
-	// 7. Subscribe the creator to the trip (maybe implement it later)
-
-	// 8. Announce the trip.
-
-	// 9. Pin the trip announcement to the chat.
-
+	// Steps: name, date, time, description, confirmation; then the announcement is pinned.
 	switch sess.UserState.State {
 	case models.StateNewTrip:
 		return s.startTrip(ctx, sess)
@@ -556,13 +539,6 @@ func (s *Service) textHandler() th.Handler {
 			return nil
 		}
 
-		if update.Message != nil {
-			if strings.HasPrefix(update.Message.Text, "/") {
-				// TODO: Handle commands.
-				log.WithField(ctx, "command", update.Message.Text).Debug("Command detected")
-			}
-		}
-
 		st := sess.UserState.State
 
 		log.WithField(ctx, "UserState", st.String()).Debug("Current Session UserState")
@@ -576,8 +552,7 @@ func (s *Service) textHandler() th.Handler {
 			models.StateNewTripName,
 			models.StateNewTripTime,
 			models.StateNewTripDescription,
-			models.StateNewTripConfirm,
-			models.StateNewTripPublish:
+			models.StateNewTripConfirm:
 			return s.tripAnswerHandler()(c, update)
 		default:
 			return s.notFoundHandler(ctx)(c, update)

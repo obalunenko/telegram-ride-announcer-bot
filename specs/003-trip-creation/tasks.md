@@ -29,6 +29,8 @@ description: "Migrated task list for Trip Creation and Publication"
 
 **Bugfix**: 2026-11-15 — BUG-009 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-010 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -95,6 +97,9 @@ description: "Migrated task list for Trip Creation and Publication"
 - [x] T037 [US1] `tripText` and the limits; re-ask in `setTripName` and `setTripDescription` in `internal/service/handlers.go` (BUG-009)
 - [x] T038 [P] [US1] `TestCreatorName`, `TestTripText` in `internal/service/helper_internal_test.go`; `TestService_TripTextLimits` (BUG-009)
 
+- [x] T039 Remove `StateNewTripPublish` from `internal/models/models.go` and regenerate `internal/models/state_string.go` with `make codegen`; remove it from `textHandler` (BUG-010)
+- [x] T040 [P] Replace the planned-step comments in `createTrip` and remove the dead command branch in `textHandler` in `internal/service/handlers.go` (BUG-010)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -108,4 +113,4 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Announcement goes to the session's chat (001 Gap 1).~~ Fixed by 001 BUG-001; tested by BUG-007.
 - ~~Abandoned drafts stay in storage.~~ Fixed by 002 BUG-002 and BUG-003 (BUG-008).
 - ~~`@` without a username; no length limits.~~ Fixed by BUG-009.
-- Planned steps never built (track, photo, subscribing the creator); `StateNewTripTime` and `StateNewTripPublish` unused.
+- ~~Planned steps never built (track, photo, subscribing the creator); `StateNewTripTime` and `StateNewTripPublish` unused.~~ Fixed by BUG-004 and BUG-010; the planned steps are out of scope.

@@ -28,6 +28,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-009 The card names creators without a username; the name and description have length limits.
 
+**Bugfix**: 2026-11-15 — BUG-010 The unused state `StateNewTripPublish` is removed; planned extra steps are out of scope.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -203,8 +205,8 @@ reply, the state, and that `/mytrips` shows no trips
   length (BUG-009).
 - **Draft owned by another user** in the session: the description and publish
   steps fail with "is not the creator of the trip".
-- **Unexpected state** in `createTrip` (for example `StateNewTripPublish`):
-  logged; nothing happens.
+- **Unexpected state** in `createTrip` (~~for example `StateNewTripPublish`~~
+  any state that is not a trip step, BUG-010): logged; nothing happens.
 
 ## Requirements *(mandatory)*
 
@@ -293,6 +295,8 @@ reply, the state, and that `/mytrips` shows no trips
   published.
 - Users do not run two trip dialogs at once; there is one dialog state per
   user.
+- Out of scope, to be specified as new features: a track link or file, a
+  photo, and subscribing the creator to their trip (BUG-010).
 - Depends on the Telegram Bot API (`sendMessage`, `pinChatMessage`).
 
 ## Gaps
@@ -319,6 +323,8 @@ Found during migration; none of them is fixed by this spec.
    recorded by BUG-008.
 9. ~~Users without a username appear as `@`; names and descriptions have no
    length limits.~~ Fixed by BUG-009.
-10. Planned steps in the `createTrip` comments were never built: a track link
+10. ~~Planned steps in the `createTrip` comments were never built: a track link
     or file, a photo, and subscribing the creator. `StateNewTripTime` and
-    `StateNewTripPublish` are unused (constitution Known Deviation).
+    `StateNewTripPublish` are unused (constitution Known Deviation).~~ Fixed
+    by BUG-004 (`StateNewTripTime`) and BUG-010 (`StateNewTripPublish`
+    removed; the planned steps are out of scope).

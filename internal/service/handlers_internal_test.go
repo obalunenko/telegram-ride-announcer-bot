@@ -424,7 +424,7 @@ func TestService_CreateTrip(t *testing.T) {
 		},
 		{
 			name:    "unexpected state",
-			state:   models.StateNewTripPublish,
+			state:   models.StateStart,
 			text:    "yes",
 			tripBy:  testUserID,
 			wantErr: "",

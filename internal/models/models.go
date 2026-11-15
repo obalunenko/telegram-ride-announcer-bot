@@ -89,8 +89,6 @@ const (
 	StateNewTripDescription
 	// StateNewTripConfirm means that trip on progress and waiting for trip confirmation
 	StateNewTripConfirm
-	// StateNewTripPublish means that trip on progress and waiting for trip publish
-	StateNewTripPublish
 
 	stateSentinel // Sentinel value.
 )

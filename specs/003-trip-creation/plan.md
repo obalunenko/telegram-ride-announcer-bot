@@ -26,6 +26,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-009 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-010 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -79,10 +81,10 @@ outcomes (publish, cancel, failure).
 - [x] II. Trips sit behind `trips.Repository` with a `NewInMemory`
       implementation guarded by `sync.RWMutex`; the spec states that nothing
       survives a restart.
-- [ ] III. Each step sets a state that `createTrip` handles and saves the
-      session before the prompt (`replyInTrip`), but ~~`StateNewTripTime` and~~
-      `StateNewTripPublish` is routed without a branch (Known Deviation;
-      `StateNewTripTime` is handled since BUG-004).
+- [x] III. Each step sets a state that `createTrip` handles and saves the
+      session before the prompt (`replyInTrip`); ~~`StateNewTripPublish` is
+      routed without a branch (Known Deviation)~~ every routed state has a
+      branch (BUG-004, BUG-010).
 - [x] IV. `/newtrip` has its `Cmd*` constant, handler, and enabled menu
       entry; the `trip` template has a golden test.
 - [x] V. Every step is tested against `telegramtest`; ~~`internal/ops/trips.go`
