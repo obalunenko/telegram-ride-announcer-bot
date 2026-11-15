@@ -33,3 +33,10 @@ coverage/
 tests-report.json
 
 report.xml
+
+# Machine-local coding agent settings
+/.claude/settings.local.json
+
+# Python tooling caches
+__pycache__/
+*.pyc
