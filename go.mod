@@ -1,6 +1,6 @@
 module github.com/obalunenko/telegram-ride-announcer-bot
 
-go 1.24
+go 1.27
 
 require (
 	github.com/gofrs/uuid/v5 v5.3.2
