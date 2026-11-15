@@ -223,9 +223,6 @@ reply, the state, and that `/mytrips` shows no trips
   keyboard buttons and MUST accept ~~any text~~ `today`, `tomorrow`, or
   `DD.MM.YYYY` that is not in the past; the time step MUST accept `HH:MM`
   for a start in the future; anything else MUST be asked again (BUG-004).
-- **FR-015**: Trip dates and times MUST be read and shown in the time zone
-  from `RIDE_ANNOUNCER_TIMEZONE` (default `UTC`); the trip stores its start
-  as a point in time (BUG-004).
 - **FR-004**: After the description, the bot MUST show the trip card and ask
   to confirm with `yes` and `no` buttons.
 - **FR-005**: Each step MUST save the new dialog state before sending the
@@ -244,9 +241,6 @@ reply, the state, and that `/mytrips` shows no trips
 - **FR-009**: The trip card MUST show the title, description, date, and the
   creator as `@<username>`, or the creator's name when there is no username
   (BUG-009), rendered from the `trip` template.
-- **FR-016**: The name MUST have 1 to 100 characters and the description 1
-  to 1000 characters after trimming spaces; other answers MUST be asked
-  again without changing the state (BUG-009).
 - **FR-010**: Free text from a user in a trip state MUST be routed to the trip
   dialog; free text from a user in `StateStart` MUST get the "Command not
   found" reply.
@@ -263,6 +257,12 @@ reply, the state, and that `/mytrips` shows no trips
   draft, reply "Your unfinished trip is discarded.", and set the state to
   `StateStart`; outside of the dialog it MUST reply "There is nothing to
   cancel." (BUG-003).
+- **FR-015**: Trip dates and times MUST be read and shown in the time zone
+  from `RIDE_ANNOUNCER_TIMEZONE` (default `UTC`); the trip stores its start
+  as a point in time (BUG-004).
+- **FR-016**: The name MUST have 1 to 100 characters and the description 1
+  to 1000 characters after trimming spaces; other answers MUST be asked
+  again without changing the state (BUG-009).
 
 ### Key Entities *(include if feature involves data)*
 
