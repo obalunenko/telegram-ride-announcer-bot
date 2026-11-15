@@ -80,7 +80,7 @@ func main() {
 	opts := []telegram.BotOption{
 		telegram.WithCommands(commands),
 		telegram.WithDescription(botDescription),
-		telegram.WithUsername(botName),
+		telegram.WithName(botName),
 	}
 
 	bot, err := telegram.NewBot(ctx, token, opts...)

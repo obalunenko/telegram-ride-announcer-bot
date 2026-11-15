@@ -63,6 +63,7 @@ type Bot struct {
 
 	id          int64
 	username    string
+	name        string
 	description string
 	commands    Commands
 }
@@ -87,6 +88,11 @@ func (b *Bot) Username() string {
 	return b.username
 }
 
+// Name returns bot name shown in chats.
+func (b *Bot) Name() string {
+	return b.name
+}
+
 // Commands returns bot commands.
 func (b *Bot) Commands() Commands {
 	return b.commands
@@ -95,7 +101,7 @@ func (b *Bot) Commands() Commands {
 type botOptions struct {
 	commands      Commands
 	description   string
-	username      string
+	name          string
 	clientOptions []tgbotapi.BotOption
 }
 
@@ -116,10 +122,10 @@ func WithDescription(description string) BotOption {
 	}
 }
 
-// WithUsername sets bot username.
-func WithUsername(username string) BotOption {
+// WithName sets bot name shown in chats. The username of a bot can't be changed via the Bot API.
+func WithName(name string) BotOption {
 	return func(o *botOptions) {
-		o.username = username
+		o.name = name
 	}
 }
 
@@ -164,6 +170,7 @@ func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) 
 		id:          self.ID,
 		client:      client,
 		username:    self.Username,
+		name:        self.FirstName,
 		description: description.Description,
 		commands:    toCommands(registedCmds),
 	}
@@ -178,8 +185,8 @@ func (b *Bot) updateOnStart(ctx context.Context, params botOptions) {
 		b.maybeUpdateDescriptionBot(ctx, params.description)
 	}
 
-	if params.username != "" {
-		b.maybeUpdateBotName(ctx, params.username)
+	if params.name != "" {
+		b.maybeUpdateBotName(ctx, params.name)
 	}
 
 	if len(params.commands) > 0 {
@@ -188,7 +195,7 @@ func (b *Bot) updateOnStart(ctx context.Context, params botOptions) {
 }
 
 func (b *Bot) maybeUpdateBotName(ctx context.Context, botName string) {
-	isUpToDate := b.Username() != botName
+	isUpToDate := b.Name() == botName
 
 	if isUpToDate {
 		log.Info(ctx, "Bot name is up to date")
@@ -207,11 +214,13 @@ func (b *Bot) maybeUpdateBotName(ctx context.Context, botName string) {
 		return
 	}
 
+	b.name = botName
+
 	log.Info(ctx, "Bot name is up to date")
 }
 
 func (b *Bot) maybeUpdateDescriptionBot(ctx context.Context, botDescription string) {
-	isUpToDate := b.Description() != botDescription
+	isUpToDate := b.Description() == botDescription
 
 	if isUpToDate {
 		log.Info(ctx, "Bot description is up to date")
@@ -230,6 +239,8 @@ func (b *Bot) maybeUpdateDescriptionBot(ctx context.Context, botDescription stri
 		return
 	}
 
+	b.description = botDescription
+
 	log.Info(ctx, "Bot description is up to date")
 }
 
@@ -240,9 +251,10 @@ func (b *Bot) maybeUpdateCommands(ctx context.Context, botCommands Commands) {
 		registeredCommands[cmd.Command] = cmd.Description
 	}
 
-	var equal bool
-
 	enabled := botCommands.EnabledCommands()
+
+	// Equal when the bot has exactly the enabled commands with the same descriptions.
+	equal := len(enabled) == len(registeredCommands)
 
 	for _, cmd := range enabled {
 		desc, ok := registeredCommands[cmd.Command]
@@ -266,7 +278,11 @@ func (b *Bot) maybeUpdateCommands(ctx context.Context, botCommands Commands) {
 	})
 	if err != nil {
 		log.WithError(ctx, err).Error("failed to set bot commands")
+
+		return
 	}
+
+	b.commands = toCommands(enabled)
 
 	log.Info(ctx, "Bot commands set")
 }

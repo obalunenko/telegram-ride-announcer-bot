@@ -120,6 +120,7 @@ func TestNewBot(t *testing.T) {
 
 	assert.Equal(t, telegramtest.BotID, bot.ID())
 	assert.Equal(t, telegramtest.BotUsername, bot.Username())
+	assert.Equal(t, "Test Bot", bot.Name())
 	assert.Equal(t, "Ride announcer", bot.Description())
 	assert.Equal(t, Commands{NewCommand("help", "show help", true)}, bot.Commands())
 	assert.NotNil(t, bot.Client())
@@ -175,47 +176,187 @@ func TestNewBot_Error(t *testing.T) {
 	}
 }
 
-func TestNewBot_WithCommands(t *testing.T) {
+func TestNewBot_UpdateOnStart(t *testing.T) {
+	helpCmd := tgbotapi.BotCommand{Command: "help", Description: "show help"}
+	tripsCmd := tgbotapi.BotCommand{Command: "trips", Description: "show trips"}
+
+	// The bot has the name from getMe, and the description and commands set below.
+	const (
+		botName        = "Test Bot"
+		botDescription = "Ride announcer"
+	)
+
+	botCommands := Commands{NewCommand(helpCmd.Command, helpCmd.Description, true)}
+
 	tests := []struct {
-		name string
-		fail bool
+		name       string
+		registered []tgbotapi.BotCommand
+		opts       []BotOption
+		fail       string
+		// wantCall is the method the bot calls to update itself; empty when it is up to date.
+		wantCall        string
+		wantParams      map[string]any
+		wantName        string
+		wantDescription string
+		wantCommands    Commands
 	}{
 		{
-			name: "commands updated",
-			fail: false,
+			name:            "name is up to date",
+			opts:            []BotOption{WithName(botName)},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    botCommands,
 		},
 		{
-			name: "update fails",
-			fail: true,
+			name:            "name updated",
+			opts:            []BotOption{WithName("Ride Bot")},
+			wantCall:        "setMyName",
+			wantParams:      map[string]any{"name": "Ride Bot"},
+			wantName:        "Ride Bot",
+			wantDescription: botDescription,
+			wantCommands:    botCommands,
+		},
+		{
+			name:            "name update fails",
+			opts:            []BotOption{WithName("Ride Bot")},
+			fail:            "setMyName",
+			wantCall:        "setMyName",
+			wantParams:      map[string]any{"name": "Ride Bot"},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    botCommands,
+		},
+		{
+			name:            "description is up to date",
+			opts:            []BotOption{WithDescription(botDescription)},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    botCommands,
+		},
+		{
+			name:            "description updated",
+			opts:            []BotOption{WithDescription("Bike trips")},
+			wantCall:        "setMyDescription",
+			wantParams:      map[string]any{"description": "Bike trips"},
+			wantName:        botName,
+			wantDescription: "Bike trips",
+			wantCommands:    botCommands,
+		},
+		{
+			name:            "description update fails",
+			opts:            []BotOption{WithDescription("Bike trips")},
+			fail:            "setMyDescription",
+			wantCall:        "setMyDescription",
+			wantParams:      map[string]any{"description": "Bike trips"},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    botCommands,
+		},
+		{
+			name: "commands are up to date",
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, helpCmd.Description, true),
+				NewCommand(tripsCmd.Command, tripsCmd.Description, false),
+			})},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    botCommands,
+		},
+		{
+			name: "command added",
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, helpCmd.Description, true),
+				NewCommand(tripsCmd.Command, tripsCmd.Description, true),
+			})},
+			wantCall: "setMyCommands",
+			wantParams: map[string]any{"commands": []any{
+				map[string]any{"command": "help", "description": "show help"},
+				map[string]any{"command": "trips", "description": "show trips"},
+			}},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    toCommands([]tgbotapi.BotCommand{helpCmd, tripsCmd}),
+		},
+		{
+			name:       "command removed",
+			registered: []tgbotapi.BotCommand{helpCmd, tripsCmd},
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, helpCmd.Description, true),
+				NewCommand(tripsCmd.Command, tripsCmd.Description, false),
+			})},
+			wantCall: "setMyCommands",
+			wantParams: map[string]any{"commands": []any{
+				map[string]any{"command": "help", "description": "show help"},
+			}},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    botCommands,
+		},
+		{
+			name: "command description changed",
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, "list commands", true),
+			})},
+			wantCall: "setMyCommands",
+			wantParams: map[string]any{"commands": []any{
+				map[string]any{"command": "help", "description": "list commands"},
+			}},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    Commands{NewCommand(helpCmd.Command, "list commands", true)},
+		},
+		{
+			name: "commands update fails",
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, "list commands", true),
+			})},
+			fail:     "setMyCommands",
+			wantCall: "setMyCommands",
+			wantParams: map[string]any{"commands": []any{
+				map[string]any{"command": "help", "description": "list commands"},
+			}},
+			wantName:        botName,
+			wantDescription: botDescription,
+			wantCommands:    botCommands,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			api := telegramtest.NewServer(t)
-			api.SetResult("getMyCommands", []tgbotapi.BotCommand{{Command: "help", Description: "old help"}})
-
-			if tt.fail {
-				api.Fail("setMyCommands")
+			registered := tt.registered
+			if registered == nil {
+				registered = []tgbotapi.BotCommand{helpCmd}
 			}
 
-			_, err := NewBot(context.Background(), telegramtest.Token,
-				WithClientOptions(api.ClientOptions()...),
-				WithCommands(Commands{
-					NewCommand("help", "show help", true),
-					NewCommand("trips", "show trips", false),
-				}),
-			)
-			// Failing to update the commands does not fail the bot creation.
+			api := telegramtest.NewServer(t)
+			api.SetResult("getMyDescription", tgbotapi.BotDescription{Description: botDescription})
+			api.SetResult("getMyCommands", registered)
+
+			if tt.fail != "" {
+				api.Fail(tt.fail)
+			}
+
+			opts := append([]BotOption{WithClientOptions(api.ClientOptions()...)}, tt.opts...)
+
+			// Failing to update the bot does not fail the bot creation.
+			bot, err := NewBot(context.Background(), telegramtest.Token, opts...)
 			require.NoError(t, err)
 
 			for range 3 { // getMe, getMyDescription, getMyCommands.
 				api.NextRequest(t)
 			}
 
-			req := api.NextRequest(t)
-			assert.Equal(t, "setMyCommands", req.Method)
-			assert.Equal(t, []any{map[string]any{"command": "help", "description": "show help"}}, req.Params["commands"])
+			if tt.wantCall != "" {
+				req := api.NextRequest(t)
+				assert.Equal(t, tt.wantCall, req.Method)
+				assert.Equal(t, tt.wantParams, req.Params)
+			}
+
+			api.AssertNoRequest(t)
+
+			assert.Equal(t, tt.wantName, bot.Name())
+			assert.Equal(t, tt.wantDescription, bot.Description())
+			assert.Equal(t, tt.wantCommands, bot.Commands())
 		})
 	}
 }
