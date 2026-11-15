@@ -18,6 +18,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Summary
 
 `myTripsHandler` asks `ops.ListTripsByUser` for the requesting user's trips;
@@ -37,7 +39,11 @@ session's chat, or a hint to use `/newtrip` when the list is empty.
 **Storage**: Reads `internal/repository/trips` (map by trip ID, filtered by
 creator and `DeletedAt`).
 
-**Testing**: `/mytrips` with one published trip in `TestService_PublishTrip`,
+**Testing**: unit tests `TestUpcomingTrips`, `TestSortByStart`,
+`TestSplitMessages`; handler tests `TestMyTripsHandler_UpcomingOnly` and
+`TestMyTripsHandler_LongList`; service tests `TestService_MyTripsHidesDrafts`
+and `TestService_MyTripsOrder` (BUG-006);
+`/mytrips` with one published trip in `TestService_PublishTrip`,
 the empty list in `TestService_CancelTrip`, `my trips: list trips` and
 `my trips: render trip` in `TestHandlers_Failure`, and `TestHandlers_NoSession`.
 
@@ -61,11 +67,13 @@ the empty list in `TestService_CancelTrip`, `my trips: list trips` and
 - [x] III. The handler does not touch the dialog state.
 - [x] IV. `/mytrips` has its `Cmd*` constant, handler, and enabled menu
       entry; it reuses the `trip` template, which has a golden test.
-- [ ] V. The handler is tested against `telegramtest`, but
-      `ops.ListTripsByUser` and the repository method have no tests of their
-      own (Known Deviation).
+- [x] V. The handler is tested against `telegramtest`; ~~`ops.ListTripsByUser`
+      and the repository method have no tests of their own (Known
+      Deviation)~~ both have tests since 003 BUG-001, and the list behavior
+      is covered at every level (BUG-006).
 - [x] VI. No generated code involved.
-- [ ] `README.md` does not document `/mytrips` (Known Deviation).
+- [x] ~~`README.md` does not document `/mytrips` (Known Deviation).~~
+      `README.md` lists `/mytrips` (002 BUG-001, BUG-005).
 - [x] Known deviations are not extended.
 
 ## Project Structure

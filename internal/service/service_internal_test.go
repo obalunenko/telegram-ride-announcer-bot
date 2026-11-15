@@ -525,6 +525,37 @@ func TestService_MyTripsHidesDrafts(t *testing.T) {
 	assert.Equal(t, msgFarewell, nextMessage(t, api))
 }
 
+func TestService_MyTripsOrder(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	// The later trip is published first.
+	for _, trip := range [][]string{
+		{"Later ride", "tomorrow", "10:00"},
+		{"Sooner ride", "today", "09:30"},
+	} {
+		for _, text := range []string{"/newtrip", trip[0], trip[1], trip[2], "Easy pace"} {
+			replyTo(t, api, text)
+		}
+
+		assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), msgPublished))
+		assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+	}
+
+	myTrips := replyTo(t, api, "/mytrips")
+	sooner, later := strings.Index(myTrips, "Title: Sooner ride"), strings.Index(myTrips, "Title: Later ride")
+	require.NotEqual(t, -1, sooner, myTrips)
+	require.NotEqual(t, -1, later, myTrips)
+	assert.Less(t, sooner, later, "the nearest trip comes first")
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
 func TestService_NewTripRestarts(t *testing.T) {
 	ctx := context.Background()
 

@@ -20,6 +20,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-005 Only upcoming trips are listed.
 
+**Bugfix**: 2026-11-15 — BUG-006 Several trips, drafts, past trips, long lists, and the order are tested.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (handler), `internal/ops/`
@@ -139,6 +141,8 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 - **SC-002**: After canceling their only trip, the user sees the "no trips
   yet" hint.
 - **SC-003**: `/mytrips` never shows another user's trips.
+- **SC-004**: With several trips, `/mytrips` lists every upcoming published
+  trip once, nearest first, and leaves out drafts and past trips (BUG-006).
 
 ## Assumptions
 
@@ -161,4 +165,5 @@ Found during migration; none of them is fixed by this spec.
 4. ~~Listing or rendering failures give the user no reply.~~ Fixed by BUG-004.
 5. ~~Past trips are never filtered out; dates are free text.~~ Fixed by
    BUG-005 (dates are real since 003 BUG-004).
-6. No tests for several trips, drafts in the list, or ordering.
+6. ~~No tests for several trips, drafts in the list, or ordering.~~ Fixed by
+   BUG-006.

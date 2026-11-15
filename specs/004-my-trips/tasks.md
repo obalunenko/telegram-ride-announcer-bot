@@ -21,6 +21,8 @@ description: "Migrated task list for My Trips"
 
 **Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -60,6 +62,8 @@ description: "Migrated task list for My Trips"
 - [x] T017 [P] [US1] "show your upcoming trips" in `cmd/rideannouncer/main.go`; welcome template and golden file; `README.md` (BUG-005)
 - [x] T018 [P] [US1] `TestUpcomingTrips` and `TestMyTripsHandler_UpcomingOnly` in `internal/service/mytrips_internal_test.go`; test trips start tomorrow (BUG-005)
 
+- [x] T019 [P] [US1] `TestService_MyTripsOrder` in `internal/service/service_internal_test.go`; record the list tests from T009, T011, T013, T018 (BUG-006)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -69,4 +73,4 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Long lists can exceed the Telegram message limit.~~ Fixed by BUG-003.
 - ~~List and render failures give the user no reply.~~ Fixed by BUG-004.
 - ~~Past trips are never filtered out.~~ Fixed by BUG-005.
-- No tests for several trips, drafts, or ordering.
+- ~~No tests for several trips, drafts, or ordering.~~ Fixed by BUG-006.
