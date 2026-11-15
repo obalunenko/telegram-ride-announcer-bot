@@ -66,8 +66,8 @@ greeting (`TestService_PublishTrip`); render the template against
 2. **Given** a user in any dialog state, **When** they send `/start`,
    **Then** their state is reset to `StateStart`.
 3. **Given** any user, **When** they read the welcome, **Then** it lists only
-   what the bot does today: creating and announcing a trip, and showing the
-   trips they created (BUG-001).
+   what the bot does today: creating and announcing a trip, and showing
+   their upcoming trips (BUG-001; wording from 004 BUG-005).
 
 ---
 

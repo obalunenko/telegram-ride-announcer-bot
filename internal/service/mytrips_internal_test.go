@@ -13,13 +13,15 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
 )
 
-func TestPublishedTrips(t *testing.T) {
-	published := &models.Trip{Name: "Morning ride", Completed: true}
-	draft := &models.Trip{Name: "Evening ride"}
+func TestUpcomingTrips(t *testing.T) {
+	upcoming := &models.Trip{Name: "upcoming", Date: testNow.Add(time.Hour), Completed: true}
+	past := &models.Trip{Name: "past", Date: testNow.Add(-time.Hour), Completed: true}
+	startsNow := &models.Trip{Name: "starts now", Date: testNow, Completed: true}
+	draft := &models.Trip{Name: "draft", Date: testNow.Add(time.Hour)}
 
-	assert.Equal(t, []*models.Trip{published}, publishedTrips([]*models.Trip{draft, published}))
-	assert.Empty(t, publishedTrips([]*models.Trip{draft}))
-	assert.Empty(t, publishedTrips(nil))
+	assert.Equal(t, []*models.Trip{upcoming}, upcomingTrips([]*models.Trip{draft, past, startsNow, upcoming}, testNow))
+	assert.Empty(t, upcomingTrips([]*models.Trip{draft, past}, testNow))
+	assert.Empty(t, upcomingTrips(nil, testNow))
 }
 
 func TestSortByStart(t *testing.T) {
@@ -110,4 +112,49 @@ func TestMyTripsHandler_LongList(t *testing.T) {
 
 	assert.Equal(t, 5, cards, "every trip is listed once")
 	api.AssertNoRequest(t)
+}
+
+func TestMyTripsHandler_UpcomingOnly(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+	sess := newSession(t, repos, testUserID, models.StateStart)
+
+	newTripAt := func(name string, start time.Time, published bool) {
+		t.Helper()
+
+		trip, err := ops.CreateTrip(ctx, repos, ops.CreateTripParams{Name: name, Date: start, CreatedBy: testUserID})
+		require.NoError(t, err)
+
+		if published {
+			_, err = ops.UpdateTrip(ctx, repos, trip.ID, ops.UpdateTripParams{Completed: &published})
+			require.NoError(t, err)
+		}
+	}
+
+	newTripAt("Later ride", testNow.Add(48*time.Hour), true)
+	newTripAt("Past ride", testNow.Add(-time.Hour), true)
+	newTripAt("Draft ride", testNow.Add(time.Hour), false)
+	newTripAt("Next ride", testNow.Add(2*time.Hour), true)
+
+	require.NoError(t, svc.myTripsHandler()(nil, sessionUpdate(sess, "/mytrips")))
+
+	msg := nextMessage(t, api)
+	assert.True(t, strings.HasPrefix(msg, myTripsHeader), msg)
+	assert.NotContains(t, msg, "Past ride")
+	assert.NotContains(t, msg, "Draft ride")
+
+	next, later := strings.Index(msg, "Title: Next ride"), strings.Index(msg, "Title: Later ride")
+	require.NotEqual(t, -1, next)
+	require.NotEqual(t, -1, later)
+	assert.Less(t, next, later, "the nearest trip comes first")
+
+	api.AssertNoRequest(t)
+
+	// After every trip has started, nothing is listed.
+	svc.now = func() time.Time { return testNow.Add(72 * time.Hour) }
+
+	require.NoError(t, svc.myTripsHandler()(nil, sessionUpdate(sess, "/mytrips")))
+	assert.Equal(t, msgNoUpcomingTrips, nextMessage(t, api))
 }

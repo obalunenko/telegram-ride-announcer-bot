@@ -2,23 +2,32 @@ package service
 
 import (
 	"slices"
+	"time"
 	"unicode/utf16"
 
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
 )
 
-// publishedTrips keeps the published trips; drafts of unfinished dialogs are not listed.
-func publishedTrips(list []*models.Trip) []*models.Trip {
-	published := make([]*models.Trip, 0, len(list))
+// upcomingTrips keeps the published trips that start after now. Drafts of unfinished
+// dialogs and past trips are not listed.
+func upcomingTrips(list []*models.Trip, now time.Time) []*models.Trip {
+	upcoming := make([]*models.Trip, 0, len(list))
 
 	for _, trip := range list {
-		if trip.Completed {
-			published = append(published, trip)
+		if trip.Completed && trip.Date.After(now) {
+			upcoming = append(upcoming, trip)
 		}
 	}
 
-	return published
+	return upcoming
 }
+
+const (
+	// msgNoUpcomingTrips is the reply to /mytrips without upcoming trips.
+	msgNoUpcomingTrips = "You have no upcoming trips. Use /" + CmdNewTrip + " command to create a new trip."
+	// myTripsHeader starts the /mytrips list.
+	myTripsHeader = "Your upcoming trips:\n\n"
+)
 
 // sortByStart orders the trips by start, the nearest first.
 // Trips with the same start keep the order in which they were created.

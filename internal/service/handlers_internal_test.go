@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"testing"
+	"time"
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -45,7 +46,7 @@ func newTrip(t *testing.T, repos *testRepos, createdBy int64) *models.Trip {
 
 	trip, err := ops.CreateTrip(context.Background(), repos, ops.CreateTripParams{
 		Name:        "Morning ride",
-		Date:        testNow,
+		Date:        testNow.Add(24 * time.Hour),
 		Description: "Easy pace",
 		CreatedBy:   createdBy,
 	})

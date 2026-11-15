@@ -376,7 +376,7 @@ func TestService_PublishTrip(t *testing.T) {
 	assert.True(t, published[0].Completed, "a published trip is completed")
 
 	myTrips := replyTo(t, api, "/mytrips")
-	assert.True(t, strings.HasPrefix(myTrips, "Your trips:"), myTrips)
+	assert.True(t, strings.HasPrefix(myTrips, myTripsHeader), myTrips)
 	assert.Contains(t, myTrips, "Title: Morning ride")
 
 	svc.Shutdown(ctx)
@@ -592,7 +592,7 @@ func TestService_CancelCommand(t *testing.T) {
 			assert.Equal(t, tt.want, replyTo(t, api, "/cancel"))
 			assertState(t, repos, tt.wantState)
 
-			assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
+			assert.Equal(t, msgNoUpcomingTrips, replyTo(t, api, "/mytrips"))
 
 			svc.Shutdown(ctx)
 			assert.Equal(t, msgFarewell, nextMessage(t, api))
@@ -761,7 +761,7 @@ func TestService_CancelTrip(t *testing.T) {
 	assert.Equal(t, msgNotFound, replyTo(t, api, "Another ride"))
 	assertState(t, repos, models.StateStart)
 
-	assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
+	assert.Equal(t, msgNoUpcomingTrips, replyTo(t, api, "/mytrips"))
 
 	svc.Shutdown(ctx)
 	assert.Equal(t, msgFarewell, nextMessage(t, api))
@@ -826,7 +826,7 @@ func TestService_InterruptTrip(t *testing.T) {
 			assert.Contains(t, nextMessage(t, api), tt.want)
 			assertState(t, repos, models.StateStart)
 
-			assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
+			assert.Equal(t, msgNoUpcomingTrips, replyTo(t, api, "/mytrips"))
 
 			svc.Shutdown(ctx)
 			assert.Equal(t, msgFarewell, nextMessage(t, api))

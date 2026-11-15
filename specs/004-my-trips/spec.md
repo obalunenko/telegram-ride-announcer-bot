@@ -18,17 +18,21 @@
 
 **Bugfix**: 2026-11-15 — BUG-004 Failures reply with the error message.
 
+**Bugfix**: 2026-11-15 — BUG-005 Only upcoming trips are listed.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (handler), `internal/ops/`
   (`ListTripsByUser`), `internal/repository/trips/` (`ListTripsByUser`),
   `cmd/rideannouncer/` (menu entry).
-- **Bot commands and menu**: `/mytrips` ("show trips you've created",
-  enabled).
+- **Bot commands and menu**: `/mytrips` (~~"show trips you've created"~~
+  "show your upcoming trips", BUG-005, enabled).
 - **Dialog states**: N/A. `/mytrips` does not change the dialog state.
-- **Messages**: `Your trips:` followed by one trip card per trip (the `trip`
-  template from 003), in several messages when the list is long (BUG-003); "You have no trips yet. Use /newtrip command to create
-  a new trip."
+- **Messages**: ~~`Your trips:`~~ `Your upcoming trips:` (BUG-005) followed
+  by one trip card per trip (the `trip` template from 003), in several
+  messages when the list is long (BUG-003); ~~"You have no trips yet. Use
+  /newtrip command to create a new trip."~~ "You have no upcoming trips. Use
+  /newtrip command to create a new trip." (BUG-005)
 - **Storage**: Reads trips; nothing is written.
 - **Chats**: The reply goes to the session's chat (see 001).
 - **Configuration**: N/A.
@@ -50,13 +54,16 @@ card.
 
 1. **Given** a user who created a trip "Morning ride", **When** they send
    `/mytrips`, **Then** the bot replies with a message that starts with
-   `Your trips:` and contains `Title: Morning ride`.
+   ~~`Your trips:`~~ `Your upcoming trips:` (BUG-005) and contains
+   `Title: Morning ride`.
 2. **Given** a user with several trips, **When** they send `/mytrips`,
    **Then** each trip appears as a card, separated by a blank line, ordered
    by start with the nearest first (BUG-002).
 3. **Given** a user in the middle of `/newtrip`, **When** they send
    `/mytrips`, **Then** the dialog state is unchanged and the next answer
    continues the dialog; the draft of that dialog is not listed (BUG-001).
+4. **Given** a published trip whose start has passed, **When** the user
+   sends `/mytrips`, **Then** that trip is not listed (BUG-005).
 
 ---
 
@@ -71,9 +78,10 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 
 **Acceptance Scenarios**:
 
-1. **Given** a user without trips, or whose only trip was canceled, **When**
-   they send `/mytrips`, **Then** the bot replies "You have no trips yet. Use
-   /newtrip command to create a new trip."
+1. **Given** a user without upcoming trips (BUG-005), or whose only trip was
+   canceled, **When** they send `/mytrips`, **Then** the bot replies "You
+   have no upcoming trips. Use /newtrip command to create a new trip."
+   (BUG-005)
 
 ---
 
@@ -91,7 +99,8 @@ A user who has no trips sends `/mytrips` and is told how to create one.
   (BUG-003).
 - **Listing or rendering fails**: logged; ~~the user gets no reply. (Gap 4.)~~
   the user gets "Sorry, something went wrong. Please try again." (BUG-004).
-- **Past trips**: never removed from the list. (Gap 5.)
+- **Past trips**: ~~never removed from the list. (Gap 5.)~~ not listed once
+  they have started (BUG-005).
 - **Trips of other users**: never listed.
 
 ## Requirements *(mandatory)*
@@ -99,19 +108,20 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 ### Functional Requirements
 
 - **FR-001**: `/mytrips` MUST list the trips created by the requesting user
-  that are not deleted and are published (BUG-001).
+  that are not deleted, are published (BUG-001), and start after now
+  (BUG-005).
 - **FR-002**: Each trip MUST be shown with the `trip` card (title,
   description, date, creator), after the header `Your trips:`, ordered by
   start with the nearest first (BUG-002).
-- **FR-003**: When the user has no trips, the bot MUST reply with the hint to
-  use `/newtrip`.
+- **FR-003**: When the user has no upcoming trips (BUG-005), the bot MUST
+  reply with the hint to use `/newtrip`.
 - **FR-004**: `/mytrips` MUST NOT change the user's dialog state.
 - **FR-005**: Trips created by other users MUST NOT be listed.
 - **FR-006**: When listing or rendering fails, the handler MUST log the
   error and ~~send no reply~~ reply "Sorry, something went wrong. Please try
   again." (BUG-004).
-- **FR-007**: `/mytrips` MUST be enabled in the Telegram menu as "show trips
-  you've created".
+- **FR-007**: `/mytrips` MUST be enabled in the Telegram menu as ~~"show trips
+  you've created"~~ "show your upcoming trips" (BUG-005).
 - **FR-008**: A list longer than Telegram's 4096-unit message limit MUST be
   sent in several messages; the header starts the first one and no card is
   split (BUG-003).
@@ -134,7 +144,8 @@ A user who has no trips sends `/mytrips` and is told how to create one.
 
 - ~~A user has few enough trips for one Telegram message.~~ A single trip
   card fits in one Telegram message (BUG-003).
-- Listing includes every non-deleted trip, whatever its date.
+- ~~Listing includes every non-deleted trip, whatever its date.~~ Listing
+  includes published trips that have not started yet (BUG-005).
 - Depends on the Telegram Bot API (`sendMessage`).
 
 ## Gaps
@@ -148,5 +159,6 @@ Found during migration; none of them is fixed by this spec.
 3. ~~Long lists can exceed Telegram's 4096-character message limit, so the
    reply fails.~~ Fixed by BUG-003.
 4. ~~Listing or rendering failures give the user no reply.~~ Fixed by BUG-004.
-5. Past trips are never filtered out; dates are free text.
+5. ~~Past trips are never filtered out; dates are free text.~~ Fixed by
+   BUG-005 (dates are real since 003 BUG-004).
 6. No tests for several trips, drafts in the list, or ordering.

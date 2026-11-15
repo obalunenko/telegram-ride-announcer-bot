@@ -595,13 +595,11 @@ func (s *Service) myTripsHandler() th.Handler {
 			return nil
 		}
 
-		list = publishedTrips(list)
+		list = upcomingTrips(list, s.now())
 		sortByStart(list)
 
 		if len(list) == 0 {
-			msg := fmt.Sprintf("You have no trips yet. Use /%s command to create a new trip.", CmdNewTrip)
-
-			s.sendMessage(ctx, msg)
+			s.sendMessage(ctx, msgNoUpcomingTrips)
 
 			return nil
 		}
@@ -621,7 +619,7 @@ func (s *Service) myTripsHandler() th.Handler {
 		}
 
 		// A long list is sent in several messages, so it fits the Telegram limit.
-		for _, msg := range splitMessages("Your trips:\n\n", cards, maxMessageLen) {
+		for _, msg := range splitMessages(myTripsHeader, cards, maxMessageLen) {
 			s.sendMessage(ctx, msg)
 		}
 

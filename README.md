@@ -17,7 +17,7 @@ Telegram bot for scheduling and announcing planned bicycle trips in chat groups
 | `/help` | Show the available commands. |
 | `/newtrip` | Create a trip: name, date (`today`, `tomorrow`, or `DD.MM.YYYY`), start time (`HH:MM`), and description, then announce and pin it in the chat. |
 | `/cancel` | Stop creating a trip and discard it. |
-| `/mytrips` | Show the trips you have created. |
+| `/mytrips` | Show your upcoming trips, the nearest first. |
 
 The bot also knows `/trips`, `/subscribe`, `/unsubscribe`, and `/subscribed`; they are not implemented yet and are hidden from the Telegram menu.
 
