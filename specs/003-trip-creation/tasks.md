@@ -21,6 +21,8 @@ description: "Migrated task list for Trip Creation and Publication"
 
 **Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -52,7 +54,7 @@ description: "Migrated task list for Trip Creation and Publication"
 
 ## Phase 4: User Story 3 - Cancel the Trip (P2)
 
-- [x] T016 [US3] `cancelTrip` soft-deletes the draft and resets to `StateNewTrip` in `internal/service/handlers.go`
+- [x] T016 [US3] ⚠️ Reopened `cancelTrip` soft-deletes the draft and resets to `StateNewTrip` in `internal/service/handlers.go` (reopened — BUG-006; closed by T032)
 - [x] T017 [P] [US3] `TestService_CancelTrip` in `internal/service/service_internal_test.go`
 
 ## Phase 5: Bugfixes
@@ -76,6 +78,9 @@ description: "Migrated task list for Trip Creation and Publication"
 - [x] T030 [US2] Log a failed pin and send `msgPinFailed` in `publishTrip` in `internal/service/handlers.go` (BUG-005)
 - [x] T031 [P] [US1] Failure replies for `/newtrip`, dialog answers, and `/cancel` in `TestHandlers_Failure`; `TestService_PinFails` (BUG-005)
 
+- [x] T032 [US3] `cancelTrip` saves `StateStart` in `internal/service/handlers.go` (BUG-006)
+- [x] T033 [P] [US3] State and free-text reply after cancel in `TestService_CancelTrip`; cancel state in `TestService_ConfirmTrip` (BUG-006)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -85,7 +90,7 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~`/newtrip` during the dialog becomes the answer to the current step.~~ Fixed by BUG-003.
 - ~~Free-text date without validation or time.~~ Fixed by BUG-004.
 - ~~Failed steps give the user no reply; pin failure after the announcement.~~ Fixed by BUG-005.
-- Free text after cancel starts a new dialog.
+- ~~Free text after cancel starts a new dialog.~~ Fixed by BUG-006.
 - Announcement goes to the session's chat (001 Gap 1).
 - Abandoned drafts stay in storage.
 - `@` without a username; no length limits.

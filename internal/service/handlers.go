@@ -441,13 +441,13 @@ func (s *Service) confirmTrip(ctx context.Context, sess *models.Session, confirm
 	}
 }
 
-// cancelTrip deletes the draft trip and lets the user start a new one.
+// cancelTrip deletes the draft trip and ends the dialog; the user starts a new one with /newtrip.
 func (s *Service) cancelTrip(ctx context.Context, sess *models.Session) error {
 	if err := ops.DeleteTrip(ctx, s.backends, sess.UserState.Trip.ID); err != nil {
 		return fmt.Errorf("failed to delete trip: %w", err)
 	}
 
-	sess.UserState.State = models.StateNewTrip
+	sess.UserState.State = models.StateStart
 	sess.UserState.Trip = nil
 
 	msg := tu.Message(tu.ID(sess.ChatID), "Your trip is canceled. Thank you!")

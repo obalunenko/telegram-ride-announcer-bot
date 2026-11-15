@@ -18,6 +18,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -145,7 +147,7 @@ through the dialog state.
    the time step replaces it with the start; both use the service time zone
    and reject the past. `main` embeds `time/tzdata` because the Docker image
    has no zone database.
-7. **Cancel**: soft-delete the draft (`DeletedAt`), so lookups and lists skip
+7. **Cancel**: save `StateStart` (BUG-006) and soft-delete the draft (`DeletedAt`), so lookups and lists skip
    it.
 
 ## Complexity Tracking

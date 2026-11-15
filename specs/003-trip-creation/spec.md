@@ -20,6 +20,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-005 Failed steps reply with the error message; a failed pin is explained.
 
+**Bugfix**: 2026-11-15 — BUG-006 Canceling ends the dialog in `StateStart`.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -31,7 +33,7 @@
 - **Dialog states**: `StateNewTrip` → `StateNewTripName` →
   `StateNewTripDate` → `StateNewTripTime` (BUG-004) →
   `StateNewTripDescription` → `StateNewTripConfirm` → `StateStart` on
-  publish, or `StateNewTrip` on cancel.
+  publish, or ~~`StateNewTrip`~~ `StateStart` on cancel (BUG-006).
 - **Messages**: ~~"Please enter trip name"~~ "Please enter trip name. Send
   /cancel to stop." (BUG-003); "Your unfinished trip is discarded." and
   "There is nothing to cancel." (BUG-003); ~~`Your trip name "<name>". Please
@@ -146,7 +148,8 @@ reply, the state, and that `/mytrips` shows no trips
 
 1. **Given** the state `StateNewTripConfirm`, **When** the user answers `no`,
    **Then** the bot deletes the draft trip, replies "Your trip is canceled.
-   Thank you!", and saves the state `StateNewTrip` without a trip.
+   Thank you!", and saves the state ~~`StateNewTrip`~~ `StateStart` without
+   a trip (BUG-006); free text afterwards gets "Command not found".
 2. **Given** a canceled trip, **When** the user lists their trips, **Then**
    the canceled trip is not listed.
 3. **Given** any step of the dialog, **When** the user sends `/cancel`,
@@ -176,8 +179,9 @@ reply, the state, and that `/mytrips` shows no trips
   "Sorry, something went wrong. Please try again."; the state is kept, so
   the user can answer again. A failed pin keeps the trip published and is
   explained (BUG-005).
-- **Free text after cancel**: the state `StateNewTrip` makes the next text
-  message start a new trip dialog. (Gap 6.)
+- ~~**Free text after cancel**: the state `StateNewTrip` makes the next text
+  message start a new trip dialog. (Gap 6.)~~ **Free text after cancel**:
+  "Command not found" (BUG-006).
 - **Dialog in a private chat**: the announcement is sent and pinned in the
   private chat, not in a group. (Gap 7.)
 - **Interrupted dialog** (`/start`, `/help`, a failure, or a restart): the
@@ -212,7 +216,7 @@ reply, the state, and that `/mytrips` shows no trips
   prompt for the next answer.
 - **FR-006**: The answer `no` (ignoring case and surrounding spaces, BUG-002)
   MUST delete the draft trip, reply "Your trip is canceled. Thank you!", and
-  set the state to `StateNewTrip`.
+  set the state to ~~`StateNewTrip`~~ `StateStart` (BUG-006).
 - **FR-007**: ~~Any other answer~~ The answer `yes` (ignoring case and
   surrounding spaces, BUG-002) MUST publish the trip: send `Trip is
   published!` with the trip card to the session's chat, pin that message, and
@@ -286,8 +290,8 @@ Found during migration; none of them is fixed by this spec.
    although the prompt asks for "date and time".~~ Fixed by BUG-004.
 5. ~~Failed steps give the user no reply; a pin failure is reported only after
    the announcement was sent and the state saved.~~ Fixed by BUG-005.
-6. After cancel, the state `StateNewTrip` makes the next free text start a
-   new dialog.
+6. ~~After cancel, the state `StateNewTrip` makes the next free text start a
+   new dialog.~~ Fixed by BUG-006.
 7. The announcement goes to the session's chat (001 Gap 1), so a dialog in a
    private chat is announced and pinned there.
 8. Abandoned drafts stay in storage.

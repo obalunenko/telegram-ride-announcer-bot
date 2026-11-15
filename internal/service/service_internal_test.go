@@ -32,6 +32,7 @@ const (
 	msgNotFound       = "Command not found. Use /help command to see all available commands."
 	msgNotImplemented = "Not implemented yet. Use /help command to see all available commands."
 	msgFarewell       = "I'm going to sleep. Bye, John!"
+	msgPublished      = "Trip is published!"
 )
 
 var errTest = errors.New("test error")
@@ -540,14 +541,14 @@ func TestService_ConfirmTrip(t *testing.T) {
 		{
 			name:       "yes in another case",
 			answers:    []string{"Yes"},
-			wantPrefix: "Trip is published!",
+			wantPrefix: msgPublished,
 			wantState:  models.StateStart,
 		},
 		{
 			name:       "no with spaces",
 			answers:    []string{" NO "},
 			wantPrefix: "Your trip is canceled.",
-			wantState:  models.StateNewTrip,
+			wantState:  models.StateStart,
 		},
 		{
 			name:       "unclear answer",
@@ -558,7 +559,7 @@ func TestService_ConfirmTrip(t *testing.T) {
 		{
 			name:       "yes after an unclear answer",
 			answers:    []string{"maybe", "yes"},
-			wantPrefix: "Trip is published!",
+			wantPrefix: msgPublished,
 			wantState:  models.StateStart,
 		},
 	}
@@ -583,7 +584,7 @@ func TestService_ConfirmTrip(t *testing.T) {
 			assert.True(t, strings.HasPrefix(reply, tt.wantPrefix), reply)
 			assertState(t, repos, tt.wantState)
 
-			if tt.wantState == models.StateStart {
+			if tt.wantPrefix == msgPublished {
 				assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
 			}
 
@@ -643,7 +644,11 @@ func TestService_CancelTrip(t *testing.T) {
 	}
 
 	assert.Equal(t, "Your trip is canceled. Thank you!", replyTo(t, api, "no"))
-	assertState(t, repos, models.StateNewTrip)
+	assertState(t, repos, models.StateStart)
+
+	// The dialog is over: free text does not start a new trip.
+	assert.Equal(t, msgNotFound, replyTo(t, api, "Another ride"))
+	assertState(t, repos, models.StateStart)
 
 	assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
 
