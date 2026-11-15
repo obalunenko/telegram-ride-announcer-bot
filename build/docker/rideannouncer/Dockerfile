@@ -14,9 +14,9 @@ ARG TARGETARCH
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /app/rideannouncer ./cmd/rideannouncer
 
 
-FROM alpine:3.21 AS final
+FROM alpine:3.24 AS final
 
-ARG APK_CA_CERTIFICATES_VERSION=~20241121
+ARG APK_CA_CERTIFICATES_VERSION=~20261020
 
 # Install any runtime dependencies that are needed to run your application.
 # Leverage a cache mount to /var/cache/apk/ to speed up subsequent builds.
@@ -34,7 +34,7 @@ RUN adduser \
     --no-create-home \
     --uid "${UID}" \
     appuser
-USER appuser
+USER ${UID}
 
 # Copy the executable from the "build" stage.
 COPY build/docker/rideannouncer/entrypoint.sh /
