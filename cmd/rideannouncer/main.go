@@ -33,7 +33,7 @@ const (
 )
 
 const (
-	defaultLogLevel  = "DEBUG"
+	defaultLogLevel  = "INFO"
 	defaultLogFormat = "text"
 	defaultTimezone  = "UTC"
 )

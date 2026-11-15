@@ -24,6 +24,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-007 Configurable log level and format; unused storage API removed; README documents the configuration.
 
+**Change**: 2026-11-16 — The default log level is `INFO` instead of `DEBUG` (owner decision after BUG-007).
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (startup, signals, shutdown
@@ -43,7 +45,7 @@
   user's first message.~~ Each chat of a user has its own session and dialog
   (BUG-001).
 - **Configuration**: `RIDE_ANNOUNCER_TELEGRAM_TOKEN` (required);
-  `RIDE_ANNOUNCER_LOG_LEVEL` (default `DEBUG`) and `RIDE_ANNOUNCER_LOG_FORMAT`
+  `RIDE_ANNOUNCER_LOG_LEVEL` (default ~~`DEBUG`~~ `INFO`) and `RIDE_ANNOUNCER_LOG_FORMAT`
   (default `text`) (BUG-007).
 - **Release impact**: N/A (existing behavior).
 
@@ -223,7 +225,7 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 - **FR-012**: Shutdown MUST use a context that is not canceled but keeps the
   logger, so Bot API calls made during shutdown succeed.
 - **FR-013**: The bot MUST read the log level from `RIDE_ANNOUNCER_LOG_LEVEL`
-  (default `DEBUG`; an unknown value falls back to `INFO`) and the log format
+  (default ~~`DEBUG`~~ `INFO`; an unknown value falls back to `INFO`) and the log format
   from `RIDE_ANNOUNCER_LOG_FORMAT` (`text` or `json`, default `text`)
   (BUG-007).
 - **FR-014**: `README.md` MUST document every environment variable

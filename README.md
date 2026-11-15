@@ -28,7 +28,7 @@ The bot reads its settings from environment variables:
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `RIDE_ANNOUNCER_TELEGRAM_TOKEN` | yes | — | Telegram Bot API token from [@BotFather](https://t.me/BotFather). |
-| `RIDE_ANNOUNCER_LOG_LEVEL` | no | `DEBUG` | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR`, or `FATAL`. An unknown value falls back to `INFO`. |
+| `RIDE_ANNOUNCER_LOG_LEVEL` | no | `INFO` | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR`, or `FATAL`. An unknown value falls back to `INFO`. |
 | `RIDE_ANNOUNCER_LOG_FORMAT` | no | `text` | Log format: `text` or `json`. |
 | `RIDE_ANNOUNCER_TIMEZONE` | no | `UTC` | IANA time zone of trip dates and times, for example `Asia/Tbilisi`. The bot exits when the zone is unknown. |
 

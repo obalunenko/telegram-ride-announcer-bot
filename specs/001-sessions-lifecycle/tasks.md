@@ -103,6 +103,7 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 
 - [x] T043 [P] Remove `states.ListStates`, `users.List`, and the `Command` field from `internal/repository/states/states.go`, `internal/repository/users/users.go`, `internal/ops/sessions.go` (BUG-007)
 - [x] T044 Read `RIDE_ANNOUNCER_LOG_LEVEL` and `RIDE_ANNOUNCER_LOG_FORMAT` in `cmd/rideannouncer/main.go`; pass them in `deployments/docker-compose/bot-compose.yaml` (BUG-007)
+- [x] T046 Default log level `INFO` in `cmd/rideannouncer/main.go`, Docker Compose, and `README.md` (owner decision, 2026-11-16)
 - [x] T045 [P] Document the environment variables and running locally in `README.md` (BUG-007)
 
 ## Gaps (not tasks)
