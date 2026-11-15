@@ -11,6 +11,8 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 **Status**: migrated. All tasks describe code that already exists, so they are marked complete. Gaps are listed at the end as notes, not as open tasks.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -25,7 +27,7 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 ## Phase 2: User Story 1 - Welcome on `/start` (P1)
 
-- [x] T005 [P] [US1] Welcome template in `internal/service/renderer/templates/welcome.gotmpl` with `internal/service/renderer/testdata/welcome.golden`
+- [x] T005 [P] [US1] ⚠️ Reopened Welcome template in `internal/service/renderer/templates/welcome.gotmpl` with `internal/service/renderer/testdata/welcome.golden` (reopened — BUG-001; closed by T017)
 - [x] T006 [US1] `startHandler` resets the state and renders the welcome in `internal/service/handlers.go`
 - [x] T007 [P] [US1] Golden test `TestTemplates_Welcome` in `internal/service/renderer/renderer_test.go`
 
@@ -47,11 +49,16 @@ description: "Migrated task list for Start, Help, and Command Menu"
 - [x] T015 [P] [US4] Fake Bot API server in `internal/telegram/telegramtest/server.go`
 - [x] T016 [P] [US4] `TestCommand`, `TestCommands_EnabledCommands`, `TestNewBot`, `TestNewBot_Error`, `TestNewBot_UpdateOnStart` in `internal/telegram/bot_test.go`
 
+## Phase 6: Bugfixes
+
+- [x] T017 [US1] Describe only built features in `internal/service/renderer/templates/welcome.gotmpl`; update `internal/service/renderer/testdata/welcome.golden` (BUG-001)
+- [x] T018 [P] [US1] Commands section in `README.md` (BUG-001)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
-- The welcome message promises trip lists, subscriptions, and weather-based recommendations that do not exist.
+- ~~The welcome message promises trip lists, subscriptions, and weather-based recommendations that do not exist.~~ Fixed by BUG-001.
 - `/start` and `/help` silently abandon `/newtrip` and leave the draft trip.
 - Save and render failures give the user no reply.
 - `/help` can list a stale menu when the startup update failed.

@@ -10,6 +10,8 @@
 
 **Input**: Reverse-engineered by `/speckit-brownfield-migrate` from `internal/service/handlers.go` (`startHandler`, `helpHandler`, `notFoundHandler`, `unsupportedHandler`, `notImplementedHandler`), `internal/service/service.go`, `cmd/rideannouncer/main.go`, `internal/telegram/bot.go`, and `internal/service/renderer/`.
 
+**Bugfix**: 2026-11-15 — BUG-001 The welcome and the README describe only built features.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (bot name, description,
@@ -51,6 +53,9 @@ greeting (`TestService_PublishTrip`); render the template against
    <bot username>.` and mentions `/help`.
 2. **Given** a user in any dialog state, **When** they send `/start`,
    **Then** their state is reset to `StateStart`.
+3. **Given** any user, **When** they read the welcome, **Then** it lists only
+   what the bot does today: creating and announcing a trip, and showing the
+   trips they created (BUG-001).
 
 ---
 
@@ -149,7 +154,8 @@ reading the current profile.
 ### Functional Requirements
 
 - **FR-001**: `/start` MUST reply with the welcome message, greeting the user
-  by first name and naming the bot by username.
+  by first name and naming the bot by username. The welcome MUST describe
+  only implemented features (BUG-001).
 - **FR-002**: `/help` MUST reply with the help message listing each menu
   command as `/<command> - <description>`.
 - **FR-003**: `/start` and `/help` MUST reset the user's dialog state to
@@ -172,6 +178,8 @@ reading the current profile.
   fail.
 - **FR-011**: When saving the session or rendering fails, the handler MUST
   log the error and send no reply.
+- **FR-012**: `README.md` MUST list the enabled commands and name the
+  unimplemented ones (BUG-001).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -205,9 +213,10 @@ reading the current profile.
 
 Found during migration; none of them is fixed by this spec.
 
-1. The welcome message promises features that do not exist: a list of
+1. ~~The welcome message promises features that do not exist: a list of
    upcoming trips, subscriptions, a list of subscribed trips (stubs), and
-   outfit and SPF recommendations based on the weather (no code at all).
+   outfit and SPF recommendations based on the weather (no code at all).~~
+   Fixed by BUG-001.
 2. `/start` and `/help` interrupt `/newtrip` silently and leave the draft
    trip in the session and in storage.
 3. Failures to save the session or render a template give the user no reply.

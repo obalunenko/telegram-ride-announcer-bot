@@ -8,6 +8,8 @@
 
 **Note**: Reverse-engineered from existing code by `/speckit-brownfield-migrate`; it describes what was built, not a proposal.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
 ## Summary
 
 Commands are `Cmd*` constants in `internal/service/service.go`, registered
@@ -65,7 +67,8 @@ fallbacks, startup sync of 3 profile fields.
 - [x] V. Handlers and the bot wrapper are tested against `telegramtest` with
       table-driven testify tests.
 - [x] VI. No generated code involved.
-- [ ] `README.md` does not document the bot commands (Known Deviation).
+- [x] ~~`README.md` does not document the bot commands (Known Deviation).~~
+      `README.md` lists the commands (BUG-001).
 - [x] Known deviations are not extended.
 
 ## Project Structure

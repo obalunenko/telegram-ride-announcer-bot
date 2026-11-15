@@ -1,17 +1,16 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.1 → 1.1.2 (PATCH: narrowed a known deviation)
-- Modified: Known Deviations (`README.md` documents the environment
-  variables since specs/001-sessions-lifecycle BUG-007; the bot commands are
-  still missing)
+- Version change: 1.1.2 → 1.1.3 (PATCH: resolved a known deviation)
+- Modified: Known Deviations (`README.md` lists the bot commands since
+  specs/002-start-help-menu BUG-001)
 - Added sections: none; Removed sections: none
 - Templates: spec-template.md, plan-template.md, tasks-template.md, AGENTS.md —
   no change needed
 - Follow-up: none
-- Previous: 1.1.0 → 1.1.1 only the trip packages remain untested; 1.0.2 →
-  1.1.0 one session per user and chat; 1.0.1 → 1.0.2 resolved tooling known
-  deviations; 1.0.0 → 1.0.1 factual corrections; template → 1.0.0 initial
-  ratification
+- Previous: 1.1.1 → 1.1.2 README documents the configuration; 1.1.0 → 1.1.1
+  only the trip packages remain untested; 1.0.2 → 1.1.0 one session per user
+  and chat; 1.0.1 → 1.0.2 resolved tooling known deviations; 1.0.0 → 1.0.1
+  factual corrections; template → 1.0.0 initial ratification
 -->
 
 # Telegram Ride Announcer Bot Constitution
@@ -188,7 +187,6 @@ extend them:
 - `StateNewTripTime` and `StateNewTripPublish` are declared and routed by
   `textHandler`, but no step sets them and `createTrip` has no branch for
   them.
-- `README.md` does not document the bot commands.
 
 ## Governance
 
@@ -201,4 +199,4 @@ extend them:
   sections, PATCH for clarifications.
 - Resolving a known deviation removes it from the list in a PATCH amendment.
 
-**Version**: 1.1.2 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.1.3 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15

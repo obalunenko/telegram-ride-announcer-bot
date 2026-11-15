@@ -9,6 +9,17 @@
 # telegram-ride-announcer-bot
 Telegram bot for scheduling and announcing planned bicycle trips in chat groups
 
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/start` | Start using the bot. |
+| `/help` | Show the available commands. |
+| `/newtrip` | Create a trip: name, date, and description, then announce and pin it in the chat. |
+| `/mytrips` | Show the trips you have created. |
+
+The bot also knows `/trips`, `/subscribe`, `/unsubscribe`, and `/subscribed`; they are not implemented yet and are hidden from the Telegram menu.
+
 ## Configuration
 
 The bot reads its settings from environment variables:
