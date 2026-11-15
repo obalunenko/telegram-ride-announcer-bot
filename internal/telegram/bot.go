@@ -93,9 +93,10 @@ func (b *Bot) Commands() Commands {
 }
 
 type botOptions struct {
-	commands    Commands
-	description string
-	username    string
+	commands      Commands
+	description   string
+	username      string
+	clientOptions []tgbotapi.BotOption
 }
 
 // BotOption is a bot option.
@@ -122,9 +123,22 @@ func WithUsername(username string) BotOption {
 	}
 }
 
+// WithClientOptions sets options of the underlying telego client, e.g. a custom Bot API server.
+func WithClientOptions(opts ...tgbotapi.BotOption) BotOption {
+	return func(o *botOptions) {
+		o.clientOptions = append(o.clientOptions, opts...)
+	}
+}
+
 // NewBot creates new bot instance.
 func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) {
-	client, err := tgbotapi.NewBot(token)
+	var params botOptions
+
+	for _, opt := range opts {
+		opt(&params)
+	}
+
+	client, err := tgbotapi.NewBot(token, params.clientOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
@@ -154,20 +168,12 @@ func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) 
 		commands:    toCommands(registedCmds),
 	}
 
-	if len(opts) > 0 {
-		bot.updateOnStart(ctx, opts...)
-	}
+	bot.updateOnStart(ctx, params)
 
 	return bot, nil
 }
 
-func (b *Bot) updateOnStart(ctx context.Context, opts ...BotOption) {
-	var params botOptions
-
-	for _, opt := range opts {
-		opt(&params)
-	}
-
+func (b *Bot) updateOnStart(ctx context.Context, params botOptions) {
 	if params.description != "" {
 		b.maybeUpdateDescriptionBot(ctx, params.description)
 	}
