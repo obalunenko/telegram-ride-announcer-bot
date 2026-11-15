@@ -369,6 +369,49 @@ func TestService_CancelTrip(t *testing.T) {
 	assert.Equal(t, msgFarewell, nextMessage(t, api))
 }
 
+func TestService_InterruptTrip(t *testing.T) {
+	tests := []struct {
+		name string
+		cmd  string
+		want string
+	}{
+		{
+			name: "start",
+			cmd:  "/" + CmdStart,
+			want: "Hello, John!",
+		},
+		{
+			name: "help",
+			cmd:  "/" + CmdHelp,
+			want: "Help!",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			repos := newTestRepos()
+			svc, api := newTestService(t, repos)
+
+			svc.Start(ctx)
+
+			replyTo(t, api, "/newtrip")
+			replyTo(t, api, "Morning ride")
+			assertState(t, repos, models.StateNewTripDate)
+
+			assert.Equal(t, msgDraftDiscarded, replyTo(t, api, tt.cmd))
+			assert.Contains(t, nextMessage(t, api), tt.want)
+			assertState(t, repos, models.StateStart)
+
+			assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
+
+			svc.Shutdown(ctx)
+			assert.Equal(t, msgFarewell, nextMessage(t, api))
+		})
+	}
+}
+
 func TestService_Commands(t *testing.T) {
 	ctx := context.Background()
 

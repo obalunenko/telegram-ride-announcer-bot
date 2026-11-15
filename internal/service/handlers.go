@@ -48,11 +48,8 @@ func (s *Service) startHandler(ctx context.Context) th.Handler {
 			return nil
 		}
 
-		// Reset Session UserState.
-		sess.UserState.State = models.StateStart
-
-		if err := s.saveSession(ctx, sess); err != nil {
-			log.WithError(ctx, err).Error("Failed to update session")
+		if err := s.resetDialog(ctx, sess); err != nil {
+			log.WithError(ctx, err).Error("Failed to reset dialog")
 
 			return nil
 		}
@@ -91,11 +88,8 @@ func (s *Service) helpHandler() th.Handler {
 			return nil
 		}
 
-		// Reset Session UserState.
-		sess.UserState.State = models.StateStart
-
-		if err := s.saveSession(ctx, sess); err != nil {
-			log.WithError(ctx, err).Error("Failed to update session")
+		if err := s.resetDialog(ctx, sess); err != nil {
+			log.WithError(ctx, err).Error("Failed to reset dialog")
 
 			return nil
 		}
@@ -125,6 +119,46 @@ func (s *Service) helpHandler() th.Handler {
 
 func (s *Service) saveSession(ctx context.Context, sess *models.Session) error {
 	return ops.UpdateSession(ctx, s.backends, sess)
+}
+
+// msgDraftDiscarded tells the user that a command interrupted their trip dialog.
+const msgDraftDiscarded = "Your unfinished trip is discarded."
+
+// discardDraft deletes the draft trip of an unfinished trip dialog.
+// It reports whether there was a draft; the caller saves the session.
+func (s *Service) discardDraft(ctx context.Context, sess *models.Session) (bool, error) {
+	if sess.UserState.Trip == nil {
+		return false, nil
+	}
+
+	if err := ops.DeleteTrip(ctx, s.backends, sess.UserState.Trip.ID); err != nil {
+		return false, fmt.Errorf("failed to delete trip: %w", err)
+	}
+
+	sess.UserState.Trip = nil
+
+	return true, nil
+}
+
+// resetDialog ends any dialog of the session: it discards the draft trip, tells the user
+// about it, and saves the session in StateStart.
+func (s *Service) resetDialog(ctx context.Context, sess *models.Session) error {
+	discarded, err := s.discardDraft(ctx, sess)
+	if err != nil {
+		return err
+	}
+
+	sess.UserState.State = models.StateStart
+
+	if err = s.saveSession(ctx, sess); err != nil {
+		return fmt.Errorf("failed to update session: %w", err)
+	}
+
+	if discarded {
+		s.sendMessage(ctx, msgDraftDiscarded)
+	}
+
+	return nil
 }
 
 func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error {

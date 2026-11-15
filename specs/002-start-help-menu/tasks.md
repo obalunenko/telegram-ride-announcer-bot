@@ -13,6 +13,8 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 **Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -54,12 +56,16 @@ description: "Migrated task list for Start, Help, and Command Menu"
 - [x] T017 [US1] Describe only built features in `internal/service/renderer/templates/welcome.gotmpl`; update `internal/service/renderer/testdata/welcome.golden` (BUG-001)
 - [x] T018 [P] [US1] Commands section in `README.md` (BUG-001)
 
+- [x] T019 [US1] `discardDraft` and `resetDialog` in `internal/service/handlers.go` (BUG-002)
+- [x] T020 [US1] Use `resetDialog` in `startHandler` and `helpHandler` (depends on T019; BUG-002)
+- [x] T021 [P] [US1] `TestService_InterruptTrip` for `/start` and `/help` in `internal/service/service_internal_test.go` (BUG-002)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
 - ~~The welcome message promises trip lists, subscriptions, and weather-based recommendations that do not exist.~~ Fixed by BUG-001.
-- `/start` and `/help` silently abandon `/newtrip` and leave the draft trip.
+- ~~`/start` and `/help` silently abandon `/newtrip` and leave the draft trip.~~ Fixed by BUG-002.
 - Save and render failures give the user no reply.
 - `/help` can list a stale menu when the startup update failed.
 - No service-level test for the `/help` command list.

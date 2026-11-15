@@ -12,6 +12,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-001 The welcome and the README describe only built features.
 
+**Bugfix**: 2026-11-15 — BUG-002 `/start` and `/help` discard an unfinished trip and say so.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (bot name, description,
@@ -23,7 +25,8 @@
   unknown commands and free text; `/trips`, `/subscribe`, `/unsubscribe`,
   `/subscribed` answer "Not implemented yet" and are disabled in the menu.
   The menu shows `/start`, `/help`, `/newtrip`, `/mytrips`.
-- **Dialog states**: `/start` and `/help` reset the session to `StateStart`.
+- **Dialog states**: `/start` and `/help` reset the session to `StateStart`
+  and discard the draft trip of an unfinished `/newtrip` (BUG-002).
 - **Messages**: welcome (`welcome.gotmpl`), help (`help.gotmpl`), "Command
   not found. Use /help command to see all available commands.", "Not
   implemented yet. Use /help command to see all available commands."
@@ -77,6 +80,10 @@ short description.
    line `/<command> - <description>` per menu command.
 2. **Given** a user in any dialog state, **When** they send `/help`, **Then**
    their state is reset to `StateStart`.
+3. **Given** a user in the middle of `/newtrip`, **When** they send `/start`
+   or `/help`, **Then** the bot deletes the draft trip, replies "Your
+   unfinished trip is discarded.", and then sends the welcome or the help
+   (BUG-002).
 
 ---
 
@@ -138,9 +145,10 @@ reading the current profile.
 
 ### Edge Cases
 
-- **`/start` or `/help` during `/newtrip`**: the state is reset, but the
+- **`/start` or `/help` during `/newtrip`**: ~~the state is reset, but the
   draft trip stays in the session and in storage, and the user is not told
-  that the dialog was abandoned. (Gap 2.)
+  that the dialog was abandoned. (Gap 2.)~~ the draft trip is deleted and
+  the user is told (BUG-002).
 - **Saving the session or rendering a template fails**: the error is logged
   and the user gets no reply. (Gap 3.)
 - **Menu update failed on startup**: `/help` lists the commands that were
@@ -159,7 +167,8 @@ reading the current profile.
 - **FR-002**: `/help` MUST reply with the help message listing each menu
   command as `/<command> - <description>`.
 - **FR-003**: `/start` and `/help` MUST reset the user's dialog state to
-  `StateStart`.
+  `StateStart`; when a trip dialog is unfinished, they MUST delete its draft
+  trip and reply "Your unfinished trip is discarded." first (BUG-002).
 - **FR-004**: Unknown commands, and free text outside a dialog, MUST get the
   "Command not found" reply pointing to `/help`.
 - **FR-005**: Commands that are not implemented MUST get the "Not
@@ -217,8 +226,8 @@ Found during migration; none of them is fixed by this spec.
    upcoming trips, subscriptions, a list of subscribed trips (stubs), and
    outfit and SPF recommendations based on the weather (no code at all).~~
    Fixed by BUG-001.
-2. `/start` and `/help` interrupt `/newtrip` silently and leave the draft
-   trip in the session and in storage.
+2. ~~`/start` and `/help` interrupt `/newtrip` silently and leave the draft
+   trip in the session and in storage.~~ Fixed by BUG-002.
 3. Failures to save the session or render a template give the user no reply.
 4. `/help` lists `bot.Commands()`, which can be stale when the menu update
    failed on startup.
