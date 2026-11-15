@@ -22,6 +22,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-006 Canceling ends the dialog in `StateStart`.
 
+**Bugfix**: 2026-11-15 — BUG-007 The announcement and the pin go to the chat of the dialog (through 001 BUG-001).
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -47,7 +49,7 @@
 - **Storage**: A draft trip is stored on the first step and updated on each
   step; cancel soft-deletes it. Nothing survives a restart.
 - **Chats**: All prompts, the announcement, and the pin go to the session's
-  chat (see 001).
+  chat, which is the chat of the dialog since 001 BUG-001 (BUG-007).
 - **Configuration**: `RIDE_ANNOUNCER_TIMEZONE`, the IANA time zone of trip
   dates and times (default `UTC`) (BUG-004).
 - **Release impact**: N/A (existing behavior).
@@ -183,7 +185,9 @@ reply, the state, and that `/mytrips` shows no trips
   message start a new trip dialog. (Gap 6.)~~ **Free text after cancel**:
   "Command not found" (BUG-006).
 - **Dialog in a private chat**: the announcement is sent and pinned in the
-  private chat, not in a group. (Gap 7.)
+  private chat~~, not in a group. (Gap 7.)~~; a dialog in a group is
+  announced and pinned in that group, even when the user talked to the bot
+  privately before (BUG-007).
 - **Interrupted dialog** (`/start`, `/help`, a failure, or a restart): the
   draft trip stays in storage. (Gap 8.)
 - **User without a username**: the card shows `Created By: @`. (Gap 9.)
@@ -219,7 +223,8 @@ reply, the state, and that `/mytrips` shows no trips
   set the state to ~~`StateNewTrip`~~ `StateStart` (BUG-006).
 - **FR-007**: ~~Any other answer~~ The answer `yes` (ignoring case and
   surrounding spaces, BUG-002) MUST publish the trip: send `Trip is
-  published!` with the trip card to the session's chat, pin that message, and
+  published!` with the trip card to the chat of the dialog (BUG-007), pin
+  that message, and
   set the state to `StateStart`. Any other answer MUST be asked again without
   changing the state (BUG-002).
 - **FR-008**: The description and publish steps MUST refuse a draft trip that
@@ -292,8 +297,9 @@ Found during migration; none of them is fixed by this spec.
    the announcement was sent and the state saved.~~ Fixed by BUG-005.
 6. ~~After cancel, the state `StateNewTrip` makes the next free text start a
    new dialog.~~ Fixed by BUG-006.
-7. The announcement goes to the session's chat (001 Gap 1), so a dialog in a
-   private chat is announced and pinned there.
+7. ~~The announcement goes to the session's chat (001 Gap 1), so a dialog in a
+   private chat is announced and pinned there.~~ Fixed by 001 BUG-001;
+   tested by BUG-007.
 8. Abandoned drafts stay in storage.
 9. Users without a username appear as `@`; names and descriptions have no
    length limits.

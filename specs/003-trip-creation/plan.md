@@ -20,6 +20,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-007 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -39,8 +41,9 @@ it.
 `telegoutil` reply keyboards), gofrs/uuid (trip IDs), `text/template`.
 
 **Storage**: In memory: `internal/repository/trips` (map by trip ID with
-soft delete through `DeletedAt`); the draft trip ID is kept in the user's
-dialog state (001).
+soft delete through `DeletedAt`); the draft trip ID is kept in the dialog
+state of the user in the chat (001 BUG-001), so each chat has its own draft
+and its own announcement target (BUG-007).
 
 **Testing**: `TestService_CreateTrip` (table-driven failures for every step
 with failing repository, renderer, and Bot API stubs),

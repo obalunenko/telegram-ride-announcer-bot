@@ -270,9 +270,16 @@ func chatUpdate(from, chatID int64, text string) tgbotapi.Update {
 func nextMessage(t *testing.T, api *telegramtest.Server) string {
 	t.Helper()
 
+	return nextMessageIn(t, api, testChatID)
+}
+
+// nextMessageIn returns the text of the next message the bot sends, which must go to the chat.
+func nextMessageIn(t *testing.T, api *telegramtest.Server, chatID int64) string {
+	t.Helper()
+
 	req := api.NextRequest(t)
 	require.Equal(t, "sendMessage", req.Method)
-	assert.EqualValues(t, testChatID, req.Params["chat_id"])
+	assert.EqualValues(t, chatID, req.Params["chat_id"])
 
 	text, ok := req.Params["text"].(string)
 	require.True(t, ok, "message text is not a string: %v", req.Params["text"])
@@ -592,6 +599,48 @@ func TestService_ConfirmTrip(t *testing.T) {
 			assert.Equal(t, msgFarewell, nextMessage(t, api))
 		})
 	}
+}
+
+func TestService_PublishInDialogChat(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	// The user talks to the bot privately first, then creates the trip in a group.
+	assert.Contains(t, replyTo(t, api, "/start"), "Hello, John!")
+
+	for _, text := range []string{"/newtrip", "Morning ride", "today", "09:30", "Easy pace"} {
+		api.SendUpdate(chatUpdate(testUserID, otherChatID, text))
+		nextMessageIn(t, api, otherChatID)
+	}
+
+	api.SendUpdate(chatUpdate(testUserID, otherChatID, "yes"))
+	assert.True(t, strings.HasPrefix(nextMessageIn(t, api, otherChatID), msgPublished))
+
+	pin := api.NextRequest(t)
+	assert.Equal(t, "pinChatMessage", pin.Method)
+	assert.EqualValues(t, otherChatID, pin.Params["chat_id"], "the trip is pinned in the chat of the dialog")
+
+	assertState(t, repos, models.StateStart)
+
+	svc.Shutdown(ctx)
+
+	// Each chat of the user has its own session, so both get the farewell.
+	farewells := map[any]string{}
+
+	for range 2 {
+		req := api.NextRequest(t)
+
+		text, ok := req.Params["text"].(string)
+		require.True(t, ok, "message text is not a string: %v", req.Params["text"])
+
+		farewells[req.Params["chat_id"]] = text
+	}
+
+	assert.Equal(t, map[any]string{float64(testChatID): msgFarewell, float64(otherChatID): msgFarewell}, farewells)
 }
 
 func TestService_PinFails(t *testing.T) {
