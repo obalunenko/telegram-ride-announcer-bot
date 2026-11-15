@@ -18,7 +18,7 @@ rm -rf "${COVER_DIR}"
 mkdir -p "${COVER_DIR}"
 
 COVERPROFILE="${COVER_DIR}/unit.cov"
-GOEXPERIMENT=nocoverageredesign go test --count=1 -coverpkg=./... -coverprofile "${COVERPROFILE}" -covermode=atomic ./... >tests-report.json
+go test --count=1 -coverpkg=./... -coverprofile "${COVERPROFILE}" -covermode=atomic ./... >tests-report.json
 
 # Get total from coverage report
 go tool cover \
