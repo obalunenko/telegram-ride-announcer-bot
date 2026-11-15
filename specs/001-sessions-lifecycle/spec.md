@@ -10,6 +10,8 @@
 
 **Input**: Reverse-engineered by `/speckit-brownfield-migrate` from `internal/service/middleware.go`, `internal/service/service.go`, `internal/ops/{sessions,users}.go`, `internal/repository/{users,sessions,states}/`, and `cmd/rideannouncer/main.go`.
 
+**Bugfix**: 2026-11-15 — BUG-001 One session and dialog state per user and chat instead of per user.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (startup, signals, shutdown
@@ -25,8 +27,9 @@
   on shutdown.
 - **Storage**: Users, sessions, and states in memory. Nothing survives a
   restart.
-- **Chats**: Private and group chats. The session keeps the chat of the
-  user's first message.
+- **Chats**: Private and group chats. ~~The session keeps the chat of the
+  user's first message.~~ Each chat of a user has its own session and dialog
+  (BUG-001).
 - **Configuration**: `RIDE_ANNOUNCER_TELEGRAM_TOKEN` (required).
 - **Release impact**: N/A (existing behavior).
 
@@ -54,6 +57,9 @@ profile, the chat ID, and `StateStart` (`TestSetSessionMiddleware`, case
    the chat of that message.
 2. **Given** a new user, **When** the session is created, **Then** the
    handler for the message runs with that session in its context.
+3. **Given** a user with a session in one chat, **When** they write in
+   another chat, **Then** the bot creates a separate session in `StateStart`
+   for that chat, and the dialog in the first chat is unchanged (BUG-001).
 
 ---
 
@@ -135,9 +141,10 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 
 ### Edge Cases
 
-- **Same user in two chats**: the session keeps the chat of the user's first
+- **Same user in two chats**: ~~the session keeps the chat of the user's first
   message. Replies and trip announcements for later messages from another
-  chat go to that first chat. (Gap 1.)
+  chat go to that first chat. (Gap 1.)~~ each chat has its own session and
+  dialog; replies go to the chat the user writes in (BUG-001).
 - **Storage failure while loading or creating the user or session**: the
   error is logged and the update is dropped; the user gets no reply.
   (Gap 2.)
@@ -159,12 +166,15 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 
 - **FR-001**: The bot MUST create a user record (Telegram ID, username, first
   name, last name) on the first message from an unknown user.
-- **FR-002**: The bot MUST keep exactly one session and one dialog state per
-  user; the first state is `StateStart`.
+- **FR-002**: ~~The bot MUST keep exactly one session and one dialog state per
+  user; the first state is `StateStart`.~~ The bot MUST keep exactly one
+  session and one dialog state per user and chat; the first state is
+  `StateStart` (BUG-001).
 - **FR-003**: A new session MUST be bound to the chat of the message that
   created it.
 - **FR-004**: On every message from a known user, the bot MUST load the saved
-  session, dialog state, and draft trip and pass them to the handler.
+  session, dialog state, and draft trip of that user in that chat and pass
+  them to the handler (BUG-001).
 - **FR-005**: The bot MUST ignore updates without a message, messages without
   a sender, and messages sent by the bot itself.
 - **FR-006**: When loading or creating the user or session fails, the bot
@@ -187,11 +197,11 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 
 - **User**: a Telegram user known to the bot: Telegram ID, username, first
   name, last name. Created once, never updated.
-- **Session**: the user's conversation with the bot: user, chat ID, and the
-  user's dialog state. One per user.
+- **Session**: the user's conversation with the bot in one chat: user, chat
+  ID, and the dialog state. ~~One per user.~~ One per user and chat (BUG-001).
 - **Dialog state** (`UserState`): the user's current `models.State` step and
-  the draft trip of the dialog, if any. One per user; referenced by the
-  session.
+  the draft trip of the dialog, if any. ~~One per user;~~ One per user and
+  chat (BUG-001); referenced by the session.
 
 ## Success Criteria *(mandatory)*
 
@@ -218,9 +228,9 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 
 Found during migration; none of them is fixed by this spec.
 
-1. The session's chat ID never changes after the first message, so replies
+1. ~~The session's chat ID never changes after the first message, so replies
    and announcements can go to a different chat than the one the user is
-   writing in.
+   writing in.~~ Fixed by BUG-001.
 2. Storage failures in `setSessionMiddleware` drop the update without
    telling the user.
 3. User profiles are never refreshed, so trip cards can show an old

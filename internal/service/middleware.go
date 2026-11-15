@@ -85,7 +85,7 @@ func (s *Service) setSessionMiddleware() th.Handler {
 			}
 		}
 
-		session, err := ops.GetSession(ctx, s.backends, user)
+		session, err := ops.GetSession(ctx, s.backends, user, cid)
 		if err != nil && !errors.Is(err, sessions.ErrNotFound) {
 			log.WithError(ctx, err).Error("Failed to get session")
 

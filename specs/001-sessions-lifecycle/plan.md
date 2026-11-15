@@ -8,6 +8,8 @@
 
 **Note**: Reverse-engineered from existing code by `/speckit-brownfield-migrate`; it describes what was built, not a proposal.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
 ## Summary
 
 Every update passes through a telego middleware chain that recovers panics,
@@ -26,9 +28,11 @@ for in-flight updates.
 **Primary Dependencies**: telego (`telegohandler` middleware, long polling,
 `telegoutil`), gofrs/uuid, obalunenko/logger, getenv, version.
 
-**Storage**: In memory: `users` (map by user ID), `sessions` (map by user
-ID), `states` (map by state ID, searched by user ID), each guarded by
-`sync.RWMutex`. All data is lost on restart.
+**Storage**: In memory: `users` (map by user ID), `sessions` (~~map by user
+ID~~ map by user ID and chat ID, BUG-001), `states` (map by state ID,
+~~searched by user ID~~ unique per user and chat and loaded through the
+session's state ID, BUG-001), each guarded by `sync.RWMutex`. All data is
+lost on restart.
 
 **Testing**: `internal/service/middleware_internal_test.go` (table-driven
 `TestSetSessionMiddleware` with failing repository stubs,
@@ -104,7 +108,8 @@ internal/
 **Structure Decision**: The session is split across three repositories and
 joined in `internal/ops`: a `sessions.Session` holds the chat and the state
 ID, a `states.State` holds the step and the draft trip ID, and the trip is
-loaded through `ops.GetTrip`.
+loaded through `ops.GetTrip`. `ops.toSession` loads the state by the
+session's `StateID` for both `GetSession` and `ListSessions` (BUG-001).
 
 ## Design Decisions (as built)
 
@@ -117,9 +122,13 @@ loaded through `ops.GetTrip`.
 3. **Session in context**: the loaded `*models.Session` is stored under a
    private key (`context.go`); handlers read it with `sessionFromContext` and
    save changes through `ops.UpdateSession`.
-4. **One record per user**: `sessions` is keyed by user ID and rejects a
+4. ~~**One record per user**: `sessions` is keyed by user ID and rejects a
    second session (`ErrAlreadyExists`); `states.CreateState` returns the
-   existing state with `ErrAlreadyExists`.
+   existing state with `ErrAlreadyExists`.~~ **One record per user and
+   chat** (BUG-001): `sessions` is keyed by user ID and chat ID and rejects a
+   second session in the same chat (`ErrAlreadyExists`);
+   `states.CreateState` returns the existing state of the user in the chat
+   with `ErrAlreadyExists`, and `ops.CreateSession` reuses it.
 5. **Shutdown context**: `main` waits for a signal, then calls `Shutdown`
    with `context.WithoutCancel(ctx)` and a 10-second timeout, because the
    root context is already canceled.

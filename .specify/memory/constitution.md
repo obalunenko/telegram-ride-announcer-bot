@@ -1,16 +1,15 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.1 → 1.0.2 (PATCH: resolved known deviations)
-- Modified: Known Deviations (removed the stale `internal/input/` and
-  `internal/puzzles/` lint exclusions and the `scrum-report` OCI label, both
-  fixed in the repository)
+- Version change: 1.0.2 → 1.1.0 (MINOR: changed session rule)
+- Modified: III (one session per user and chat instead of per user, from
+  specs/001-sessions-lifecycle BUG-001)
 - Added sections: none; Removed sections: none
 - Templates: spec-template.md, plan-template.md, tasks-template.md, AGENTS.md —
   no change needed
 - Follow-up: none
-- Previous: 1.0.0 → 1.0.1 factual corrections from
-  /speckit-brownfield-validate; template → 1.0.0 initial ratification from the
-  brownfield scan
+- Previous: 1.0.1 → 1.0.2 resolved tooling known deviations; 1.0.0 → 1.0.1
+  factual corrections from /speckit-brownfield-validate; template → 1.0.0
+  initial ratification from the brownfield scan
 -->
 
 # Telegram Ride Announcer Bot Constitution
@@ -80,11 +79,13 @@ Evidence: `internal/repository/*/*.go`; `internal/service/backends/backends.go`.
   next input (`replyInTrip`), so the user's answer finds the session in the
   new state.
 - `/start` and `/help` reset the session to `StateStart`.
-- One session exists per user, created by `setSessionMiddleware` on the
-  user's first message, and keeps the chat ID of that message.
+- One session and one dialog state exist per user and chat, created by
+  `setSessionMiddleware` on the user's first message in that chat. Replies
+  go to the chat of the session.
 
 Evidence: `internal/models/models.go`; `internal/service/handlers.go`
-(`createTrip`, `replyInTrip`, `textHandler`); `internal/service/middleware.go`.
+(`createTrip`, `replyInTrip`, `textHandler`); `internal/service/middleware.go`;
+`internal/repository/sessions/sessions.go`.
 
 ### IV. Keep the Command and Message Contract Consistent
 
@@ -200,4 +201,4 @@ extend them:
   sections, PATCH for clarifications.
 - Resolving a known deviation removes it from the list in a PATCH amendment.
 
-**Version**: 1.0.2 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.1.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15

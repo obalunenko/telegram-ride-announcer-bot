@@ -20,15 +20,15 @@ var (
 )
 
 // Repository provides access to the state storage.
+// A user has one state per chat.
 type Repository interface {
-	// CreateState creates a new state.
+	// CreateState creates a new state. If the user already has a state in the chat,
+	// it returns that state with ErrAlreadyExists.
 	CreateState(ctx context.Context, params CreateParams) (*State, error)
 	// ListStates returns all states.
 	ListStates(ctx context.Context) ([]*State, error)
 	// GetStateByID returns a state by ID.
 	GetStateByID(ctx context.Context, id uuid.UUID) (*State, error)
-	// GetStateByUserID returns a state by user ID.
-	GetStateByUserID(ctx context.Context, userID int64) (*State, error)
 	// UpdateState updates a state.
 	UpdateState(ctx context.Context, state *State) error
 }
@@ -37,6 +37,7 @@ type Repository interface {
 type State struct {
 	ID      uuid.UUID  `db:"id"`
 	UserID  int64      `db:"user_id"`
+	ChatID  int64      `db:"chat_id"`
 	TripID  *uuid.UUID `db:"trip_id"`
 	Command string     `db:"command"`
 	Step    uint       `db:"step"`
@@ -45,6 +46,7 @@ type State struct {
 // CreateParams contains the parameters for CreateState.
 type CreateParams struct {
 	UserID  int64
+	ChatID  int64
 	Command string
 	TripID  *uuid.UUID
 	Step    uint
@@ -76,14 +78,15 @@ func (i *inMemoryRepository) CreateState(_ context.Context, params CreateParams)
 	newState := &State{
 		ID:      id,
 		UserID:  params.UserID,
+		ChatID:  params.ChatID,
 		TripID:  params.TripID,
 		Command: params.Command,
 		Step:    params.Step,
 	}
 
-	// Each user can only have one state at a time.
+	// Each user can only have one state per chat.
 	for _, state := range i.states {
-		if state.UserID == newState.UserID {
+		if state.UserID == newState.UserID && state.ChatID == newState.ChatID {
 			return state, ErrAlreadyExists
 		}
 	}
@@ -118,19 +121,6 @@ func (i *inMemoryRepository) GetStateByID(_ context.Context, id uuid.UUID) (*Sta
 	return state, nil
 }
 
-func (i *inMemoryRepository) GetStateByUserID(_ context.Context, userID int64) (*State, error) {
-	i.RLock()
-	defer i.RUnlock()
-
-	for _, state := range i.states {
-		if state.UserID == userID {
-			return state, nil
-		}
-	}
-
-	return nil, ErrNotFound
-}
-
 func (i *inMemoryRepository) UpdateState(_ context.Context, newState *State) error {
 	i.Lock()
 	defer i.Unlock()
@@ -146,6 +136,10 @@ func (i *inMemoryRepository) UpdateState(_ context.Context, newState *State) err
 
 	if st.UserID != newState.UserID {
 		return fmt.Errorf("state user id mismatch: %d != %d", st.UserID, newState.UserID)
+	}
+
+	if st.ChatID != newState.ChatID {
+		return fmt.Errorf("state chat id mismatch: %d != %d", st.ChatID, newState.ChatID)
 	}
 
 	if st == newState {

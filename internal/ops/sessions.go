@@ -13,17 +13,25 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/states"
 )
 
-// GetSession returns session for user.
-func GetSession(ctx context.Context, b backends, user *models.User) (*models.Session, error) {
-	// Check if user exists.
-	sess, err := b.SessionsRepository().GetSessionByUserID(ctx, user.ID)
+// GetSession returns the session of the user in the chat.
+func GetSession(ctx context.Context, b backends, user *models.User, chatID int64) (*models.Session, error) {
+	sess, err := b.SessionsRepository().GetSession(ctx, user.ID, chatID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get session by user id[%d]: %w", user.ID, err)
+		return nil, fmt.Errorf("failed to get session of user id[%d] in chat id[%d]: %w", user.ID, chatID, err)
 	}
 
-	state, err := b.StatesRepository().GetStateByUserID(ctx, user.ID)
+	return toSession(ctx, b, user, sess)
+}
+
+// toSession loads the state and the trip of the session record.
+func toSession(ctx context.Context, b backends, user *models.User, sess *sessions.Session) (*models.Session, error) {
+	if sess.StateID == nil {
+		return nil, fmt.Errorf("session id[%s] has no state", sess.ID)
+	}
+
+	state, err := b.StatesRepository().GetStateByID(ctx, *sess.StateID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get state by user id[%d]: %w", user.ID, err)
+		return nil, fmt.Errorf("failed to get state by id[%s]: %w", sess.StateID, err)
 	}
 
 	var trip *models.Trip
@@ -35,7 +43,7 @@ func GetSession(ctx context.Context, b backends, user *models.User) (*models.Ses
 		}
 	}
 
-	resp := models.Session{
+	return &models.Session{
 		ID:     sess.ID,
 		User:   user,
 		ChatID: sess.ChatID,
@@ -44,9 +52,7 @@ func GetSession(ctx context.Context, b backends, user *models.User) (*models.Ses
 			State: models.State(state.Step),
 			Trip:  trip,
 		},
-	}
-
-	return &resp, nil
+	}, nil
 }
 
 // CreateSessionParams is a params for CreateSession function.
@@ -55,26 +61,18 @@ type CreateSessionParams struct {
 	ChatID int64
 }
 
-// CreateSession creates a new session.
+// CreateSession creates a new session of the user in the chat.
 func CreateSession(ctx context.Context, b backends, p CreateSessionParams) (*models.Session, error) {
-	// check if state exists
-	state, err := b.StatesRepository().GetStateByUserID(ctx, p.User.ID)
-	if err != nil && !errors.Is(err, states.ErrNotFound) {
-		return nil, fmt.Errorf("failed to get state by user id[%d]: %w", p.User.ID, err)
-	}
-
-	if state == nil {
-		// create session and state
-		// Create state
-		state, err = b.StatesRepository().CreateState(ctx, states.CreateParams{
-			UserID:  p.User.ID,
-			Command: "",
-			TripID:  nil,
-			Step:    uint(models.StateStart),
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create state: %w", err)
-		}
+	// The user keeps the state of the chat when the session is created again.
+	state, err := b.StatesRepository().CreateState(ctx, states.CreateParams{
+		UserID:  p.User.ID,
+		ChatID:  p.ChatID,
+		Command: "",
+		TripID:  nil,
+		Step:    uint(models.StateStart),
+	})
+	if err != nil && !errors.Is(err, states.ErrAlreadyExists) {
+		return nil, fmt.Errorf("failed to create state: %w", err)
 	}
 
 	// Create session
@@ -88,7 +86,7 @@ func CreateSession(ctx context.Context, b backends, p CreateSessionParams) (*mod
 		"chat_id": p.ChatID,
 	}).Debug("New session created")
 
-	return GetSession(ctx, b, p.User)
+	return GetSession(ctx, b, p.User, p.ChatID)
 }
 
 // UpdateSession updates session.
@@ -105,6 +103,7 @@ func UpdateSession(ctx context.Context, b backends, sess *models.Session) error 
 	err := b.StatesRepository().UpdateState(ctx, &states.State{
 		ID:      sess.UserState.ID,
 		UserID:  uid,
+		ChatID:  sess.ChatID,
 		TripID:  tid,
 		Command: "",
 		Step:    uint(sess.UserState.State),
@@ -154,30 +153,12 @@ func ListSessions(ctx context.Context, b backends) ([]*models.Session, error) {
 			continue
 		}
 
-		state, err := b.StatesRepository().GetStateByUserID(ctx, user.ID)
+		s, err := toSession(ctx, b, user, sess)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get state by user id[%d]: %w", user.ID, err)
+			return nil, err
 		}
 
-		var trip *models.Trip
-
-		if state.TripID != nil {
-			trip, err = GetTrip(ctx, b, *state.TripID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get trip by id[%s]: %w", state.TripID, err)
-			}
-		}
-
-		resp = append(resp, &models.Session{
-			ID:     sess.ID,
-			User:   user,
-			ChatID: sess.ChatID,
-			UserState: models.UserState{
-				ID:    state.ID,
-				State: models.State(state.Step),
-				Trip:  trip,
-			},
-		})
+		resp = append(resp, s)
 	}
 
 	return resp, nil
@@ -185,7 +166,7 @@ func ListSessions(ctx context.Context, b backends) ([]*models.Session, error) {
 
 // DeleteSession deletes session.
 func DeleteSession(ctx context.Context, b backends, sess *models.Session) error {
-	err := b.SessionsRepository().DeleteSession(ctx, sess.User.ID)
+	err := b.SessionsRepository().DeleteSession(ctx, sess.User.ID, sess.ChatID)
 	if err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}

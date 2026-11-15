@@ -26,6 +26,7 @@ const (
 	testUserID  int64 = 42
 	otherUserID int64 = 43
 	testChatID  int64 = 4242
+	otherChatID int64 = 4343
 
 	msgNotFound       = "Command not found. Use /help command to see all available commands."
 	msgNotImplemented = "Not implemented yet. Use /help command to see all available commands."
@@ -105,12 +106,12 @@ func (f failingSessions) CreateSession(ctx context.Context, userID, chatID int64
 	return f.Repository.CreateSession(ctx, userID, chatID, stateID)
 }
 
-func (f failingSessions) GetSessionByUserID(ctx context.Context, userID int64) (*sessions.Session, error) {
-	if f.method == "GetSessionByUserID" {
+func (f failingSessions) GetSession(ctx context.Context, userID, chatID int64) (*sessions.Session, error) {
+	if f.method == "GetSession" {
 		return nil, errTest
 	}
 
-	return f.Repository.GetSessionByUserID(ctx, userID)
+	return f.Repository.GetSession(ctx, userID, chatID)
 }
 
 // failingStates fails to update states, so sessions can't be saved.
@@ -199,6 +200,11 @@ func newTestService(t *testing.T, repos *testRepos) (*Service, *telegramtest.Ser
 
 // textUpdate returns an update with a text message sent to the test chat.
 func textUpdate(from int64, text string) tgbotapi.Update {
+	return chatUpdate(from, testChatID, text)
+}
+
+// chatUpdate returns an update with a text message sent to the chat.
+func chatUpdate(from, chatID int64, text string) tgbotapi.Update {
 	return tgbotapi.Update{
 		Message: &tgbotapi.Message{
 			MessageID: 1,
@@ -208,7 +214,7 @@ func textUpdate(from int64, text string) tgbotapi.Update {
 				Username:  "john",
 			},
 			Chat: tgbotapi.Chat{
-				ID:   testChatID,
+				ID:   chatID,
 				Type: tgbotapi.ChatTypePrivate,
 			},
 			Text: text,
@@ -244,7 +250,7 @@ func replyTo(t *testing.T, api *telegramtest.Server, text string) string {
 func assertState(t *testing.T, repos *testRepos, want models.State) {
 	t.Helper()
 
-	sess, err := ops.GetSession(context.Background(), repos, &models.User{ID: testUserID})
+	sess, err := ops.GetSession(context.Background(), repos, &models.User{ID: testUserID}, testChatID)
 	require.NoError(t, err)
 	assert.Equal(t, want, sess.UserState.State)
 }

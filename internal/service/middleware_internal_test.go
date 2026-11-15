@@ -80,6 +80,8 @@ func TestSetSessionMiddleware(t *testing.T) {
 		setup  func(t *testing.T, repos *testRepos)
 		// wantState is the state of the session passed to the next handler; 0 means the chain is stopped.
 		wantState models.State
+		// wantChat is the chat of the session passed to the next handler; 0 means the test chat.
+		wantChat int64
 	}{
 		{
 			name:      "new user",
@@ -94,6 +96,16 @@ func TestSetSessionMiddleware(t *testing.T) {
 				require.NoError(t, ops.UpdateSession(context.Background(), repos, sess))
 			},
 			wantState: models.StateNewTripName,
+		},
+		{
+			name:   "same user in another chat",
+			update: chatUpdate(testUserID, otherChatID, "hello"),
+			setup: func(t *testing.T, repos *testRepos) {
+				sess := newSession(t, repos, testUserID, models.StateNewTripName)
+				require.NoError(t, ops.UpdateSession(context.Background(), repos, sess))
+			},
+			wantState: models.StateStart,
+			wantChat:  otherChatID,
 		},
 		{
 			name:   "message from the bot",
@@ -127,7 +139,7 @@ func TestSetSessionMiddleware(t *testing.T) {
 			name:   "get session fails",
 			update: textUpdate(testUserID, "hello"),
 			setup: func(_ *testing.T, repos *testRepos) {
-				repos.sessions = failingSessions{Repository: repos.sessions, method: "GetSessionByUserID"}
+				repos.sessions = failingSessions{Repository: repos.sessions, method: "GetSession"}
 			},
 		},
 		{
@@ -157,10 +169,15 @@ func TestSetSessionMiddleware(t *testing.T) {
 
 			require.NotNil(t, next)
 
+			wantChat := tt.wantChat
+			if wantChat == 0 {
+				wantChat = testChatID
+			}
+
 			sess := sessionFromContext(next.Context())
 			require.NotNil(t, sess)
 			assert.Equal(t, &models.User{ID: testUserID, Username: "john", Firstname: "John"}, sess.User)
-			assert.Equal(t, testChatID, sess.ChatID)
+			assert.Equal(t, wantChat, sess.ChatID)
 			assert.Equal(t, tt.wantState, sess.UserState.State)
 		})
 	}

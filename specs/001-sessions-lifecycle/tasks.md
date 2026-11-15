@@ -11,6 +11,8 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 
 **Status**: migrated. All tasks describe code that already exists, so they are marked complete. Gaps are listed at the end as notes, not as open tasks.
 
+**Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -60,11 +62,19 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 
 - [x] T023 Read `RIDE_ANNOUNCER_TELEGRAM_TOKEN`, initialize the logger, create the bot, repositories, backends, and service in `cmd/rideannouncer/main.go`
 
+## Phase 8: Bugfixes
+
+- [x] T024 [US2] Key sessions by user and chat: `GetSession` and `DeleteSession` take the chat ID in `internal/repository/sessions/sessions.go` (BUG-001)
+- [x] T025 [P] [US2] One state per user and chat with a `ChatID` field; drop `GetStateByUserID` in `internal/repository/states/states.go` (BUG-001)
+- [x] T026 [US2] Pass the chat ID to `ops.GetSession`, `ops.CreateSession`, `ops.DeleteSession`; load the state by the session's state ID in `internal/ops/sessions.go` (depends on T024, T025; BUG-001)
+- [x] T027 [US1] Use the message's chat in `setSessionMiddleware` in `internal/service/middleware.go` (depends on T026; BUG-001)
+- [x] T028 [P] [US1] Case "same user in another chat" in `TestSetSessionMiddleware`; repository tests in `internal/repository/sessions/sessions_test.go` and `internal/repository/states/states_test.go` (BUG-001)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
-- Session chat ID is fixed to the first message's chat.
+- ~~Session chat ID is fixed to the first message's chat.~~ Fixed by BUG-001.
 - Storage failures in `setSessionMiddleware` give the user no reply.
 - User profiles are never refreshed.
 - `Service.Shutdown` skips stopping polling when listing sessions fails.
