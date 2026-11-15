@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -266,9 +267,32 @@ func (s *Service) startTrip(ctx context.Context, sess *models.Session) error {
 	return err
 }
 
+const (
+	// maxTripNameLen and maxTripDescriptionLen limit the trip texts, in characters.
+	maxTripNameLen        = 100
+	maxTripDescriptionLen = 1000
+
+	msgInvalidTripName = "Please enter a trip name of 1 to 100 characters."
+	msgInvalidTripDesc = "Please enter a trip description of 1 to 1000 characters."
+)
+
+// tripText trims the text and reports whether it has 1 to maxLen characters.
+func tripText(text string, maxLen int) (string, bool) {
+	text = strings.TrimSpace(text)
+	n := utf8.RuneCountInString(text)
+
+	return text, n > 0 && n <= maxLen
+}
+
 // setTripName saves the trip name and asks for the trip date.
-func (s *Service) setTripName(ctx context.Context, sess *models.Session, name string) error {
-	sess.UserState.Trip.Name = name
+// It asks again when the name is empty or too long.
+func (s *Service) setTripName(ctx context.Context, sess *models.Session, text string) error {
+	name, ok := tripText(text, maxTripNameLen)
+	if !ok {
+		_, err := s.replyInTrip(ctx, sess, tu.Message(tu.ID(sess.ChatID), msgInvalidTripName))
+
+		return err
+	}
 
 	trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 		Name: &name,
@@ -374,7 +398,15 @@ func (s *Service) setTripTime(ctx context.Context, sess *models.Session, text st
 }
 
 // setTripDescription saves the trip description and asks to confirm the trip.
-func (s *Service) setTripDescription(ctx context.Context, sess *models.Session, description string) error {
+// It asks again when the description is empty or too long.
+func (s *Service) setTripDescription(ctx context.Context, sess *models.Session, text string) error {
+	description, ok := tripText(text, maxTripDescriptionLen)
+	if !ok {
+		_, err := s.replyInTrip(ctx, sess, tu.Message(tu.ID(sess.ChatID), msgInvalidTripDesc))
+
+		return err
+	}
+
 	trip, err := ops.UpdateTrip(ctx, s.backends, sess.UserState.Trip.ID, ops.UpdateTripParams{
 		Description: &description,
 	})

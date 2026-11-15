@@ -24,6 +24,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-008 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-009 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -62,7 +64,8 @@ and `TestHandlers_NoSession`, and `TestTemplates_Trip` with `trip.golden`.
 **Constraints**: Save the session before each prompt; only the creator can
 finish their draft trip. Dates and times use the time zone from
 `service.WithLocation` (`RIDE_ANNOUNCER_TIMEZONE`, default `UTC`); the
-service clock (`Service.now`) is replaced in tests (BUG-004).
+service clock (`Service.now`) is replaced in tests (BUG-004). Names have 1
+to 100 and descriptions 1 to 1000 characters (`tripText`, BUG-009).
 
 **Scale/Scope**: About 700 lines; one command, five dialog states, three
 outcomes (publish, cancel, failure).
@@ -113,7 +116,7 @@ internal/
 │   ├── handlers.go     # createTrip, replyInTrip, startTrip, setTripName/Date/Description,
 │   │                   # confirmTrip, cancelTrip, publishTrip, textHandler routing
 │   ├── dates.go        # parseTripDate, parseTripTime, formatTripDate (BUG-004)
-│   ├── helper.go       # renderTrip
+│   ├── helper.go       # renderTrip, creatorName (BUG-009)
 │   └── renderer/       # templates/trip.gotmpl, testdata/trip.golden
 ├── ops/trips.go        # CreateTrip, GetTrip, UpdateTrip, DeleteTrip
 ├── repository/trips/   # Trip records, soft delete

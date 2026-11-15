@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	tu "github.com/mymmrac/telego/telegoutil"
 	log "github.com/obalunenko/logger"
@@ -39,12 +39,21 @@ func (s *Service) sendMessage(ctx context.Context, text string) {
 	}
 }
 
+// creatorName shows the trip creator: the username, or the name when the user has no username.
+func creatorName(user *models.User) string {
+	if user.Username != "" {
+		return "@" + user.Username
+	}
+
+	return strings.TrimSpace(user.Firstname + " " + user.Lastname)
+}
+
 func (s *Service) renderTrip(trip *models.Trip) (string, error) {
 	r, err := s.templates.Trip(renderer.TripParams{
 		Title:       trip.Name,
 		Description: trip.Description,
 		Date:        formatTripDate(trip.Date, s.location),
-		CreatedBy:   fmt.Sprintf("@%s", trip.CreatedBy.Username),
+		CreatedBy:   creatorName(trip.CreatedBy),
 	})
 	if err != nil {
 		return "", err

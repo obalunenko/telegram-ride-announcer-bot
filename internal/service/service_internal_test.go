@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -458,6 +459,42 @@ func TestService_TripInTimeZone(t *testing.T) {
 	require.Len(t, list, 1)
 	// 13:30 in Tbilisi is 09:30 UTC.
 	assert.True(t, time.Date(2026, time.November, 15, 9, 30, 0, 0, time.UTC).Equal(list[0].Date), list[0].Date)
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
+func TestService_TripTextLimits(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	svc.Start(ctx)
+
+	replyTo(t, api, "/newtrip")
+
+	steps := []struct {
+		text  string
+		want  string
+		state models.State
+	}{
+		{text: "   ", want: msgInvalidTripName, state: models.StateNewTripName},
+		{text: strings.Repeat("a", maxTripNameLen+1), want: msgInvalidTripName, state: models.StateNewTripName},
+		{text: "  Morning ride  ", want: fmt.Sprintf(msgEnterTripDate, "Morning ride"), state: models.StateNewTripDate},
+		{text: "today", want: msgEnterTripTime, state: models.StateNewTripTime},
+		{text: "09:30", want: msgEnterTripDesc, state: models.StateNewTripDescription},
+		{text: strings.Repeat("a", maxTripDescriptionLen+1), want: msgInvalidTripDesc, state: models.StateNewTripDescription},
+	}
+
+	for _, step := range steps {
+		assert.Equal(t, step.want, replyTo(t, api, step.text))
+		assertState(t, repos, step.state)
+	}
+
+	confirm := replyTo(t, api, strings.Repeat("a", maxTripDescriptionLen))
+	assert.True(t, strings.HasSuffix(confirm, "Please confirm"), confirm)
+	assertState(t, repos, models.StateNewTripConfirm)
 
 	svc.Shutdown(ctx)
 	assert.Equal(t, msgFarewell, nextMessage(t, api))

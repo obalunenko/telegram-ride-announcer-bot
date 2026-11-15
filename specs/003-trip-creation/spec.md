@@ -26,6 +26,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-008 Every command that ends the dialog deletes its draft.
 
+**Bugfix**: 2026-11-15 — BUG-009 The card names creators without a username; the name and description have length limits.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -75,7 +77,8 @@ prompt and the saved state after each answer (`TestService_PublishTrip`,
    **Then** the bot creates a draft trip owned by them, replies "Please enter
    trip name", and saves the state `StateNewTripName`.
 2. **Given** the state `StateNewTripName`, **When** the user sends
-   `Morning ride`, **Then** the bot saves the name, replies `Your trip name
+   `Morning ride` (1 to 100 characters after trimming spaces, BUG-009),
+   **Then** the bot saves the name, replies `Your trip name
    "Morning ride". Please select date and time` with `today` and `tomorrow`
    buttons, and saves `StateNewTripDate`.
 3. **Given** the state `StateNewTripDate`, **When** the user sends `today`,
@@ -194,7 +197,10 @@ reply, the state, and that `/mytrips` shows no trips
   draft trip stays in storage. (Gap 8.)~~ `/start`, `/help`, `/newtrip`, and
   `/cancel` delete the draft; a failure keeps the dialog; a restart loses all
   data (BUG-008).
-- **User without a username**: the card shows `Created By: @`. (Gap 9.)
+- **User without a username**: ~~the card shows `Created By: @`. (Gap 9.)~~
+  the card shows the user's name (BUG-009).
+- **Empty or long name or description**: asked again with the allowed
+  length (BUG-009).
 - **Draft owned by another user** in the session: the description and publish
   steps fail with "is not the creator of the trip".
 - **Unexpected state** in `createTrip` (for example `StateNewTripPublish`):
@@ -234,7 +240,11 @@ reply, the state, and that `/mytrips` shows no trips
 - **FR-008**: The description and publish steps MUST refuse a draft trip that
   the user did not create.
 - **FR-009**: The trip card MUST show the title, description, date, and the
-  creator as `@<username>`, rendered from the `trip` template.
+  creator as `@<username>`, or the creator's name when there is no username
+  (BUG-009), rendered from the `trip` template.
+- **FR-016**: The name MUST have 1 to 100 characters and the description 1
+  to 1000 characters after trimming spaces; other answers MUST be asked
+  again without changing the state (BUG-009).
 - **FR-010**: Free text from a user in a trip state MUST be routed to the trip
   dialog; free text from a user in `StateStart` MUST get the "Command not
   found" reply.
@@ -307,8 +317,8 @@ Found during migration; none of them is fixed by this spec.
    tested by BUG-007.
 8. ~~Abandoned drafts stay in storage.~~ Fixed by 002 BUG-002 and BUG-003;
    recorded by BUG-008.
-9. Users without a username appear as `@`; names and descriptions have no
-   length limits.
+9. ~~Users without a username appear as `@`; names and descriptions have no
+   length limits.~~ Fixed by BUG-009.
 10. Planned steps in the `createTrip` comments were never built: a track link
     or file, a photo, and subscribing the creator. `StateNewTripTime` and
     `StateNewTripPublish` are unused (constitution Known Deviation).

@@ -27,6 +27,8 @@ description: "Migrated task list for Trip Creation and Publication"
 
 **Bugfix**: 2026-11-15 — BUG-008 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-009 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -89,6 +91,10 @@ description: "Migrated task list for Trip Creation and Publication"
 
 - [x] T035 [US1] Record that `/start`, `/help` (002 T019–T021), `/newtrip`, and `/cancel` (T022–T024) delete the draft of an unfinished dialog (BUG-008)
 
+- [x] T036 [P] [US1] `creatorName` in `internal/service/helper.go` (BUG-009)
+- [x] T037 [US1] `tripText` and the limits; re-ask in `setTripName` and `setTripDescription` in `internal/service/handlers.go` (BUG-009)
+- [x] T038 [P] [US1] `TestCreatorName`, `TestTripText` in `internal/service/helper_internal_test.go`; `TestService_TripTextLimits` (BUG-009)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -101,5 +107,5 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Free text after cancel starts a new dialog.~~ Fixed by BUG-006.
 - ~~Announcement goes to the session's chat (001 Gap 1).~~ Fixed by 001 BUG-001; tested by BUG-007.
 - ~~Abandoned drafts stay in storage.~~ Fixed by 002 BUG-002 and BUG-003 (BUG-008).
-- `@` without a username; no length limits.
+- ~~`@` without a username; no length limits.~~ Fixed by BUG-009.
 - Planned steps never built (track, photo, subscribing the creator); `StateNewTripTime` and `StateNewTripPublish` unused.
