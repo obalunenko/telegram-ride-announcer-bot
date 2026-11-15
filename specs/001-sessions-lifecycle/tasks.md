@@ -19,6 +19,8 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 
 **Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -88,6 +90,9 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 - [x] T036 [US3] Move the farewells into `sayGoodbye` and always run the stop functions in `Service.Shutdown` in `internal/service/service.go` (BUG-004)
 - [x] T037 [P] [US3] `TestService_Shutdown_ListSessionsFails` in `internal/service/service_internal_test.go` (BUG-004)
 
+- [x] T038 [US4] Log the panic stack as a field and reply with `replyError` in `panicRecovery` in `internal/service/middleware.go` (depends on T029; BUG-005)
+- [x] T039 [P] [US4] Cases "message" and "update without a message" in `TestPanicRecovery` (BUG-005)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -96,6 +101,6 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Storage failures in `setSessionMiddleware` give the user no reply.~~ Fixed by BUG-002.
 - ~~User profiles are never refreshed.~~ Fixed by BUG-003.
 - ~~`Service.Shutdown` skips stopping polling when listing sessions fails.~~ Fixed by BUG-004.
-- Panics give the user no reply and print the stack with `fmt.Println`.
+- ~~Panics give the user no reply and print the stack with `fmt.Println`.~~ Fixed by BUG-005.
 - No tests for `internal/ops/{sessions,users}.go` and the `users`, `sessions`, `states` repositories.
 - Unused API: `states.ListStates`, `states.GetStateByID`, `users.List`, `states.State.Command`.

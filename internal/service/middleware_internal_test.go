@@ -225,16 +225,42 @@ func createUser(t *testing.T, repos *testRepos, username string) {
 }
 
 func TestPanicRecovery(t *testing.T) {
-	svc, _ := newTestService(t, newTestRepos())
+	tests := []struct {
+		name      string
+		update    tgbotapi.Update
+		wantReply bool
+	}{
+		{
+			name:      "message",
+			update:    textUpdate(testUserID, "hello"),
+			wantReply: true,
+		},
+		{
+			name:   "update without a message",
+			update: tgbotapi.Update{},
+		},
+	}
 
-	var group th.HandlerGroup
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, api := newTestService(t, newTestRepos())
 
-	group.Use(svc.panicRecovery())
-	group.Handle(func(*th.Context, tgbotapi.Update) error {
-		panic("handler panic")
-	})
+			var group th.HandlerGroup
 
-	assert.NotPanics(t, func() {
-		assert.NoError(t, group.HandleUpdate(context.Background(), svc.bot.Client(), textUpdate(testUserID, "hello")))
-	})
+			group.Use(svc.panicRecovery())
+			group.Handle(func(*th.Context, tgbotapi.Update) error {
+				panic("handler panic")
+			})
+
+			assert.NotPanics(t, func() {
+				assert.NoError(t, group.HandleUpdate(context.Background(), svc.bot.Client(), tt.update))
+			})
+
+			if tt.wantReply {
+				assert.Equal(t, msgSomethingWentWrong, nextMessage(t, api))
+			}
+
+			api.AssertNoRequest(t)
+		})
+	}
 }

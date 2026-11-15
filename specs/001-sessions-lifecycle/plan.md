@@ -16,6 +16,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
+
 ## Summary
 
 Every update passes through a telego middleware chain that recovers panics,
@@ -122,7 +124,8 @@ session's `StateID` for both `GetSession` and `ListSessions` (BUG-001).
 1. **Middleware order** (`initHandlers`): `panicRecovery` →
    `setContextMiddleware(ctx)` → `setSessionMiddleware` → `loggerMiddleware`,
    then command handlers and the text handler. Panic recovery comes first so
-   it also covers the session lookup.
+   it also covers the session lookup. It logs the stack as a field and
+   replies with `replyError` to the chat of the message (BUG-005).
 2. **Root context in updates**: `setContextMiddleware` replaces each update's
    context with the service context, so handlers get the configured logger.
 3. **Session in context**: the loaded `*models.Session` is stored under a

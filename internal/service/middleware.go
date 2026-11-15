@@ -139,14 +139,22 @@ func (s *Service) loadUser(ctx context.Context, from *tgbotapi.User) (*models.Us
 	return user, nil
 }
 
-// PanicRecovery is a middleware that will recover handler from panic
+// PanicRecovery is a middleware that will recover handler from panic.
+// It logs the panic with its stack and tells the user that the bot failed to handle the message.
 func (s *Service) panicRecovery() th.Handler {
 	return func(c *th.Context, update tgbotapi.Update) error {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Println(string(debug.Stack()))
+				ctx := update.Context()
 
-				log.WithField(update.Context(), "error", err).Error("Panic recovered")
+				log.WithFields(ctx, log.Fields{
+					"error": err,
+					"stack": string(debug.Stack()),
+				}).Error("Panic recovered")
+
+				if update.Message != nil {
+					s.replyError(ctx, update.Message.Chat.ID)
+				}
 			}
 		}()
 

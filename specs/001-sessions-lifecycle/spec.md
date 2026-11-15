@@ -18,6 +18,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-004 Shutdown stops polling even when sessions cannot be listed.
 
+**Bugfix**: 2026-11-15 — BUG-005 Recovered panics get the error reply and log the stack through the logger.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (startup, signals, shutdown
@@ -142,8 +144,8 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 2. **Given** a message sent by the bot itself, **When** it arrives, **Then**
    no session is created and no handler runs.
 3. **Given** a handler that panics, **When** it handles an update, **Then**
-   the panic is recovered and logged, and the bot keeps handling other
-   updates.
+   the panic is recovered and logged with its stack, the sender gets the
+   error reply, and the bot keeps handling other updates (BUG-005).
 4. **Given** a user with a session, **When** any handler logs, **Then** the
    log entry carries `user_id` and `chat_id`.
 5. **Given** a handler that runs without a session in its context, **When**
@@ -199,8 +201,9 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 - **FR-006**: When loading or creating the user or session fails, the bot
   MUST log the error, reply "Sorry, something went wrong. Please try again."
   to the chat of the message, and drop the update (BUG-002).
-- **FR-007**: The bot MUST recover from handler panics, log them, and keep
-  handling updates.
+- **FR-007**: The bot MUST recover from handler panics, log them with the
+  stack through the logger, reply with the error message when the update has
+  a message, and keep handling updates (BUG-005).
 - **FR-008**: Log entries of a handled update MUST carry `user_id` and
   `chat_id` when the update has a session.
 - **FR-009**: The bot MUST read the token from
@@ -259,8 +262,8 @@ Found during migration; none of them is fixed by this spec.
    username.~~ Fixed by BUG-003.
 4. ~~`Service.Shutdown` returns early when listing sessions fails and skips
    stopping long polling and the handler.~~ Fixed by BUG-004.
-5. After a recovered panic the user gets no reply; the stack trace goes to
-   stdout through `fmt.Println` instead of the logger.
+5. ~~After a recovered panic the user gets no reply; the stack trace goes to
+   stdout through `fmt.Println` instead of the logger.~~ Fixed by BUG-005.
 6. `internal/ops/sessions.go`, `internal/ops/users.go`, and the
    `users`, `sessions`, and `states` repositories have no tests of their own
    (constitution Known Deviation).
