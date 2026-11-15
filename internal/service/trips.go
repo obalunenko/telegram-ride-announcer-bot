@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
@@ -29,13 +31,12 @@ func (s *Service) newTripHandler() th.Handler {
 
 		if _, err := s.resetDialog(ctx, sess, models.StateNewTrip); err != nil {
 			log.WithError(ctx, err).Error("Failed to reset dialog")
+			s.replyError(ctx, sess.ChatID)
 
 			return nil
 		}
 
-		if err := s.createTrip(ctx, update); err != nil {
-			log.WithError(ctx, err).Error("Failed to create trip")
-		}
+		s.runTripStep(ctx, update)
 
 		return nil
 	}
@@ -48,11 +49,24 @@ func (s *Service) tripAnswerHandler() th.Handler {
 
 		ctx = log.ContextWithLogger(ctx, log.WithField(ctx, "command_handler", CmdNewTrip))
 
-		if err := s.createTrip(ctx, update); err != nil {
-			log.WithError(ctx, err).Error("Failed to create trip")
-		}
+		s.runTripStep(ctx, update)
 
 		return nil
+	}
+}
+
+// runTripStep runs the current step of the trip dialog and tells the user when it fails.
+// Steps fail before they save the next state, so the user can answer again.
+func (s *Service) runTripStep(ctx context.Context, update tgbotapi.Update) {
+	err := s.createTrip(ctx, update)
+	if err == nil {
+		return
+	}
+
+	log.WithError(ctx, err).Error("Failed to create trip")
+
+	if sess := sessionFromContext(ctx); sess != nil {
+		s.replyError(ctx, sess.ChatID)
 	}
 }
 
@@ -75,6 +89,7 @@ func (s *Service) cancelHandler() th.Handler {
 		discarded, err := s.resetDialog(ctx, sess, models.StateStart)
 		if err != nil {
 			log.WithError(ctx, err).Error("Failed to reset dialog")
+			s.replyError(ctx, sess.ChatID)
 
 			return nil
 		}

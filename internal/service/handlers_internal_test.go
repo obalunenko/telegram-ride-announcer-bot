@@ -176,6 +176,7 @@ func TestHandlers_Failure(t *testing.T) {
 			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.states = failingStates{Repository: repos.states}
 			},
+			wantError: true,
 		},
 		{
 			name: "new trip: create trip",
@@ -185,6 +186,29 @@ func TestHandlers_Failure(t *testing.T) {
 			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
 				repos.trips = failingTrips{Repository: repos.trips, method: "CreateTrip"}
 			},
+			wantError: true,
+		},
+		{
+			name: "trip answer: update trip",
+			handler: func(svc *Service) th.Handler {
+				return svc.tripAnswerHandler()
+			},
+			setup: func(t *testing.T, _ *Service, repos *testRepos, sess *models.Session) {
+				sess.UserState.State = models.StateNewTripName
+				sess.UserState.Trip = newTrip(t, repos, testUserID)
+				repos.trips = failingTrips{Repository: repos.trips, method: "UpdateTrip"}
+			},
+			wantError: true,
+		},
+		{
+			name: "cancel: save session",
+			handler: func(svc *Service) th.Handler {
+				return svc.cancelHandler()
+			},
+			setup: func(_ *testing.T, _ *Service, repos *testRepos, _ *models.Session) {
+				repos.states = failingStates{Repository: repos.states}
+			},
+			wantError: true,
 		},
 	}
 
@@ -388,6 +412,7 @@ func TestService_CreateTrip(t *testing.T) {
 			wantErr: "failed to send message",
 		},
 		{
+			// A failed pin does not fail the step: the trip is published already.
 			name:   "publish: pin announcement",
 			state:  models.StateNewTripConfirm,
 			text:   "yes",
@@ -395,7 +420,7 @@ func TestService_CreateTrip(t *testing.T) {
 			setup: func(_ *Service, _ *testRepos, api *telegramtest.Server) {
 				api.Fail("pinChatMessage")
 			},
-			wantErr: "failed to pin message",
+			wantErr: "",
 		},
 		{
 			name:    "unexpected state",

@@ -593,6 +593,31 @@ func TestService_ConfirmTrip(t *testing.T) {
 	}
 }
 
+func TestService_PinFails(t *testing.T) {
+	ctx := context.Background()
+
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+	api.Fail("pinChatMessage")
+
+	svc.Start(ctx)
+
+	toConfirmation(t, api, repos)
+
+	assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), "Trip is published!"))
+	assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+	assert.Equal(t, msgPinFailed, nextMessage(t, api))
+	assertState(t, repos, models.StateStart)
+
+	list, err := ops.ListTripsByUser(ctx, repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	assert.True(t, list[0].Completed, "the trip is published although it is not pinned")
+
+	svc.Shutdown(ctx)
+	assert.Equal(t, msgFarewell, nextMessage(t, api))
+}
+
 func TestService_CancelTrip(t *testing.T) {
 	ctx := context.Background()
 

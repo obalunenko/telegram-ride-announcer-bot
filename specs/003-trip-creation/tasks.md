@@ -19,6 +19,8 @@ description: "Migrated task list for Trip Creation and Publication"
 
 **Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -70,6 +72,10 @@ description: "Migrated task list for Trip Creation and Publication"
 - [x] T027 [US1] `Option`, `WithLocation`, and `Service.now` in `internal/service/service.go`; `RIDE_ANNOUNCER_TIMEZONE` and `time/tzdata` in `cmd/rideannouncer/main.go`; README and Docker Compose (depends on T026; BUG-004)
 - [x] T028 [P] [US1] `TestParseTripDate`, `TestParseTripTime`, `TestFormatTripDate` in `internal/service/dates_internal_test.go`; `TestService_TripDateAndTime`, `TestService_TripInTimeZone`, the time-step cases in `TestService_CreateTrip`, and updated dialogs (BUG-004)
 
+- [x] T029 [US1] `runTripStep` with the error reply, used by `newTripHandler` and `tripAnswerHandler`; error replies when `/newtrip` or `/cancel` fail to reset in `internal/service/trips.go` (BUG-005)
+- [x] T030 [US2] Log a failed pin and send `msgPinFailed` in `publishTrip` in `internal/service/handlers.go` (BUG-005)
+- [x] T031 [P] [US1] Failure replies for `/newtrip`, dialog answers, and `/cancel` in `TestHandlers_Failure`; `TestService_PinFails` (BUG-005)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -78,7 +84,7 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Any confirmation answer except exactly `no` publishes.~~ Fixed by BUG-002.
 - ~~`/newtrip` during the dialog becomes the answer to the current step.~~ Fixed by BUG-003.
 - ~~Free-text date without validation or time.~~ Fixed by BUG-004.
-- Failed steps give the user no reply; pin failure after the announcement.
+- ~~Failed steps give the user no reply; pin failure after the announcement.~~ Fixed by BUG-005.
 - Free text after cancel starts a new dialog.
 - Announcement goes to the session's chat (001 Gap 1).
 - Abandoned drafts stay in storage.

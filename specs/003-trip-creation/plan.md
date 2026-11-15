@@ -16,6 +16,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -134,7 +136,11 @@ through the dialog state.
    any other answer is asked again with `confirmKeyboard()` (BUG-002).
 5. **Publish order**: update the trip (completed; stored since BUG-001), check the creator, render
    the card, reset the state, save the session and send the announcement,
-   then pin it.
+   then pin it. A failed pin is logged and explained with `msgPinFailed`;
+   publishing still succeeds (BUG-005).
+5a. **Step failures** (BUG-005): `runTripStep` in `trips.go` runs
+   `createTrip` and replies with `replyError` when it fails; steps fail
+   before they save the next state.
 6. **Date and time** (BUG-004): the date step stores the start of the day,
    the time step replaces it with the start; both use the service time zone
    and reject the past. `main` embeds `time/tzdata` because the Docker image

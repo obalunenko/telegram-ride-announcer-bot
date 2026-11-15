@@ -488,18 +488,24 @@ func (s *Service) publishTrip(ctx context.Context, sess *models.Session) error {
 		return err
 	}
 
-	// TODO: Check if message really pinned
 	err = s.bot.Client().PinChatMessage(ctx, &tgbotapi.PinChatMessageParams{
 		ChatID:              tu.ID(resp.Chat.ID),
 		MessageID:           resp.MessageID,
 		DisableNotification: false,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to pin message: %w", err)
+		// The trip is published already; tell the user why the announcement is not pinned.
+		log.WithError(ctx, err).Warn("Failed to pin the trip announcement")
+
+		s.sendMessage(ctx, msgPinFailed)
 	}
 
 	return nil
 }
+
+// msgPinFailed tells the user that the announcement is published but not pinned.
+const msgPinFailed = "The trip is published, but I couldn't pin it. " +
+	"To pin announcements, make me an admin who can pin messages."
 
 func (s *Service) textHandler() th.Handler {
 	return func(c *th.Context, update tgbotapi.Update) error {

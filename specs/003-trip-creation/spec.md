@@ -18,6 +18,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-004 The dialog asks for a real date and a start time in the bot's time zone.
 
+**Bugfix**: 2026-11-15 — BUG-005 Failed steps reply with the error message; a failed pin is explained.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -118,6 +120,10 @@ announcement, the `pinChatMessage` call, and the state
    the state stays `StateNewTripConfirm` (BUG-002).
 2. **Given** the trip was published, **When** the user sends another message,
    **Then** their state is `StateStart` and they can start a new trip.
+5. **Given** the bot cannot pin messages in the chat, **When** the trip is
+   published, **Then** the trip stays published and the bot replies "The
+   trip is published, but I couldn't pin it. To pin announcements, make me
+   an admin who can pin messages." (BUG-005).
 3. **Given** the trip was published, **When** it is loaded from storage,
    **Then** it is completed; a trip that is not completed is a draft
    (BUG-001).
@@ -165,8 +171,11 @@ reply, the state, and that `/mytrips` shows no trips
 - **Midnight in the bot's time zone**: `today` is the current day in
   `RIDE_ANNOUNCER_TIMEZONE`, not in UTC (BUG-004).
 - **A step fails** (storage, rendering, or a Bot API call): the error is
-  logged and the user gets no reply. A pin failure happens after the
-  announcement was sent and the state was saved. (Gap 5.)
+  logged and ~~the user gets no reply. A pin failure happens after the
+  announcement was sent and the state was saved. (Gap 5.)~~ the user gets
+  "Sorry, something went wrong. Please try again."; the state is kept, so
+  the user can answer again. A failed pin keeps the trip published and is
+  explained (BUG-005).
 - **Free text after cancel**: the state `StateNewTrip` makes the next text
   message start a new trip dialog. (Gap 6.)
 - **Dialog in a private chat**: the announcement is sent and pinned in the
@@ -220,7 +229,10 @@ reply, the state, and that `/mytrips` shows no trips
 - **FR-012**: Publishing ~~SHOULD mark the trip as completed; the current code
   requests it but does not store it. (Gap 1.)~~ MUST mark the trip as
   completed in storage (BUG-001).
-- **FR-013**: A failed step MUST log the error.
+- **FR-013**: A failed step, `/newtrip`, or `/cancel` MUST log the error and
+  reply "Sorry, something went wrong. Please try again." without advancing
+  the state; a failed pin MUST NOT fail publishing and MUST be explained to
+  the user (BUG-005).
 - **FR-014**: `/cancel` MUST end the trip dialog on any step: delete the
   draft, reply "Your unfinished trip is discarded.", and set the state to
   `StateStart`; outside of the dialog it MUST reply "There is nothing to
@@ -272,8 +284,8 @@ Found during migration; none of them is fixed by this spec.
    Fixed by BUG-003.
 4. ~~The date is free text: no parsing, no validation, and no time step,
    although the prompt asks for "date and time".~~ Fixed by BUG-004.
-5. Failed steps give the user no reply; a pin failure is reported only after
-   the announcement was sent and the state saved.
+5. ~~Failed steps give the user no reply; a pin failure is reported only after
+   the announcement was sent and the state saved.~~ Fixed by BUG-005.
 6. After cancel, the state `StateNewTrip` makes the next free text start a
    new dialog.
 7. The announcement goes to the session's chat (001 Gap 1), so a dialog in a
