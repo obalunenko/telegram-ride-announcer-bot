@@ -12,6 +12,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
 ## Summary
 
 Every update passes through a telego middleware chain that recovers panics,
@@ -98,7 +100,7 @@ internal/
 │   ├── helper.go       # sendMessage to the session's chat
 │   └── backends/       # Set of repositories
 ├── ops/
-│   ├── users.go        # GetUser, CreateUser
+│   ├── users.go        # GetUser, CreateUser, UpdateUser (BUG-003)
 │   └── sessions.go     # GetSession, CreateSession, UpdateSession, ListSessions, DeleteSession
 ├── repository/
 │   ├── users/          # User records by Telegram ID
@@ -137,7 +139,10 @@ session's `StateID` for both `GetSession` and `ListSessions` (BUG-001).
 6. **Error reply without a session** (BUG-002): `replyError(ctx, chatID)` in
    `helper.go` sends `msgSomethingWentWrong` to a chat ID, so the session
    middleware can answer before a session exists.
-7. **Shutdown order**: farewell and session deletion for each session first,
+7. **User refresh** (BUG-003): `loadUser` in `middleware.go` gets, creates,
+   or updates the user, so `setSessionMiddleware` stays short; the update
+   runs only when the stored profile differs from the sender.
+8. **Shutdown order**: farewell and session deletion for each session first,
    then the stop function from `initHandlers` cancels polling and calls
    `handler.StopWithContext`.
 

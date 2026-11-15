@@ -20,6 +20,8 @@ type Repository interface {
 	Create(ctx context.Context, user *User) error
 	// GetBuID returns a user by ID.
 	GetBuID(ctx context.Context, id int64) (*User, error)
+	// Update replaces the stored user with the same ID.
+	Update(ctx context.Context, user *User) error
 	// List returns all users.
 	List(ctx context.Context) ([]*User, error)
 }
@@ -70,6 +72,19 @@ func (i *inMemoryRepository) GetBuID(_ context.Context, id int64) (*User, error)
 	}
 
 	return u, nil
+}
+
+func (i *inMemoryRepository) Update(_ context.Context, user *User) error {
+	i.Lock()
+	defer i.Unlock()
+
+	if _, ok := i.users[user.ID]; !ok {
+		return ErrNotFound
+	}
+
+	i.users[user.ID] = user
+
+	return nil
 }
 
 func (i *inMemoryRepository) List(_ context.Context) ([]*User, error) {

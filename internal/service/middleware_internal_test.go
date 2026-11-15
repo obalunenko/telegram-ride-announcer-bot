@@ -110,6 +110,23 @@ func TestSetSessionMiddleware(t *testing.T) {
 			wantChat:  otherChatID,
 		},
 		{
+			name:   "changed profile",
+			update: textUpdate(testUserID, "hello"),
+			setup: func(t *testing.T, repos *testRepos) {
+				createUser(t, repos, "old_john")
+			},
+			wantState: models.StateStart,
+		},
+		{
+			name:   "update user fails",
+			update: textUpdate(testUserID, "hello"),
+			setup: func(t *testing.T, repos *testRepos) {
+				createUser(t, repos, "old_john")
+				repos.users = failingUsers{Repository: repos.users, method: "Update"}
+			},
+			wantError: true,
+		},
+		{
 			name:   "message from the bot",
 			update: textUpdate(telegramtest.BotID, "hello"),
 		},
@@ -193,6 +210,18 @@ func TestSetSessionMiddleware(t *testing.T) {
 			assert.Equal(t, tt.wantState, sess.UserState.State)
 		})
 	}
+}
+
+// createUser stores the test user with the username.
+func createUser(t *testing.T, repos *testRepos, username string) {
+	t.Helper()
+
+	_, err := ops.CreateUser(context.Background(), repos, ops.CreateUserParams{
+		UserID:    testUserID,
+		Username:  username,
+		Firstname: "John",
+	})
+	require.NoError(t, err)
 }
 
 func TestPanicRecovery(t *testing.T) {

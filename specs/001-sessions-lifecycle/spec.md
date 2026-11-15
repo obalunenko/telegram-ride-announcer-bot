@@ -14,6 +14,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-002 Storage failures in the session middleware get an error reply.
 
+**Bugfix**: 2026-11-15 — BUG-003 The stored user profile follows the sender's Telegram profile.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (startup, signals, shutdown
@@ -84,6 +86,9 @@ that the next handler receives that state (`TestSetSessionMiddleware`, case
    same chat ID.
 2. **Given** a saved state that references a draft trip, **When** the session
    is loaded, **Then** the draft trip is loaded with it.
+3. **Given** a known user who changed their username or name in Telegram,
+   **When** they send a message, **Then** the stored profile is updated
+   before the handler runs (BUG-003).
 
 ---
 
@@ -153,8 +158,9 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 - **Storage failure while loading or creating the user or session**: the
   error is logged and the update is dropped; ~~the user gets no reply.
   (Gap 2.)~~ the user gets the error reply (BUG-002).
-- **Changed Telegram profile**: the stored username and names are never
-  refreshed after first contact. (Gap 3.)
+- **Changed Telegram profile**: ~~the stored username and names are never
+  refreshed after first contact. (Gap 3.)~~ the stored profile is updated on
+  the next message (BUG-003).
 - **Session list fails during shutdown**: `Shutdown` returns before it stops
   long polling and the handler, so no farewell is sent and in-flight updates
   are not awaited. (Gap 4.)
@@ -170,7 +176,9 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 ### Functional Requirements
 
 - **FR-001**: The bot MUST create a user record (Telegram ID, username, first
-  name, last name) on the first message from an unknown user.
+  name, last name) on the first message from an unknown user, and MUST
+  update the record when a later message shows a different username, first
+  name, or last name (BUG-003).
 - **FR-002**: ~~The bot MUST keep exactly one session and one dialog state per
   user; the first state is `StateStart`.~~ The bot MUST keep exactly one
   session and one dialog state per user and chat; the first state is
@@ -202,7 +210,8 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 ### Key Entities *(include if feature involves data)*
 
 - **User**: a Telegram user known to the bot: Telegram ID, username, first
-  name, last name. Created once, never updated.
+  name, last name. ~~Created once, never updated.~~ Created on first contact,
+  updated when the Telegram profile changes (BUG-003).
 - **Session**: the user's conversation with the bot in one chat: user, chat
   ID, and the dialog state. ~~One per user.~~ One per user and chat (BUG-001).
 - **Dialog state** (`UserState`): the user's current `models.State` step and
@@ -239,8 +248,8 @@ Found during migration; none of them is fixed by this spec.
    writing in.~~ Fixed by BUG-001.
 2. ~~Storage failures in `setSessionMiddleware` drop the update without
    telling the user.~~ Fixed by BUG-002.
-3. User profiles are never refreshed, so trip cards can show an old
-   username.
+3. ~~User profiles are never refreshed, so trip cards can show an old
+   username.~~ Fixed by BUG-003.
 4. `Service.Shutdown` returns early when listing sessions fails and skips
    stopping long polling and the handler.
 5. After a recovered panic the user gets no reply; the stack trace goes to

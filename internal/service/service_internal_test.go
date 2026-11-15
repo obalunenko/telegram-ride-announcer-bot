@@ -91,6 +91,14 @@ func (f failingUsers) GetBuID(ctx context.Context, id int64) (*users.User, error
 	return f.Repository.GetBuID(ctx, id)
 }
 
+func (f failingUsers) Update(ctx context.Context, user *users.User) error {
+	if f.method == "Update" {
+		return errTest
+	}
+
+	return f.Repository.Update(ctx, user)
+}
+
 // failingSessions fails the method named in it.
 type failingSessions struct {
 	sessions.Repository

@@ -10,6 +10,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
 
+	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/ops"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/sessions"
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/repository/users"
@@ -62,29 +63,12 @@ func (s *Service) setSessionMiddleware() th.Handler {
 			return nil
 		}
 
-		user, err := ops.GetUser(ctx, s.backends, uid)
+		user, err := s.loadUser(ctx, update.Message.From)
 		if err != nil {
-			if !errors.Is(err, users.ErrNotFound) {
-				log.WithError(ctx, err).Error("Failed to get user")
-				s.replyError(ctx, cid)
+			log.WithError(ctx, err).Error("Failed to load user")
+			s.replyError(ctx, cid)
 
-				return nil
-			}
-
-			p := ops.CreateUserParams{
-				UserID:    uid,
-				Username:  update.Message.From.Username,
-				Firstname: update.Message.From.FirstName,
-				Lastname:  update.Message.From.LastName,
-			}
-
-			user, err = ops.CreateUser(ctx, s.backends, p)
-			if err != nil {
-				log.WithError(ctx, err).Error("Failed to create user")
-				s.replyError(ctx, cid)
-
-				return nil
-			}
+			return nil
 		}
 
 		session, err := ops.GetSession(ctx, s.backends, user, cid)
@@ -114,6 +98,45 @@ func (s *Service) setSessionMiddleware() th.Handler {
 
 		return c.Next(update)
 	}
+}
+
+// loadUser returns the stored user of the sender. It creates the user on first contact
+// and refreshes the stored profile when the sender changed it in Telegram.
+func (s *Service) loadUser(ctx context.Context, from *tgbotapi.User) (*models.User, error) {
+	user, err := ops.GetUser(ctx, s.backends, from.ID)
+	if err != nil {
+		if !errors.Is(err, users.ErrNotFound) {
+			return nil, fmt.Errorf("get user: %w", err)
+		}
+
+		user, err = ops.CreateUser(ctx, s.backends, ops.CreateUserParams{
+			UserID:    from.ID,
+			Username:  from.Username,
+			Firstname: from.FirstName,
+			Lastname:  from.LastName,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("create user: %w", err)
+		}
+
+		return user, nil
+	}
+
+	if user.Username == from.Username && user.Firstname == from.FirstName && user.Lastname == from.LastName {
+		return user, nil
+	}
+
+	user, err = ops.UpdateUser(ctx, s.backends, ops.UpdateUserParams{
+		UserID:    from.ID,
+		Username:  from.Username,
+		Firstname: from.FirstName,
+		Lastname:  from.LastName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("update user: %w", err)
+	}
+
+	return user, nil
 }
 
 // PanicRecovery is a middleware that will recover handler from panic

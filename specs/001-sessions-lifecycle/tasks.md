@@ -15,6 +15,8 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 
 **Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -76,13 +78,18 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 - [x] T030 [US4] Reply with the error message in every failure branch of `setSessionMiddleware` in `internal/service/middleware.go` (depends on T029; BUG-002)
 - [x] T031 [P] [US4] Assert the error reply for failures and no reply for ignored updates in `TestSetSessionMiddleware` (BUG-002)
 
+- [x] T032 [P] [US2] `Update` in `internal/repository/users/users.go` with tests in `internal/repository/users/users_test.go` (BUG-003)
+- [x] T033 [US2] `UpdateUser` in `internal/ops/users.go` (depends on T032; BUG-003)
+- [x] T034 [US2] `loadUser` gets, creates, or refreshes the user for `setSessionMiddleware` in `internal/service/middleware.go` (depends on T033; BUG-003)
+- [x] T035 [P] [US2] Cases "changed profile" and "update user fails" in `TestSetSessionMiddleware` (BUG-003)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
 - ~~Session chat ID is fixed to the first message's chat.~~ Fixed by BUG-001.
 - ~~Storage failures in `setSessionMiddleware` give the user no reply.~~ Fixed by BUG-002.
-- User profiles are never refreshed.
+- ~~User profiles are never refreshed.~~ Fixed by BUG-003.
 - `Service.Shutdown` skips stopping polling when listing sessions fails.
 - Panics give the user no reply and print the stack with `fmt.Println`.
 - No tests for `internal/ops/{sessions,users}.go` and the `users`, `sessions`, `states` repositories.
