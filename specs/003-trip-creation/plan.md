@@ -22,6 +22,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-007 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-008 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -126,7 +128,8 @@ through the dialog state.
 
 1. **Draft trip from the first step**: `startTrip` creates an empty trip so
    every later step only updates one field, and the draft survives between
-   messages through the dialog state.
+   messages through the dialog state. `discardDraft` (002 BUG-002) deletes it
+   whenever a command ends the dialog (BUG-008).
 2. **Save before prompt**: `replyInTrip` saves the session, then sends the
    message, so the next answer always finds the new state.
 3. **Routing**: ~~`newTripHandler` resets to `StateNewTrip` only when the user

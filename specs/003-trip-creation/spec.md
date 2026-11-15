@@ -24,6 +24,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-007 The announcement and the pin go to the chat of the dialog (through 001 BUG-001).
 
+**Bugfix**: 2026-11-15 — BUG-008 Every command that ends the dialog deletes its draft.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -188,8 +190,10 @@ reply, the state, and that `/mytrips` shows no trips
   private chat~~, not in a group. (Gap 7.)~~; a dialog in a group is
   announced and pinned in that group, even when the user talked to the bot
   privately before (BUG-007).
-- **Interrupted dialog** (`/start`, `/help`, a failure, or a restart): the
-  draft trip stays in storage. (Gap 8.)
+- **Interrupted dialog** (`/start`, `/help`, a failure, or a restart): ~~the
+  draft trip stays in storage. (Gap 8.)~~ `/start`, `/help`, `/newtrip`, and
+  `/cancel` delete the draft; a failure keeps the dialog; a restart loses all
+  data (BUG-008).
 - **User without a username**: the card shows `Created By: @`. (Gap 9.)
 - **Draft owned by another user** in the session: the description and publish
   steps fail with "is not the creator of the trip".
@@ -235,6 +239,7 @@ reply, the state, and that `/mytrips` shows no trips
   dialog; free text from a user in `StateStart` MUST get the "Command not
   found" reply.
 - **FR-011**: A deleted trip MUST NOT be returned by trip lookups or lists.
+  A command that ends an unfinished dialog MUST delete its draft (BUG-008).
 - **FR-012**: Publishing ~~SHOULD mark the trip as completed; the current code
   requests it but does not store it. (Gap 1.)~~ MUST mark the trip as
   completed in storage (BUG-001).
@@ -300,7 +305,8 @@ Found during migration; none of them is fixed by this spec.
 7. ~~The announcement goes to the session's chat (001 Gap 1), so a dialog in a
    private chat is announced and pinned there.~~ Fixed by 001 BUG-001;
    tested by BUG-007.
-8. Abandoned drafts stay in storage.
+8. ~~Abandoned drafts stay in storage.~~ Fixed by 002 BUG-002 and BUG-003;
+   recorded by BUG-008.
 9. Users without a username appear as `@`; names and descriptions have no
    length limits.
 10. Planned steps in the `createTrip` comments were never built: a track link
