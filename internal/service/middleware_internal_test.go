@@ -75,20 +75,20 @@ func TestLoggerMiddleware(t *testing.T) {
 
 func TestSetSessionMiddleware(t *testing.T) {
 	tests := []struct {
-		name  string
-		from  int64
-		setup func(t *testing.T, repos *testRepos)
+		name   string
+		update tgbotapi.Update
+		setup  func(t *testing.T, repos *testRepos)
 		// wantState is the state of the session passed to the next handler; 0 means the chain is stopped.
 		wantState models.State
 	}{
 		{
 			name:      "new user",
-			from:      testUserID,
+			update:    textUpdate(testUserID, "hello"),
 			wantState: models.StateStart,
 		},
 		{
-			name: "existing session",
-			from: testUserID,
+			name:   "existing session",
+			update: textUpdate(testUserID, "hello"),
 			setup: func(t *testing.T, repos *testRepos) {
 				sess := newSession(t, repos, testUserID, models.StateNewTripName)
 				require.NoError(t, ops.UpdateSession(context.Background(), repos, sess))
@@ -96,26 +96,43 @@ func TestSetSessionMiddleware(t *testing.T) {
 			wantState: models.StateNewTripName,
 		},
 		{
-			name: "message from the bot",
-			from: telegramtest.BotID,
+			name:   "message from the bot",
+			update: textUpdate(telegramtest.BotID, "hello"),
 		},
 		{
-			name: "create user fails",
-			from: testUserID,
-			setup: func(_ *testing.T, repos *testRepos) {
-				repos.users = failingUsers{Repository: repos.users}
+			name:   "update without a message",
+			update: tgbotapi.Update{},
+		},
+		{
+			name: "message without a sender",
+			update: tgbotapi.Update{
+				Message: &tgbotapi.Message{Chat: tgbotapi.Chat{ID: testChatID}, Text: "hello"},
 			},
 		},
 		{
-			name: "get session fails",
-			from: testUserID,
+			name:   "get user fails",
+			update: textUpdate(testUserID, "hello"),
+			setup: func(_ *testing.T, repos *testRepos) {
+				repos.users = failingUsers{Repository: repos.users, method: "GetBuID"}
+			},
+		},
+		{
+			name:   "create user fails",
+			update: textUpdate(testUserID, "hello"),
+			setup: func(_ *testing.T, repos *testRepos) {
+				repos.users = failingUsers{Repository: repos.users, method: "Create"}
+			},
+		},
+		{
+			name:   "get session fails",
+			update: textUpdate(testUserID, "hello"),
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.sessions = failingSessions{Repository: repos.sessions, method: "GetSessionByUserID"}
 			},
 		},
 		{
-			name: "create session fails",
-			from: testUserID,
+			name:   "create session fails",
+			update: textUpdate(testUserID, "hello"),
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.sessions = failingSessions{Repository: repos.sessions, method: "CreateSession"}
 			},
@@ -131,7 +148,7 @@ func TestSetSessionMiddleware(t *testing.T) {
 				tt.setup(t, repos)
 			}
 
-			next := handleUpdate(t, svc, svc.setSessionMiddleware(), textUpdate(tt.from, "hello"))
+			next := handleUpdate(t, svc, svc.setSessionMiddleware(), tt.update)
 			if tt.wantState == 0 {
 				assert.Nil(t, next)
 

@@ -223,6 +223,14 @@ func TestService_CreateTrip(t *testing.T) {
 			wantErr: "failed to update trip",
 		},
 		{
+			name:  "start: save session",
+			state: models.StateNewTrip,
+			setup: func(_ *Service, repos *testRepos, _ *telegramtest.Server) {
+				repos.states = failingStates{Repository: repos.states}
+			},
+			wantErr: "failed to update session",
+		},
+		{
 			name:   "name: send reply",
 			state:  models.StateNewTripName,
 			text:   "Morning ride",
@@ -230,8 +238,7 @@ func TestService_CreateTrip(t *testing.T) {
 			setup: func(_ *Service, _ *testRepos, api *telegramtest.Server) {
 				api.Fail("sendMessage")
 			},
-			// The failed reply is only logged.
-			wantErr: "",
+			wantErr: "failed to send message",
 		},
 		{
 			name:   "date: update trip",
@@ -316,6 +323,16 @@ func TestService_CreateTrip(t *testing.T) {
 				svc.templates = failingRenderer{}
 			},
 			wantErr: "failed to render trip",
+		},
+		{
+			name:   "publish: save session",
+			state:  models.StateNewTripConfirm,
+			text:   "yes",
+			tripBy: testUserID,
+			setup: func(_ *Service, repos *testRepos, _ *telegramtest.Server) {
+				repos.states = failingStates{Repository: repos.states}
+			},
+			wantErr: "failed to update session",
 		},
 		{
 			name:   "publish: send announcement",

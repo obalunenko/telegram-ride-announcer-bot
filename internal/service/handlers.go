@@ -137,14 +137,6 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 
 	log.WithField(ctx, "UserState", sess.UserState.State.String()).Debug("Current Session UserState")
 
-	defer func() {
-		log.WithField(ctx, "UserState", sess.UserState.State.String()).Debug("Saving Session")
-
-		if err := s.saveSession(ctx, sess); err != nil {
-			log.WithError(ctx, err).Error("Failed to update session")
-		}
-	}()
-
 	// 1. Ask for trip name.
 
 	// 2. Ask for date and time
@@ -181,6 +173,27 @@ func (s *Service) createTrip(ctx context.Context, update tgbotapi.Update) error 
 	}
 }
 
+// replyInTrip saves the session and only then sends the reply of a trip step:
+// the user answers the reply, and the answer must find the session in the new state.
+func (s *Service) replyInTrip(
+	ctx context.Context,
+	sess *models.Session,
+	msg *tgbotapi.SendMessageParams,
+) (*tgbotapi.Message, error) {
+	log.WithField(ctx, "UserState", sess.UserState.State.String()).Debug("Saving Session")
+
+	if err := s.saveSession(ctx, sess); err != nil {
+		return nil, fmt.Errorf("failed to update session: %w", err)
+	}
+
+	resp, err := s.bot.Client().SendMessage(ctx, msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send message: %w", err)
+	}
+
+	return resp, nil
+}
+
 // startTrip creates a draft trip, if the session has none yet, and asks for the trip name.
 func (s *Service) startTrip(ctx context.Context, sess *models.Session) error {
 	if sess.UserState.Trip == nil {
@@ -201,11 +214,11 @@ func (s *Service) startTrip(ctx context.Context, sess *models.Session) error {
 
 	sess.UserState.State = models.StateNewTripName
 
-	msg := "Please enter trip name"
+	msg := tu.Message(tu.ID(sess.ChatID), "Please enter trip name")
 
-	s.sendMessage(ctx, msg)
+	_, err := s.replyInTrip(ctx, sess, msg)
 
-	return nil
+	return err
 }
 
 // setTripName saves the trip name and asks for the trip date.
@@ -237,12 +250,9 @@ func (s *Service) setTripName(ctx context.Context, sess *models.Session, name st
 
 	msg.WithReplyMarkup(keyboard)
 
-	_, err = s.bot.Client().SendMessage(ctx, msg)
-	if err != nil {
-		log.WithError(ctx, err).Error("Failed to send message")
-	}
+	_, err = s.replyInTrip(ctx, sess, msg)
 
-	return nil
+	return err
 }
 
 // setTripDate saves the trip date and asks for the trip description.
@@ -258,11 +268,11 @@ func (s *Service) setTripDate(ctx context.Context, sess *models.Session, date st
 
 	sess.UserState.State = models.StateNewTripDescription
 
-	msg := "Please enter trip description"
+	msg := tu.Message(tu.ID(sess.ChatID), "Please enter trip description")
 
-	s.sendMessage(ctx, msg)
+	_, err = s.replyInTrip(ctx, sess, msg)
 
-	return nil
+	return err
 }
 
 // setTripDescription saves the trip description and asks to confirm the trip.
@@ -300,12 +310,9 @@ func (s *Service) setTripDescription(ctx context.Context, sess *models.Session, 
 
 	msg.WithReplyMarkup(keyboard)
 
-	_, err = s.bot.Client().SendMessage(ctx, msg)
-	if err != nil {
-		return fmt.Errorf("failed to send message: %w", err)
-	}
+	_, err = s.replyInTrip(ctx, sess, msg)
 
-	return nil
+	return err
 }
 
 // confirmTrip cancels the trip on "no" and publishes it on any other answer.
@@ -319,19 +326,18 @@ func (s *Service) confirmTrip(ctx context.Context, sess *models.Session, confirm
 
 // cancelTrip deletes the draft trip and lets the user start a new one.
 func (s *Service) cancelTrip(ctx context.Context, sess *models.Session) error {
-	sess.UserState.State = models.StateNewTrip
-
 	if err := ops.DeleteTrip(ctx, s.backends, sess.UserState.Trip.ID); err != nil {
 		return fmt.Errorf("failed to delete trip: %w", err)
 	}
 
+	sess.UserState.State = models.StateNewTrip
 	sess.UserState.Trip = nil
 
-	msg := "Your trip is canceled. Thank you!"
+	msg := tu.Message(tu.ID(sess.ChatID), "Your trip is canceled. Thank you!")
 
-	s.sendMessage(ctx, msg)
+	_, err := s.replyInTrip(ctx, sess, msg)
 
-	return nil
+	return err
 }
 
 // publishTrip completes the trip, announces it to the chat and pins the announcement.
@@ -343,10 +349,6 @@ func (s *Service) publishTrip(ctx context.Context, sess *models.Session) error {
 		return fmt.Errorf("failed to update trip: %w", err)
 	}
 
-	sess.UserState.Trip = trip
-
-	sess.UserState.State = models.StateNewTripPublish
-
 	if sess.User.ID != trip.CreatedBy.ID {
 		return fmt.Errorf("user %d is not the creator of the trip %d", sess.User.ID, trip.ID)
 	}
@@ -356,13 +358,17 @@ func (s *Service) publishTrip(ctx context.Context, sess *models.Session) error {
 		return fmt.Errorf("failed to render trip: %w", err)
 	}
 
+	// The trip is complete, the user can start a new one.
+	sess.UserState.State = models.StateStart
+	sess.UserState.Trip = nil
+
 	msgtxt := fmt.Sprintf("Trip is published!\n\n%s", tripfmt)
 
 	msg := tu.Message(tu.ID(sess.ChatID), msgtxt)
 
-	resp, err := s.bot.Client().SendMessage(ctx, msg)
+	resp, err := s.replyInTrip(ctx, sess, msg)
 	if err != nil {
-		return fmt.Errorf("failed to send message: %w", err)
+		return err
 	}
 
 	// TODO: Check if message really pinned
@@ -374,9 +380,6 @@ func (s *Service) publishTrip(ctx context.Context, sess *models.Session) error {
 	if err != nil {
 		return fmt.Errorf("failed to pin message: %w", err)
 	}
-
-	sess.UserState.State = models.StateStart
-	sess.UserState.Trip = nil
 
 	return nil
 }

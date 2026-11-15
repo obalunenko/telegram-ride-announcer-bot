@@ -45,6 +45,13 @@ func (s *Service) setSessionMiddleware() th.Handler {
 	return func(c *th.Context, update tgbotapi.Update) error {
 		ctx := update.Context()
 
+		// All the handlers serve messages from users, other updates have no one to create a session for.
+		if update.Message == nil || update.Message.From == nil {
+			log.Debug(ctx, "Skipping update without a message from a user")
+
+			return nil
+		}
+
 		uid := update.Message.From.ID
 		cid := update.Message.Chat.ID
 
@@ -57,20 +64,24 @@ func (s *Service) setSessionMiddleware() th.Handler {
 
 		user, err := ops.GetUser(ctx, s.backends, uid)
 		if err != nil {
-			if errors.Is(err, users.ErrNotFound) {
-				p := ops.CreateUserParams{
-					UserID:    uid,
-					Username:  update.Message.From.Username,
-					Firstname: update.Message.From.FirstName,
-					Lastname:  update.Message.From.LastName,
-				}
+			if !errors.Is(err, users.ErrNotFound) {
+				log.WithError(ctx, err).Error("Failed to get user")
 
-				user, err = ops.CreateUser(ctx, s.backends, p)
-				if err != nil {
-					log.WithError(ctx, err).Error("Failed to create user")
+				return nil
+			}
 
-					return nil
-				}
+			p := ops.CreateUserParams{
+				UserID:    uid,
+				Username:  update.Message.From.Username,
+				Firstname: update.Message.From.FirstName,
+				Lastname:  update.Message.From.LastName,
+			}
+
+			user, err = ops.CreateUser(ctx, s.backends, p)
+			if err != nil {
+				log.WithError(ctx, err).Error("Failed to create user")
+
+				return nil
 			}
 		}
 

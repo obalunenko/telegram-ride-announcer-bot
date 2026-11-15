@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gofrs/uuid/v5"
 	tgbotapi "github.com/mymmrac/telego"
@@ -68,13 +67,27 @@ func (r *testRepos) TripsRepository() trips.Repository {
 	return r.trips
 }
 
-// failingUsers fails to create users.
+// failingUsers fails the method named in it.
 type failingUsers struct {
 	users.Repository
+
+	method string
 }
 
-func (failingUsers) Create(context.Context, *users.User) error {
-	return errTest
+func (f failingUsers) Create(ctx context.Context, user *users.User) error {
+	if f.method == "Create" {
+		return errTest
+	}
+
+	return f.Repository.Create(ctx, user)
+}
+
+func (f failingUsers) GetBuID(ctx context.Context, id int64) (*users.User, error) {
+	if f.method == "GetBuID" {
+		return nil, errTest
+	}
+
+	return f.Repository.GetBuID(ctx, id)
 }
 
 // failingSessions fails the method named in it.
@@ -226,19 +239,14 @@ func replyTo(t *testing.T, api *telegramtest.Server, text string) string {
 	return nextMessage(t, api)
 }
 
-// waitForState waits until the session of the test user is saved in the state.
-// The trip steps save the session after they reply, so a reply alone doesn't mean
-// that the next update sees the new state.
-func waitForState(t *testing.T, repos *testRepos, want models.State) {
+// assertState checks the saved session state of the test user. Handlers save the session
+// before they reply, so the state is checked right after the reply, without waiting.
+func assertState(t *testing.T, repos *testRepos, want models.State) {
 	t.Helper()
 
-	user := &models.User{ID: testUserID}
-
-	require.Eventually(t, func() bool {
-		sess, err := ops.GetSession(context.Background(), repos, user)
-
-		return err == nil && sess.UserState.State == want
-	}, time.Second, 10*time.Millisecond, "session state is not %s", want)
+	sess, err := ops.GetSession(context.Background(), repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	assert.Equal(t, want, sess.UserState.State)
 }
 
 func TestNew(t *testing.T) {
@@ -259,25 +267,25 @@ func TestService_PublishTrip(t *testing.T) {
 	assert.Contains(t, replyTo(t, api, "/help"), "Welcome to test_bot Help!")
 
 	assert.Equal(t, "Please enter trip name", replyTo(t, api, "/newtrip"))
-	waitForState(t, repos, models.StateNewTripName)
+	assertState(t, repos, models.StateNewTripName)
 
 	assert.Equal(t, `Your trip name "Morning ride". Please select date and time`, replyTo(t, api, "Morning ride"))
-	waitForState(t, repos, models.StateNewTripDate)
+	assertState(t, repos, models.StateNewTripDate)
 
 	assert.Equal(t, "Please enter trip description", replyTo(t, api, "today"))
-	waitForState(t, repos, models.StateNewTripDescription)
+	assertState(t, repos, models.StateNewTripDescription)
 
 	confirm := replyTo(t, api, "Easy pace")
 	assert.Contains(t, confirm, "Title: Morning ride\nDescription: Easy pace\nDate: today\nCreated By: @john")
 	assert.True(t, strings.HasSuffix(confirm, "Please confirm"), confirm)
-	waitForState(t, repos, models.StateNewTripConfirm)
+	assertState(t, repos, models.StateNewTripConfirm)
 
 	assert.True(t, strings.HasPrefix(replyTo(t, api, "yes"), "Trip is published!"))
 
 	pin := api.NextRequest(t)
 	assert.Equal(t, "pinChatMessage", pin.Method)
 	assert.EqualValues(t, testChatID, pin.Params["chat_id"])
-	waitForState(t, repos, models.StateStart)
+	assertState(t, repos, models.StateStart)
 
 	myTrips := replyTo(t, api, "/mytrips")
 	assert.True(t, strings.HasPrefix(myTrips, "Your trips:"), myTrips)
@@ -307,11 +315,11 @@ func TestService_CancelTrip(t *testing.T) {
 
 	for _, step := range steps {
 		replyTo(t, api, step.text)
-		waitForState(t, repos, step.state)
+		assertState(t, repos, step.state)
 	}
 
 	assert.Equal(t, "Your trip is canceled. Thank you!", replyTo(t, api, "no"))
-	waitForState(t, repos, models.StateNewTrip)
+	assertState(t, repos, models.StateNewTrip)
 
 	assert.Equal(t, "You have no trips yet. Use /newtrip command to create a new trip.", replyTo(t, api, "/mytrips"))
 
@@ -326,8 +334,7 @@ func TestService_Commands(t *testing.T) {
 
 	svc.Start(ctx)
 
-	// The bot ignores its own messages and survives an update without a message,
-	// which panics in the session middleware. Neither of them gets a reply.
+	// The bot ignores its own messages and updates without a message: neither gets a reply.
 	api.SendUpdate(textUpdate(telegramtest.BotID, "/help"))
 	api.SendUpdate(tgbotapi.Update{})
 
