@@ -66,6 +66,8 @@ type Bot struct {
 	name        string
 	description string
 	commands    Commands
+	// menu holds the commands declared with WithCommands.
+	menu Commands
 }
 
 // Description returns bot description.
@@ -93,9 +95,19 @@ func (b *Bot) Name() string {
 	return b.name
 }
 
-// Commands returns bot commands.
+// Commands returns the commands registered in Telegram.
 func (b *Bot) Commands() Commands {
 	return b.commands
+}
+
+// Menu returns the enabled commands declared with WithCommands, even when Telegram
+// did not accept them on start. Without declared commands, it returns the registered ones.
+func (b *Bot) Menu() []tgbotapi.BotCommand {
+	if len(b.menu) == 0 {
+		return b.commands.EnabledCommands()
+	}
+
+	return b.menu.EnabledCommands()
 }
 
 type botOptions struct {
@@ -173,6 +185,7 @@ func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) 
 		name:        self.FirstName,
 		description: description.Description,
 		commands:    toCommands(registedCmds),
+		menu:        params.commands,
 	}
 
 	bot.updateOnStart(ctx, params)

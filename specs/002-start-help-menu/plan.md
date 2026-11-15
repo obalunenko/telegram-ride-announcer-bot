@@ -14,6 +14,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
 ## Summary
 
 Commands are `Cmd*` constants in `internal/service/service.go`, registered
@@ -105,8 +107,10 @@ internal/
 ```
 
 **Structure Decision**: The menu definition lives in `main` with the rest of
-the wiring; `internal/telegram` owns the sync with Telegram; handlers read
-the synced menu through `bot.Commands()` for `/help`.
+the wiring; `internal/telegram` owns the sync with Telegram; ~~handlers read
+the synced menu through `bot.Commands()` for `/help`.~~ `/help` reads the
+declared menu through `bot.Menu()`, so a failed sync does not change it
+(BUG-004).
 
 ## Design Decisions (as built)
 

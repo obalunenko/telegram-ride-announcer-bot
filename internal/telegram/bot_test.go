@@ -130,6 +130,57 @@ func TestNewBot(t *testing.T) {
 	}
 }
 
+func TestBot_Menu(t *testing.T) {
+	helpCmd := tgbotapi.BotCommand{Command: "help", Description: "show help"}
+	tripsCmd := tgbotapi.BotCommand{Command: "trips", Description: "show trips"}
+
+	tests := []struct {
+		name string
+		opts []BotOption
+		fail string
+		want []tgbotapi.BotCommand
+	}{
+		{
+			name: "declared commands",
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, helpCmd.Description, true),
+				NewCommand(tripsCmd.Command, tripsCmd.Description, false),
+			})},
+			want: []tgbotapi.BotCommand{helpCmd},
+		},
+		{
+			name: "declared commands when the update fails",
+			opts: []BotOption{WithCommands(Commands{
+				NewCommand(helpCmd.Command, helpCmd.Description, true),
+				NewCommand(tripsCmd.Command, tripsCmd.Description, true),
+			})},
+			fail: "setMyCommands",
+			want: []tgbotapi.BotCommand{helpCmd, tripsCmd},
+		},
+		{
+			name: "no declared commands",
+			want: []tgbotapi.BotCommand{tripsCmd},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			api := telegramtest.NewServer(t)
+			api.SetResult("getMyCommands", []tgbotapi.BotCommand{tripsCmd})
+
+			if tt.fail != "" {
+				api.Fail(tt.fail)
+			}
+
+			opts := append([]BotOption{WithClientOptions(api.ClientOptions()...)}, tt.opts...)
+
+			bot, err := NewBot(context.Background(), telegramtest.Token, opts...)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, bot.Menu())
+		})
+	}
+}
+
 func TestNewBot_Error(t *testing.T) {
 	tests := []struct {
 		name    string

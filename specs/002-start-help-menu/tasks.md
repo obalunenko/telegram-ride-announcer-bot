@@ -17,6 +17,8 @@ description: "Migrated task list for Start, Help, and Command Menu"
 
 **Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -38,7 +40,7 @@ description: "Migrated task list for Start, Help, and Command Menu"
 ## Phase 3: User Story 2 - Command List on `/help` (P1)
 
 - [x] T008 [P] [US2] Help template in `internal/service/renderer/templates/help.gotmpl` with `internal/service/renderer/testdata/help.golden`
-- [x] T009 [US2] `helpHandler` resets the state and lists `bot.Commands()` in `internal/service/handlers.go`
+- [x] T009 [US2] ⚠️ Reopened `helpHandler` resets the state and lists `bot.Commands()` in `internal/service/handlers.go` (reopened — BUG-004; closed by T025)
 - [x] T010 [P] [US2] Golden test `TestTemplates_Help`; `/start` and `/help` replies in `TestService_PublishTrip`; save and render failures in `TestHandlers_Failure`
 
 ## Phase 4: User Story 3 - Fallback Replies (P2)
@@ -65,6 +67,9 @@ description: "Migrated task list for Start, Help, and Command Menu"
 - [x] T022 [US1] Reply with `replyError` on every failure in `startHandler` and `helpHandler` in `internal/service/handlers.go` (BUG-003)
 - [x] T023 [P] [US1] Error-reply assertions and the "start: discard draft" case in `TestHandlers_Failure` (BUG-003)
 
+- [x] T024 [US2] Keep the declared commands and add `Menu()` in `internal/telegram/bot.go` with `TestBot_Menu` in `internal/telegram/bot_test.go` (BUG-004)
+- [x] T025 [US2] List `bot.Menu()` in `helpHandler` in `internal/service/handlers.go` (depends on T024; BUG-004)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -72,6 +77,6 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~The welcome message promises trip lists, subscriptions, and weather-based recommendations that do not exist.~~ Fixed by BUG-001.
 - ~~`/start` and `/help` silently abandon `/newtrip` and leave the draft trip.~~ Fixed by BUG-002.
 - ~~Save and render failures give the user no reply.~~ Fixed by BUG-003.
-- `/help` can list a stale menu when the startup update failed.
+- ~~`/help` can list a stale menu when the startup update failed.~~ Fixed by BUG-004.
 - No service-level test for the `/help` command list.
 - Bot username without `@`; default language only; no short description.

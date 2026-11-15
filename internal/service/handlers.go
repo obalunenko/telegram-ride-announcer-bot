@@ -99,7 +99,7 @@ func (s *Service) helpHandler() th.Handler {
 
 		var cmdsStr string
 
-		for _, cmd := range s.bot.Commands() {
+		for _, cmd := range s.bot.Menu() {
 			cmdsStr += fmt.Sprintf("\t/%s - %s\n", cmd.Command, cmd.Description)
 		}
 

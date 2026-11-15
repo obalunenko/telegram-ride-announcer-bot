@@ -16,6 +16,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-003 `/start` and `/help` reply with the error message when they fail.
 
+**Bugfix**: 2026-11-15 — BUG-004 `/help` lists the enabled commands declared in the code.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (bot name, description,
@@ -77,9 +79,10 @@ short description.
 
 **Acceptance Scenarios**:
 
-1. **Given** the bot's registered menu, **When** a user sends `/help`,
-   **Then** the bot replies with `Welcome to <bot username> Help!` and one
-   line `/<command> - <description>` per menu command.
+1. **Given** ~~the bot's registered menu~~ the enabled commands declared in
+   the code (BUG-004), **When** a user sends `/help`, **Then** the bot
+   replies with `Welcome to <bot username> Help!` and one line
+   `/<command> - <description>` per enabled command.
 2. **Given** a user in any dialog state, **When** they send `/help`, **Then**
    their state is reset to `StateStart`.
 3. **Given** a user in the middle of `/newtrip`, **When** they send `/start`
@@ -154,8 +157,9 @@ reading the current profile.
 - **Saving the session or rendering a template fails**: the error is logged
   and ~~the user gets no reply. (Gap 3.)~~ the user gets "Sorry, something
   went wrong. Please try again." (BUG-003).
-- **Menu update failed on startup**: `/help` lists the commands that were
-  registered in Telegram before, not the ones in the code. (Gap 4.)
+- **Menu update failed on startup**: ~~`/help` lists the commands that were
+  registered in Telegram before, not the ones in the code. (Gap 4.)~~
+  `/help` still lists the enabled commands declared in the code (BUG-004).
 - **Disabled commands typed by hand**: they still get the "Not implemented
   yet" reply.
 - **Unknown dialog state**: free text is answered with "Command not found".
@@ -167,8 +171,9 @@ reading the current profile.
 - **FR-001**: `/start` MUST reply with the welcome message, greeting the user
   by first name and naming the bot by username. The welcome MUST describe
   only implemented features (BUG-001).
-- **FR-002**: `/help` MUST reply with the help message listing each menu
-  command as `/<command> - <description>`.
+- **FR-002**: `/help` MUST reply with the help message listing each ~~menu
+  command~~ enabled command declared in the code, whether or not Telegram
+  accepted the menu (BUG-004), as `/<command> - <description>`.
 - **FR-003**: `/start` and `/help` MUST reset the user's dialog state to
   `StateStart`; when a trip dialog is unfinished, they MUST delete its draft
   trip and reply "Your unfinished trip is discarded." first (BUG-002).
@@ -234,8 +239,8 @@ Found during migration; none of them is fixed by this spec.
    trip in the session and in storage.~~ Fixed by BUG-002.
 3. ~~Failures to save the session or render a template give the user no reply.~~
    Fixed by BUG-003.
-4. `/help` lists `bot.Commands()`, which can be stale when the menu update
-   failed on startup.
+4. ~~`/help` lists `bot.Commands()`, which can be stale when the menu update
+   failed on startup.~~ Fixed by BUG-004.
 5. No service-level test checks that `/help` lists exactly the enabled
    commands; tests check only the header.
 6. Minor: the bot username appears without `@`; only the default language
