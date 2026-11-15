@@ -82,6 +82,8 @@ func TestSetSessionMiddleware(t *testing.T) {
 		wantState models.State
 		// wantChat is the chat of the session passed to the next handler; 0 means the test chat.
 		wantChat int64
+		// wantError means the chain is stopped with an error reply to the user.
+		wantError bool
 	}{
 		{
 			name:      "new user",
@@ -127,6 +129,7 @@ func TestSetSessionMiddleware(t *testing.T) {
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.users = failingUsers{Repository: repos.users, method: "GetBuID"}
 			},
+			wantError: true,
 		},
 		{
 			name:   "create user fails",
@@ -134,6 +137,7 @@ func TestSetSessionMiddleware(t *testing.T) {
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.users = failingUsers{Repository: repos.users, method: "Create"}
 			},
+			wantError: true,
 		},
 		{
 			name:   "get session fails",
@@ -141,6 +145,7 @@ func TestSetSessionMiddleware(t *testing.T) {
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.sessions = failingSessions{Repository: repos.sessions, method: "GetSession"}
 			},
+			wantError: true,
 		},
 		{
 			name:   "create session fails",
@@ -148,13 +153,14 @@ func TestSetSessionMiddleware(t *testing.T) {
 			setup: func(_ *testing.T, repos *testRepos) {
 				repos.sessions = failingSessions{Repository: repos.sessions, method: "CreateSession"}
 			},
+			wantError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repos := newTestRepos()
-			svc, _ := newTestService(t, repos)
+			svc, api := newTestService(t, repos)
 
 			if tt.setup != nil {
 				tt.setup(t, repos)
@@ -163,6 +169,12 @@ func TestSetSessionMiddleware(t *testing.T) {
 			next := handleUpdate(t, svc, svc.setSessionMiddleware(), tt.update)
 			if tt.wantState == 0 {
 				assert.Nil(t, next)
+
+				if tt.wantError {
+					assert.Equal(t, msgSomethingWentWrong, nextMessage(t, api))
+				}
+
+				api.AssertNoRequest(t)
 
 				return
 			}

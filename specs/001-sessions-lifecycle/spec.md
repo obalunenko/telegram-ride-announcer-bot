@@ -12,6 +12,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-001 One session and dialog state per user and chat instead of per user.
 
+**Bugfix**: 2026-11-15 — BUG-002 Storage failures in the session middleware get an error reply.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (startup, signals, shutdown
@@ -136,6 +138,9 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
    log entry carries `user_id` and `chat_id`.
 5. **Given** a handler that runs without a session in its context, **When**
    it is called, **Then** it logs an error and returns without replying.
+6. **Given** loading or creating the user or session fails, **When** a
+   message arrives, **Then** the bot replies "Sorry, something went wrong.
+   Please try again." to that chat and drops the update (BUG-002).
 
 ---
 
@@ -146,8 +151,8 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
   chat go to that first chat. (Gap 1.)~~ each chat has its own session and
   dialog; replies go to the chat the user writes in (BUG-001).
 - **Storage failure while loading or creating the user or session**: the
-  error is logged and the update is dropped; the user gets no reply.
-  (Gap 2.)
+  error is logged and the update is dropped; ~~the user gets no reply.
+  (Gap 2.)~~ the user gets the error reply (BUG-002).
 - **Changed Telegram profile**: the stored username and names are never
   refreshed after first contact. (Gap 3.)
 - **Session list fails during shutdown**: `Shutdown` returns before it stops
@@ -178,7 +183,8 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 - **FR-005**: The bot MUST ignore updates without a message, messages without
   a sender, and messages sent by the bot itself.
 - **FR-006**: When loading or creating the user or session fails, the bot
-  MUST log the error and drop the update.
+  MUST log the error, reply "Sorry, something went wrong. Please try again."
+  to the chat of the message, and drop the update (BUG-002).
 - **FR-007**: The bot MUST recover from handler panics, log them, and keep
   handling updates.
 - **FR-008**: Log entries of a handled update MUST carry `user_id` and
@@ -231,8 +237,8 @@ Found during migration; none of them is fixed by this spec.
 1. ~~The session's chat ID never changes after the first message, so replies
    and announcements can go to a different chat than the one the user is
    writing in.~~ Fixed by BUG-001.
-2. Storage failures in `setSessionMiddleware` drop the update without
-   telling the user.
+2. ~~Storage failures in `setSessionMiddleware` drop the update without
+   telling the user.~~ Fixed by BUG-002.
 3. User profiles are never refreshed, so trip cards can show an old
    username.
 4. `Service.Shutdown` returns early when listing sessions fails and skips

@@ -11,6 +11,18 @@ import (
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/service/renderer"
 )
 
+// msgSomethingWentWrong is the reply to an update that the bot failed to handle.
+const msgSomethingWentWrong = "Sorry, something went wrong. Please try again."
+
+// replyError tells the chat that the bot failed to handle the update.
+// It does not need a session, so the middleware can use it too.
+func (s *Service) replyError(ctx context.Context, chatID int64) {
+	_, err := s.bot.Client().SendMessage(ctx, tu.Message(tu.ID(chatID), msgSomethingWentWrong))
+	if err != nil {
+		log.WithError(ctx, err).Error("Failed to send error message")
+	}
+}
+
 func (s *Service) sendMessage(ctx context.Context, text string) {
 	sess := sessionFromContext(ctx)
 	if sess == nil {

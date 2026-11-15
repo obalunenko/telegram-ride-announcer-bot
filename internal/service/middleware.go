@@ -66,6 +66,7 @@ func (s *Service) setSessionMiddleware() th.Handler {
 		if err != nil {
 			if !errors.Is(err, users.ErrNotFound) {
 				log.WithError(ctx, err).Error("Failed to get user")
+				s.replyError(ctx, cid)
 
 				return nil
 			}
@@ -80,6 +81,7 @@ func (s *Service) setSessionMiddleware() th.Handler {
 			user, err = ops.CreateUser(ctx, s.backends, p)
 			if err != nil {
 				log.WithError(ctx, err).Error("Failed to create user")
+				s.replyError(ctx, cid)
 
 				return nil
 			}
@@ -88,6 +90,7 @@ func (s *Service) setSessionMiddleware() th.Handler {
 		session, err := ops.GetSession(ctx, s.backends, user, cid)
 		if err != nil && !errors.Is(err, sessions.ErrNotFound) {
 			log.WithError(ctx, err).Error("Failed to get session")
+			s.replyError(ctx, cid)
 
 			return nil
 		}
@@ -99,6 +102,7 @@ func (s *Service) setSessionMiddleware() th.Handler {
 			})
 			if err != nil {
 				log.WithError(ctx, err).Error("Failed to create session")
+				s.replyError(ctx, cid)
 
 				return nil
 			}

@@ -10,6 +10,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
+
 ## Summary
 
 Every update passes through a telego middleware chain that recovers panics,
@@ -132,7 +134,10 @@ session's `StateID` for both `GetSession` and `ListSessions` (BUG-001).
 5. **Shutdown context**: `main` waits for a signal, then calls `Shutdown`
    with `context.WithoutCancel(ctx)` and a 10-second timeout, because the
    root context is already canceled.
-6. **Shutdown order**: farewell and session deletion for each session first,
+6. **Error reply without a session** (BUG-002): `replyError(ctx, chatID)` in
+   `helper.go` sends `msgSomethingWentWrong` to a chat ID, so the session
+   middleware can answer before a session exists.
+7. **Shutdown order**: farewell and session deletion for each session first,
    then the stop function from `initHandlers` cancels polling and calls
    `handler.StopWithContext`.
 
