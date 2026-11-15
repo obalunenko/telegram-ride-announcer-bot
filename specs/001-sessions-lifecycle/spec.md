@@ -20,6 +20,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-005 Recovered panics get the error reply and log the stack through the logger.
 
+**Bugfix**: 2026-11-15 — BUG-006 Users, sessions, states, and their operations have tests of their own.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (startup, signals, shutdown
@@ -240,6 +242,8 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
   message when the bot stops.
 - **SC-004**: A panic in one handler does not stop the bot from handling the
   next update.
+- **SC-005**: The users, sessions, and states repositories, the user and
+  session operations, and `models.State` pass their own tests (BUG-006).
 
 ## Assumptions
 
@@ -264,9 +268,9 @@ Found during migration; none of them is fixed by this spec.
    stopping long polling and the handler.~~ Fixed by BUG-004.
 5. ~~After a recovered panic the user gets no reply; the stack trace goes to
    stdout through `fmt.Println` instead of the logger.~~ Fixed by BUG-005.
-6. `internal/ops/sessions.go`, `internal/ops/users.go`, and the
+6. ~~`internal/ops/sessions.go`, `internal/ops/users.go`, and the
    `users`, `sessions`, and `states` repositories have no tests of their own
-   (constitution Known Deviation).
+   (constitution Known Deviation).~~ Fixed by BUG-006.
 7. Unused repository API: `states.ListStates`, `states.GetStateByID`,
    `users.List`, and `states.State.Command` (always empty). The log level
    cannot be configured.

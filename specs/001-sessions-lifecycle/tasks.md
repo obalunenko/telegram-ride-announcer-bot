@@ -21,6 +21,8 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 
 **Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -93,6 +95,10 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 - [x] T038 [US4] Log the panic stack as a field and reply with `replyError` in `panicRecovery` in `internal/service/middleware.go` (depends on T029; BUG-005)
 - [x] T039 [P] [US4] Cases "message" and "update without a message" in `TestPanicRecovery` (BUG-005)
 
+- [x] T040 [P] Tests for `ops.CreateUser`, `ops.GetUser`, `ops.UpdateUser` in `internal/ops/users_test.go` (BUG-006)
+- [x] T041 [P] Tests for session creation, lookup, update, per-chat dialogs, listing, and deletion in `internal/ops/sessions_test.go` (BUG-006)
+- [x] T042 [P] Tests for `State.Valid`, `State.IsAny`, `State.String`, `NewSession` in `internal/models/models_test.go` (BUG-006)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -102,5 +108,5 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~User profiles are never refreshed.~~ Fixed by BUG-003.
 - ~~`Service.Shutdown` skips stopping polling when listing sessions fails.~~ Fixed by BUG-004.
 - ~~Panics give the user no reply and print the stack with `fmt.Println`.~~ Fixed by BUG-005.
-- No tests for `internal/ops/{sessions,users}.go` and the `users`, `sessions`, `states` repositories.
+- ~~No tests for `internal/ops/{sessions,users}.go` and the `users`, `sessions`, `states` repositories.~~ Fixed by BUG-006.
 - Unused API: `states.ListStates`, `states.GetStateByID`, `users.List`, `states.State.Command`.

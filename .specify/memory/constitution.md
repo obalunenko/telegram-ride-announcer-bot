@@ -1,15 +1,16 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.2 → 1.1.0 (MINOR: changed session rule)
-- Modified: III (one session per user and chat instead of per user, from
-  specs/001-sessions-lifecycle BUG-001)
+- Version change: 1.1.0 → 1.1.1 (PATCH: narrowed a known deviation)
+- Modified: Known Deviations (users, sessions, states, their operations, and
+  models now have tests; only the trip packages remain untested, from
+  specs/001-sessions-lifecycle BUG-006)
 - Added sections: none; Removed sections: none
 - Templates: spec-template.md, plan-template.md, tasks-template.md, AGENTS.md —
   no change needed
 - Follow-up: none
-- Previous: 1.0.1 → 1.0.2 resolved tooling known deviations; 1.0.0 → 1.0.1
-  factual corrections from /speckit-brownfield-validate; template → 1.0.0
-  initial ratification from the brownfield scan
+- Previous: 1.0.2 → 1.1.0 one session per user and chat; 1.0.1 → 1.0.2
+  resolved tooling known deviations; 1.0.0 → 1.0.1 factual corrections from
+  /speckit-brownfield-validate; template → 1.0.0 initial ratification
 -->
 
 # Telegram Ride Announcer Bot Constitution
@@ -181,9 +182,8 @@ Evidence: `//go:generate` in `internal/models/models.go`,
 These are current exceptions. They are not rules, and new features MUST NOT
 extend them:
 
-- `internal/ops`, `internal/repository/*`, and `internal/models` have no
-  tests of their own; they are exercised only through `internal/service`
-  tests.
+- `internal/ops/trips.go` and `internal/repository/trips` have no tests of
+  their own; they are exercised only through `internal/service` tests.
 - `StateNewTripTime` and `StateNewTripPublish` are declared and routed by
   `textHandler`, but no step sets them and `createTrip` has no branch for
   them.
@@ -201,4 +201,4 @@ extend them:
   sections, PATCH for clarifications.
 - Resolving a known deviation removes it from the list in a PATCH amendment.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.1.1 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15

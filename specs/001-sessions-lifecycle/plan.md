@@ -18,6 +18,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-005 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
+
 ## Summary
 
 Every update passes through a telego middleware chain that recovers panics,
@@ -47,6 +49,8 @@ lost on restart.
 `TestLoggerMiddleware`, `TestSetContextMiddleware`, `TestPanicRecovery`);
 `TestHandlers_NoSession` in `handlers_internal_test.go`; farewell checks in
 `service_internal_test.go` against `internal/telegram/telegramtest`.
+Package tests (BUG-006): `internal/repository/{users,sessions,states}/*_test.go`,
+`internal/ops/{users,sessions}_test.go`, `internal/models/models_test.go`.
 
 **Target Platform**: Long-running bot binary and Docker image. CGO disabled.
 
@@ -72,9 +76,10 @@ run concurrently, so repositories must be safe for concurrent use.
 - [x] III. The session stores the `models.State` and draft trip; new users
       start in `StateStart`.
 - [x] IV. N/A: no commands or templates of its own.
-- [ ] V. Middleware behavior is tested against `telegramtest`, but
-      `internal/ops/{sessions,users}.go` and the three repositories have no
-      tests of their own (Known Deviation; spec Gap 6).
+- [x] V. Middleware behavior is tested against `telegramtest`;
+      ~~`internal/ops/{sessions,users}.go` and the three repositories have no
+      tests of their own (Known Deviation; spec Gap 6).~~ the repositories,
+      operations, and models have their own tests (BUG-006).
 - [x] VI. No generated code involved.
 - [ ] `README.md` does not document `RIDE_ANNOUNCER_TELEGRAM_TOKEN` (Known
       Deviation).
