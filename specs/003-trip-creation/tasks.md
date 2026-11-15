@@ -13,6 +13,8 @@ description: "Migrated task list for Trip Creation and Publication"
 
 **Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -52,12 +54,15 @@ description: "Migrated task list for Trip Creation and Publication"
 - [x] T018 [US2] Pass `Completed` in `ops.UpdateTrip`; add `Completed` to `models.Trip` and map it in `GetTrip` and `ListTripsByUser` in `internal/ops/trips.go`, `internal/models/models.go` (BUG-001)
 - [x] T019 [P] [US2] Tests for the trips repository in `internal/repository/trips/trips_test.go` and for `internal/ops/trips_test.go`; completed check in `TestService_PublishTrip` (BUG-001)
 
+- [x] T020 [US2] Match `yes` and `no` ignoring case and spaces, ask again otherwise, and share `confirmKeyboard()` in `internal/service/handlers.go` (BUG-002)
+- [x] T021 [P] [US2] `TestService_ConfirmTrip` and the `toConfirmation` helper in `internal/service/service_internal_test.go` (BUG-002)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
 
 - ~~Bug: `ops.UpdateTrip` drops `Completed`, so published trips are never marked completed; `models.Trip` has no completed field.~~ Fixed by BUG-001.
-- Any confirmation answer except exactly `no` publishes.
+- ~~Any confirmation answer except exactly `no` publishes.~~ Fixed by BUG-002.
 - `/newtrip` during the dialog becomes the answer to the current step.
 - Free-text date without validation or time.
 - Failed steps give the user no reply; pin failure after the announcement.

@@ -10,6 +10,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
+
 ## Summary
 
 `/newtrip` puts the session into `StateNewTrip`, and `createTrip` dispatches
@@ -114,7 +116,9 @@ through the dialog state.
 3. **Routing**: `newTripHandler` resets to `StateNewTrip` only when the user
    is not in a trip state; `textHandler` routes text in any trip state to
    `newTripHandler`; `createTrip` switches on the state.
-4. **Confirmation**: exact `no` cancels; every other answer publishes.
+4. **Confirmation**: ~~exact `no` cancels; every other answer publishes.~~
+   `yes` publishes and `no` cancels, ignoring case and surrounding spaces;
+   any other answer is asked again with `confirmKeyboard()` (BUG-002).
 5. **Publish order**: update the trip (completed; stored since BUG-001), check the creator, render
    the card, reset the state, save the session and send the announcement,
    then pin it.

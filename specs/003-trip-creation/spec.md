@@ -12,6 +12,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-001 Publishing marks the trip completed.
 
+**Bugfix**: 2026-11-15 — BUG-002 Only `yes` publishes and only `no` cancels; other answers are asked again.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -83,8 +85,13 @@ announcement, the `pinChatMessage` call, and the state
 **Acceptance Scenarios**:
 
 1. **Given** the state `StateNewTripConfirm`, **When** the user answers
-   `yes`, **Then** the bot sends `Trip is published!` followed by the trip
-   card to the session's chat and pins that message.
+   `yes` (in any case, with or without surrounding spaces, BUG-002), **Then**
+   the bot sends `Trip is published!` followed by the trip card to the
+   session's chat and pins that message.
+4. **Given** the state `StateNewTripConfirm`, **When** the user answers
+   anything other than `yes` or `no`, **Then** the bot replies "Please answer
+   "yes" to publish the trip or "no" to cancel it." with the same buttons and
+   the state stays `StateNewTripConfirm` (BUG-002).
 2. **Given** the trip was published, **When** the user sends another message,
    **Then** their state is `StateStart` and they can start a new trip.
 3. **Given** the trip was published, **When** it is loaded from storage,
@@ -117,8 +124,9 @@ reply, the state, and that `/mytrips` shows no trips
 
 ### Edge Cases
 
-- **Any answer other than exactly `no`** at the confirmation step publishes
-  the trip, including `No`, `nope`, or `maybe`. (Gap 2.)
+- ~~**Any answer other than exactly `no`** at the confirmation step publishes
+  the trip, including `No`, `nope`, or `maybe`. (Gap 2.)~~ **Unclear answer
+  at the confirmation step**: the bot asks again (BUG-002).
 - **`/newtrip` sent during the dialog** is handled as the answer to the
   current step; for example, it becomes the trip name. (Gap 3.)
 - **Free-text date**: any text is stored as the date; nothing is parsed or
@@ -152,11 +160,14 @@ reply, the state, and that `/mytrips` shows no trips
   to confirm with `yes` and `no` buttons.
 - **FR-005**: Each step MUST save the new dialog state before sending the
   prompt for the next answer.
-- **FR-006**: The answer `no` MUST delete the draft trip, reply "Your trip is
-  canceled. Thank you!", and set the state to `StateNewTrip`.
-- **FR-007**: Any other answer MUST publish the trip: send `Trip is
+- **FR-006**: The answer `no` (ignoring case and surrounding spaces, BUG-002)
+  MUST delete the draft trip, reply "Your trip is canceled. Thank you!", and
+  set the state to `StateNewTrip`.
+- **FR-007**: ~~Any other answer~~ The answer `yes` (ignoring case and
+  surrounding spaces, BUG-002) MUST publish the trip: send `Trip is
   published!` with the trip card to the session's chat, pin that message, and
-  set the state to `StateStart`.
+  set the state to `StateStart`. Any other answer MUST be asked again without
+  changing the state (BUG-002).
 - **FR-008**: The description and publish steps MUST refuse a draft trip that
   the user did not create.
 - **FR-009**: The trip card MUST show the title, description, date, and the
@@ -207,7 +218,8 @@ Found during migration; none of them is fixed by this spec.
 1. ~~Published trips are never marked completed: `ops.UpdateTrip` does not pass
    `Completed` to the repository, and `models.Trip` has no completed field,
    so drafts and published trips cannot be told apart.~~ Fixed by BUG-001.
-2. Any confirmation answer except exactly `no` publishes the trip.
+2. ~~Any confirmation answer except exactly `no` publishes the trip.~~ Fixed by
+   BUG-002.
 3. `/newtrip` during the dialog is taken as the answer to the current step.
 4. The date is free text: no parsing, no validation, and no time step,
    although the prompt asks for "date and time".

@@ -326,15 +326,6 @@ func (s *Service) setTripDescription(ctx context.Context, sess *models.Session, 
 
 	sess.UserState.State = models.StateNewTripConfirm
 
-	keyboard := tu.Keyboard(
-		tu.KeyboardRow(
-			tu.KeyboardButton("yes"),
-		),
-		tu.KeyboardRow(
-			tu.KeyboardButton("no"),
-		),
-	).WithResizeKeyboard().WithInputFieldPlaceholder("Confirm").WithOneTimeKeyboard()
-
 	if sess.User.ID != trip.CreatedBy.ID {
 		return fmt.Errorf("user %d is not the creator of the trip %d", sess.User.ID, trip.ID)
 	}
@@ -346,20 +337,48 @@ func (s *Service) setTripDescription(ctx context.Context, sess *models.Session, 
 
 	msg := tu.Message(tu.ID(sess.ChatID), fmt.Sprintf("%s\n\nPlease confirm", tripfmt))
 
-	msg.WithReplyMarkup(keyboard)
+	msg.WithReplyMarkup(confirmKeyboard())
 
 	_, err = s.replyInTrip(ctx, sess, msg)
 
 	return err
 }
 
-// confirmTrip cancels the trip on "no" and publishes it on any other answer.
-func (s *Service) confirmTrip(ctx context.Context, sess *models.Session, confirm string) error {
-	if confirm == "no" {
-		return s.cancelTrip(ctx, sess)
-	}
+const (
+	answerYes = "yes"
+	answerNo  = "no"
 
-	return s.publishTrip(ctx, sess)
+	// msgConfirmAgain asks again when the answer to the confirmation is neither yes nor no.
+	msgConfirmAgain = `Please answer "yes" to publish the trip or "no" to cancel it.`
+)
+
+// confirmKeyboard offers the answers to the trip confirmation.
+func confirmKeyboard() *tgbotapi.ReplyKeyboardMarkup {
+	return tu.Keyboard(
+		tu.KeyboardRow(
+			tu.KeyboardButton(answerYes),
+		),
+		tu.KeyboardRow(
+			tu.KeyboardButton(answerNo),
+		),
+	).WithResizeKeyboard().WithInputFieldPlaceholder("Confirm").WithOneTimeKeyboard()
+}
+
+// confirmTrip publishes the trip on "yes", cancels it on "no", and asks again on any other answer.
+// Answers are matched ignoring case and surrounding spaces.
+func (s *Service) confirmTrip(ctx context.Context, sess *models.Session, confirm string) error {
+	switch strings.ToLower(strings.TrimSpace(confirm)) {
+	case answerYes:
+		return s.publishTrip(ctx, sess)
+	case answerNo:
+		return s.cancelTrip(ctx, sess)
+	default:
+		msg := tu.Message(tu.ID(sess.ChatID), msgConfirmAgain).WithReplyMarkup(confirmKeyboard())
+
+		_, err := s.replyInTrip(ctx, sess, msg)
+
+		return err
+	}
 }
 
 // cancelTrip deletes the draft trip and lets the user start a new one.

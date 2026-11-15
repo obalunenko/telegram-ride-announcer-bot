@@ -357,6 +357,80 @@ func TestService_PublishTrip(t *testing.T) {
 	assert.Equal(t, msgFarewell, nextMessage(t, api))
 }
 
+// toConfirmation runs the trip dialog up to the confirmation step.
+func toConfirmation(t *testing.T, api *telegramtest.Server, repos *testRepos) {
+	t.Helper()
+
+	replyTo(t, api, "/newtrip")
+	replyTo(t, api, "Morning ride")
+	replyTo(t, api, "today")
+	replyTo(t, api, "Easy pace")
+	assertState(t, repos, models.StateNewTripConfirm)
+}
+
+func TestService_ConfirmTrip(t *testing.T) {
+	tests := []struct {
+		name       string
+		answers    []string
+		wantPrefix string
+		wantState  models.State
+	}{
+		{
+			name:       "yes in another case",
+			answers:    []string{"Yes"},
+			wantPrefix: "Trip is published!",
+			wantState:  models.StateStart,
+		},
+		{
+			name:       "no with spaces",
+			answers:    []string{" NO "},
+			wantPrefix: "Your trip is canceled.",
+			wantState:  models.StateNewTrip,
+		},
+		{
+			name:       "unclear answer",
+			answers:    []string{"maybe"},
+			wantPrefix: msgConfirmAgain,
+			wantState:  models.StateNewTripConfirm,
+		},
+		{
+			name:       "yes after an unclear answer",
+			answers:    []string{"maybe", "yes"},
+			wantPrefix: "Trip is published!",
+			wantState:  models.StateStart,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			repos := newTestRepos()
+			svc, api := newTestService(t, repos)
+
+			svc.Start(ctx)
+
+			toConfirmation(t, api, repos)
+
+			var reply string
+
+			for _, answer := range tt.answers {
+				reply = replyTo(t, api, answer)
+			}
+
+			assert.True(t, strings.HasPrefix(reply, tt.wantPrefix), reply)
+			assertState(t, repos, tt.wantState)
+
+			if tt.wantState == models.StateStart {
+				assert.Equal(t, "pinChatMessage", api.NextRequest(t).Method)
+			}
+
+			svc.Shutdown(ctx)
+			assert.Equal(t, msgFarewell, nextMessage(t, api))
+		})
+	}
+}
+
 func TestService_CancelTrip(t *testing.T) {
 	ctx := context.Background()
 
