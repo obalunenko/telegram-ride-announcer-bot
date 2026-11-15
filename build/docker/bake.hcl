@@ -38,12 +38,3 @@ target "rideannouncer" {
     "${BUILD_TAG}"
   ]
 }
-
-target "go-tools"{
-  dockerfile = "${DOCKERFILE_PATH}"
-  context    = "."
-  platforms  = ["linux/amd64", "linux/arm64"]
-    tags       = [
-        "${BUILD_TAG}"
-    ]
-}

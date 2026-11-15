@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM ghcr.io/obalunenko/go-tools:v1.7.0 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine3.24 AS builder
 
 LABEL maintainer="oleg.balunenko@gmail.com"
 LABEL org.opencontainers.image.source="https://github.com/obalunenko/scrum-report"
@@ -10,9 +10,8 @@ COPY . .
 
 ARG TARGETOS
 ARG TARGETARCH
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH make compile-app
-RUN mkdir -p /app && \
-    cp ./bin/rideannouncer /app/
+# The same build as `make compile-app`, without make and the repo scripts.
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /app/rideannouncer ./cmd/rideannouncer
 
 
 FROM alpine:3.21 AS final
