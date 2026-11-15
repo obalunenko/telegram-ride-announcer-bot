@@ -1,18 +1,22 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.5 → 1.1.6 (PATCH: resolved the last known deviation)
-- Modified: Known Deviations (`StateNewTripPublish` is removed since
-  specs/003-trip-creation BUG-010; no deviations remain)
+- Version change: 1.1.6 → 1.2.0 (MINOR: expanded principle III)
+- Modified: III (dialog answers are routed through the trip states in
+  `textHandler`, not `newTripHandler`; commands that end a dialog go through
+  `resetDialog` and delete its draft; replies to unclear or invalid answers
+  keep the state), from the bugfixes of specs/002 and specs/003
 - Added sections: none; Removed sections: none
-- Templates: spec-template.md, plan-template.md, tasks-template.md, AGENTS.md —
+- Templates: plan-template.md (Constitution Check III), tasks-template.md
+  (routing task), spec-template.md (input edge cases) — updated; AGENTS.md —
   no change needed
 - Follow-up: none
-- Previous: 1.1.4 → 1.1.5 `StateNewTripTime` handled, timezone variable;
-  1.1.3 → 1.1.4 trip packages have tests; 1.1.2 → 1.1.3 README lists the
-  commands; 1.1.1 → 1.1.2 README documents the configuration; 1.1.0 → 1.1.1
-  only the trip packages remained untested; 1.0.2 → 1.1.0 one session per
-  user and chat; 1.0.1 → 1.0.2 resolved tooling known deviations; 1.0.0 →
-  1.0.1 factual corrections; template → 1.0.0 initial ratification
+- Previous: 1.1.5 → 1.1.6 no known deviations left; 1.1.4 → 1.1.5
+  `StateNewTripTime` handled, timezone variable; 1.1.3 → 1.1.4 trip packages
+  have tests; 1.1.2 → 1.1.3 README lists the commands; 1.1.1 → 1.1.2 README
+  documents the configuration; 1.1.0 → 1.1.1 only the trip packages remained
+  untested; 1.0.2 → 1.1.0 one session per user and chat; 1.0.1 → 1.0.2
+  resolved tooling known deviations; 1.0.0 → 1.0.1 factual corrections;
+  template → 1.0.0 initial ratification
 -->
 
 # Telegram Ride Announcer Bot Constitution
@@ -75,19 +79,24 @@ Evidence: `internal/repository/*/*.go`; `internal/service/backends/backends.go`.
 - Multi-step dialogs are transitions of `models.State`, stored in the user's
   session (`Session.UserState`) together with the draft trip.
 - A new step adds a `State` constant before `stateSentinel`, regenerates
-  `internal/models/state_string.go` with `make codegen`, and is routed in
-  `textHandler`, `newTripHandler`, and `createTrip` in `internal/service/`.
-  Every state that a step sets MUST have a branch in `createTrip`.
+  `internal/models/state_string.go` with `make codegen`, is added to the trip
+  states that `textHandler` routes to `tripAnswerHandler`, and gets a branch
+  in `createTrip` in `internal/service/`. Every state that a step sets MUST
+  have a branch in `createTrip`.
 - A step MUST save the session before it sends the reply that asks for the
   next input (`replyInTrip`), so the user's answer finds the session in the
-  new state.
-- `/start` and `/help` reset the session to `StateStart`.
+  new state. An unclear or invalid answer is asked again without changing
+  the state.
+- Commands that end a dialog (`/start`, `/help`, `/newtrip`, `/cancel`) go
+  through `resetDialog`, which deletes the draft trip and tells the user;
+  `/start`, `/help`, and `/cancel` leave the session in `StateStart`.
 - One session and one dialog state exist per user and chat, created by
   `setSessionMiddleware` on the user's first message in that chat. Replies
   go to the chat of the session.
 
 Evidence: `internal/models/models.go`; `internal/service/handlers.go`
-(`createTrip`, `replyInTrip`, `textHandler`); `internal/service/middleware.go`;
+(`createTrip`, `replyInTrip`, `resetDialog`, `textHandler`);
+`internal/service/trips.go`; `internal/service/middleware.go`;
 `internal/repository/sessions/sessions.go`.
 
 ### IV. Keep the Command and Message Contract Consistent
@@ -198,4 +207,4 @@ extend them:
   sections, PATCH for clarifications.
 - Resolving a known deviation removes it from the list in a PATCH amendment.
 
-**Version**: 1.1.6 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.2.0 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-16
