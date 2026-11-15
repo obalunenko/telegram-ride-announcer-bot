@@ -99,7 +99,8 @@ type stopFunc func(ctx context.Context)
 
 func (s *Service) initHandlers(ctx context.Context) stopFunc {
 	// Canceling pollCtx stops long polling and closes pollChan.
-	pollCtx, stopPolling := context.WithCancel(ctx)
+	// stopPolling can't be deferred here: the returned stop function calls it on Shutdown.
+	pollCtx, stopPolling := context.WithCancel(ctx) // NOSONAR
 
 	// nil params use the default long polling timeout.
 	pollChan, err := s.bot.Client().UpdatesViaLongPolling(pollCtx, nil)
