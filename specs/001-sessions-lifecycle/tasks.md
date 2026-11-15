@@ -17,6 +17,8 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 
 **Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -49,7 +51,7 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 ## Phase 5: User Story 3 - Graceful Shutdown With a Farewell (P2)
 
 - [x] T013 [US3] Signal handling, `context.WithCancelCause`, and a 10-second shutdown context with `context.WithoutCancel` in `cmd/rideannouncer/main.go`
-- [x] T014 [US3] Farewell to every session, session deletion, then the stop function in `Service.Shutdown` in `internal/service/service.go`
+- [x] T014 [US3] Farewell to every session, session deletion, then the stop function in `Service.Shutdown` in `internal/service/service.go` (reopened — BUG-004; closed by T036)
 - [x] T015 [US3] Stop long polling and wait for handlers with `StopWithContext` in `initHandlers` in `internal/service/service.go`
 - [x] T016 [P] [US3] Farewell assertions after `Shutdown` in `TestService_PublishTrip`, `TestService_CancelTrip`, `TestService_Commands` in `internal/service/service_internal_test.go`
 
@@ -83,6 +85,9 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 - [x] T034 [US2] `loadUser` gets, creates, or refreshes the user for `setSessionMiddleware` in `internal/service/middleware.go` (depends on T033; BUG-003)
 - [x] T035 [P] [US2] Cases "changed profile" and "update user fails" in `TestSetSessionMiddleware` (BUG-003)
 
+- [x] T036 [US3] Move the farewells into `sayGoodbye` and always run the stop functions in `Service.Shutdown` in `internal/service/service.go` (BUG-004)
+- [x] T037 [P] [US3] `TestService_Shutdown_ListSessionsFails` in `internal/service/service_internal_test.go` (BUG-004)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -90,7 +95,7 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~Session chat ID is fixed to the first message's chat.~~ Fixed by BUG-001.
 - ~~Storage failures in `setSessionMiddleware` give the user no reply.~~ Fixed by BUG-002.
 - ~~User profiles are never refreshed.~~ Fixed by BUG-003.
-- `Service.Shutdown` skips stopping polling when listing sessions fails.
+- ~~`Service.Shutdown` skips stopping polling when listing sessions fails.~~ Fixed by BUG-004.
 - Panics give the user no reply and print the stack with `fmt.Println`.
 - No tests for `internal/ops/{sessions,users}.go` and the `users`, `sessions`, `states` repositories.
 - Unused API: `states.ListStates`, `states.GetStateByID`, `users.List`, `states.State.Command`.

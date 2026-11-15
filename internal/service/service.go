@@ -70,7 +70,17 @@ func (s *Service) Start(ctx context.Context) {
 
 // Shutdown is a helper function that will be called when the program receives an interrupt signal.
 // It will gracefully shut down the bot by waiting for all requests to be processed before shutting down.
+// It stops the bot even when it fails to say goodbye.
 func (s *Service) Shutdown(ctx context.Context) {
+	s.sayGoodbye(ctx)
+
+	for _, fn := range s.stopFns {
+		fn(ctx)
+	}
+}
+
+// sayGoodbye sends the farewell to every session and deletes the session.
+func (s *Service) sayGoodbye(ctx context.Context) {
 	list, err := ops.ListSessions(ctx, s.backends)
 	if err != nil {
 		log.WithError(ctx, err).Error("Failed to get sessions")
@@ -88,10 +98,6 @@ func (s *Service) Shutdown(ctx context.Context) {
 
 			continue
 		}
-	}
-
-	for _, fn := range s.stopFns {
-		fn(ctx)
 	}
 }
 

@@ -16,6 +16,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-003 The stored user profile follows the sender's Telegram profile.
 
+**Bugfix**: 2026-11-15 — BUG-004 Shutdown stops polling even when sessions cannot be listed.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (startup, signals, shutdown
@@ -115,6 +117,9 @@ session, call `Shutdown`, and check the farewell message
 3. **Given** updates still being handled, **When** the bot shuts down,
    **Then** it stops long polling and waits for those handlers for up to
    10 seconds.
+4. **Given** listing the sessions fails, **When** the bot shuts down,
+   **Then** it skips the farewells, logs the error, and still stops long
+   polling and waits for in-flight updates (BUG-004).
 
 ---
 
@@ -161,9 +166,10 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 - **Changed Telegram profile**: ~~the stored username and names are never
   refreshed after first contact. (Gap 3.)~~ the stored profile is updated on
   the next message (BUG-003).
-- **Session list fails during shutdown**: `Shutdown` returns before it stops
+- **Session list fails during shutdown**: ~~`Shutdown` returns before it stops
   long polling and the handler, so no farewell is sent and in-flight updates
-  are not awaited. (Gap 4.)
+  are not awaited. (Gap 4.)~~ no farewell is sent, but the bot still stops
+  polling and waits for in-flight updates (BUG-004).
 - **Bot restart**: all users, sessions, states, and draft trips are lost;
   every user starts again with `StateStart`.
 - **Session deleted on shutdown**: the user's state stays in memory until the
@@ -203,7 +209,8 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 - **FR-010**: On SIGTERM, SIGINT, SIGQUIT, or SIGHUP the bot MUST send each
   open session the farewell message and delete the session.
 - **FR-011**: On shutdown the bot MUST stop long polling and wait up to
-  10 seconds for updates in flight.
+  10 seconds for updates in flight, even when sending the farewells fails
+  (BUG-004).
 - **FR-012**: Shutdown MUST use a context that is not canceled but keeps the
   logger, so Bot API calls made during shutdown succeed.
 
@@ -250,8 +257,8 @@ Found during migration; none of them is fixed by this spec.
    telling the user.~~ Fixed by BUG-002.
 3. ~~User profiles are never refreshed, so trip cards can show an old
    username.~~ Fixed by BUG-003.
-4. `Service.Shutdown` returns early when listing sessions fails and skips
-   stopping long polling and the handler.
+4. ~~`Service.Shutdown` returns early when listing sessions fails and skips
+   stopping long polling and the handler.~~ Fixed by BUG-004.
 5. After a recovered panic the user gets no reply; the stack trace goes to
    stdout through `fmt.Println` instead of the logger.
 6. `internal/ops/sessions.go`, `internal/ops/users.go`, and the

@@ -122,6 +122,14 @@ func (f failingSessions) GetSession(ctx context.Context, userID, chatID int64) (
 	return f.Repository.GetSession(ctx, userID, chatID)
 }
 
+func (f failingSessions) ListSessions(ctx context.Context) ([]*sessions.Session, error) {
+	if f.method == "ListSessions" {
+		return nil, errTest
+	}
+
+	return f.Repository.ListSessions(ctx)
+}
+
 // failingStates fails to update states, so sessions can't be saved.
 type failingStates struct {
 	states.Repository
@@ -267,6 +275,26 @@ func TestNew(t *testing.T) {
 	svc, err := New(nil, newTestRepos())
 	require.EqualError(t, err, "bot is nil")
 	assert.Nil(t, svc)
+}
+
+func TestService_Shutdown_ListSessionsFails(t *testing.T) {
+	repos := newTestRepos()
+	svc, api := newTestService(t, repos)
+
+	newSession(t, repos, testUserID, models.StateStart)
+
+	repos.sessions = failingSessions{Repository: repos.sessions, method: "ListSessions"}
+
+	var stopped bool
+
+	svc.stopFns = append(svc.stopFns, func(context.Context) {
+		stopped = true
+	})
+
+	svc.Shutdown(context.Background())
+
+	assert.True(t, stopped, "the bot must stop even when it fails to say goodbye")
+	api.AssertNoRequest(t)
 }
 
 func TestService_PublishTrip(t *testing.T) {

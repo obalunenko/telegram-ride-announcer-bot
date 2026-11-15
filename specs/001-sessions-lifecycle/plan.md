@@ -14,6 +14,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-003 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-004 Updated from bugfix patch
+
 ## Summary
 
 Every update passes through a telego middleware chain that recovers panics,
@@ -142,9 +144,10 @@ session's `StateID` for both `GetSession` and `ListSessions` (BUG-001).
 7. **User refresh** (BUG-003): `loadUser` in `middleware.go` gets, creates,
    or updates the user, so `setSessionMiddleware` stays short; the update
    runs only when the stored profile differs from the sender.
-8. **Shutdown order**: farewell and session deletion for each session first,
-   then the stop function from `initHandlers` cancels polling and calls
-   `handler.StopWithContext`.
+8. **Shutdown order**: farewell and session deletion for each session first
+   (`sayGoodbye`, BUG-004), then the stop function from `initHandlers`
+   cancels polling and calls `handler.StopWithContext`. The stop functions
+   run even when `sayGoodbye` fails (BUG-004).
 
 ## Complexity Tracking
 
