@@ -10,6 +10,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-001 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-002 Updated from bugfix patch
+
 ## Summary
 
 `myTripsHandler` asks `ops.ListTripsByUser` for the requesting user's trips;
@@ -95,6 +97,8 @@ list-specific template.
    failure aborts the whole reply.
 4. **Published only** (BUG-001): `publishedTrips` in `mytrips.go` drops trips
    that are not completed, so drafts of unfinished dialogs are not listed.
+5. **Order** (BUG-002): `sortByStart` sorts by `Date`, then `CreatedAt`, with
+   a stable sort.
 
 ## Complexity Tracking
 

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"slices"
+
 	"github.com/obalunenko/telegram-ride-announcer-bot/internal/models"
 )
 
@@ -15,4 +17,16 @@ func publishedTrips(list []*models.Trip) []*models.Trip {
 	}
 
 	return published
+}
+
+// sortByStart orders the trips by start, the nearest first.
+// Trips with the same start keep the order in which they were created.
+func sortByStart(list []*models.Trip) {
+	slices.SortStableFunc(list, func(a, b *models.Trip) int {
+		if c := a.Date.Compare(b.Date); c != 0 {
+			return c
+		}
+
+		return a.CreatedAt.Compare(b.CreatedAt)
+	})
 }
