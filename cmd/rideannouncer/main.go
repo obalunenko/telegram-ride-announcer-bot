@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/obalunenko/getenv"
 	log "github.com/obalunenko/logger"
@@ -24,6 +25,9 @@ import (
 const (
 	envTGAPIToken = "RIDE_ANNOUNCER_TELEGRAM_TOKEN"
 )
+
+// shutdownTimeout limits the time the bot has to say bye and finish the updates in flight.
+const shutdownTimeout = 10 * time.Second
 
 const (
 	// BotName is a Command of the bot.
@@ -80,7 +84,7 @@ func main() {
 	opts := []telegram.BotOption{
 		telegram.WithCommands(commands),
 		telegram.WithDescription(botDescription),
-		telegram.WithUsername(botName),
+		telegram.WithName(botName),
 	}
 
 	bot, err := telegram.NewBot(ctx, token, opts...)
@@ -116,7 +120,12 @@ func main() {
 
 	log.WithField(ctx, "reason", context.Cause(ctx)).Info("Exiting...")
 
-	svc.Shutdown(ctx)
+	// ctx is canceled by now, and the Bot API calls fail with a canceled context.
+	// Shut down with a fresh context that keeps the ctx values, such as the logger.
+	shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownTimeout)
+	defer cancel()
+
+	svc.Shutdown(shutdownCtx)
 
 	log.Info(ctx, "Bot stopped")
 }

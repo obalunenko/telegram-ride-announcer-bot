@@ -12,6 +12,12 @@ func (r *ReplyParameters) WithChatID(chatID ChatID) *ReplyParameters {
 	return r
 }
 
+// WithEphemeralMessageID adds ephemeral message ID parameter
+func (r *ReplyParameters) WithEphemeralMessageID(ephemeralMessageID int) *ReplyParameters {
+	r.EphemeralMessageID = ephemeralMessageID
+	return r
+}
+
 // WithAllowSendingWithoutReply adds allow sending without reply parameter
 func (r *ReplyParameters) WithAllowSendingWithoutReply() *ReplyParameters {
 	r.AllowSendingWithoutReply = true
@@ -36,10 +42,46 @@ func (r *ReplyParameters) WithQuoteEntities(quoteEntities ...MessageEntity) *Rep
 	return r
 }
 
+// WithQuoteRichTexts adds quote rich texts parameter
+func (r *ReplyParameters) WithQuoteRichTexts(quoteRichTexts ...RichText) *ReplyParameters {
+	r.QuoteRichTexts = quoteRichTexts
+	return r
+}
+
 // WithQuotePosition adds quote position parameter
 func (r *ReplyParameters) WithQuotePosition(quotePosition int) *ReplyParameters {
 	r.QuotePosition = quotePosition
 	return r
+}
+
+// WithChecklistTaskID adds checklist task ID parameter
+func (r *ReplyParameters) WithChecklistTaskID(checklistTaskID int) *ReplyParameters {
+	r.ChecklistTaskID = checklistTaskID
+	return r
+}
+
+// WithPollOptionID adds poll option ID parameter
+func (r *ReplyParameters) WithPollOptionID(pollOptionID string) *ReplyParameters {
+	r.PollOptionID = pollOptionID
+	return r
+}
+
+// WithReceiverUserID adds receiver user ID parameter
+func (e *EphemeralMessageParameters) WithReceiverUserID(receiverUserID int) *EphemeralMessageParameters {
+	e.ReceiverUserID = receiverUserID
+	return e
+}
+
+// WithCallbackQueryID adds callback query ID parameter
+func (e *EphemeralMessageParameters) WithCallbackQueryID(callbackQueryID string) *EphemeralMessageParameters {
+	e.CallbackQueryID = callbackQueryID
+	return e
+}
+
+// WithReplaceCallbackQueryMessage adds replace callback query message parameter
+func (e *EphemeralMessageParameters) WithReplaceCallbackQueryMessage() *EphemeralMessageParameters {
+	e.ReplaceCallbackQueryMessage = true
+	return e
 }
 
 // WithText adds text parameter
@@ -57,6 +99,72 @@ func (i *InputPollOption) WithTextParseMode(textParseMode string) *InputPollOpti
 // WithTextEntities adds text entities parameter
 func (i *InputPollOption) WithTextEntities(textEntities ...MessageEntity) *InputPollOption {
 	i.TextEntities = textEntities
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputPollOption) WithMedia(media InputPollOptionMedia) *InputPollOption {
+	i.Media = media
+	return i
+}
+
+// WithID adds ID parameter
+func (i *InputChecklistTask) WithID(iD int) *InputChecklistTask {
+	i.ID = iD
+	return i
+}
+
+// WithText adds text parameter
+func (i *InputChecklistTask) WithText(text string) *InputChecklistTask {
+	i.Text = text
+	return i
+}
+
+// WithParseMode adds parse mode parameter
+func (i *InputChecklistTask) WithParseMode(parseMode string) *InputChecklistTask {
+	i.ParseMode = parseMode
+	return i
+}
+
+// WithTextEntities adds text entities parameter
+func (i *InputChecklistTask) WithTextEntities(textEntities ...MessageEntity) *InputChecklistTask {
+	i.TextEntities = textEntities
+	return i
+}
+
+// WithTitle adds title parameter
+func (i *InputChecklist) WithTitle(title string) *InputChecklist {
+	i.Title = title
+	return i
+}
+
+// WithParseMode adds parse mode parameter
+func (i *InputChecklist) WithParseMode(parseMode string) *InputChecklist {
+	i.ParseMode = parseMode
+	return i
+}
+
+// WithTitleEntities adds title entities parameter
+func (i *InputChecklist) WithTitleEntities(titleEntities ...MessageEntity) *InputChecklist {
+	i.TitleEntities = titleEntities
+	return i
+}
+
+// WithTasks adds tasks parameter
+func (i *InputChecklist) WithTasks(tasks ...InputChecklistTask) *InputChecklist {
+	i.Tasks = tasks
+	return i
+}
+
+// WithOthersCanAddTasks adds others can add tasks parameter
+func (i *InputChecklist) WithOthersCanAddTasks() *InputChecklist {
+	i.OthersCanAddTasks = true
+	return i
+}
+
+// WithOthersCanMarkTasksAsDone adds others can mark tasks as done parameter
+func (i *InputChecklist) WithOthersCanMarkTasksAsDone() *InputChecklist {
+	i.OthersCanMarkTasksAsDone = true
 	return i
 }
 
@@ -96,9 +204,27 @@ func (r *ReplyKeyboardMarkup) WithSelective() *ReplyKeyboardMarkup {
 	return r
 }
 
+// WithForceReply adds force reply parameter
+func (r *ReplyKeyboardMarkup) WithForceReply() *ReplyKeyboardMarkup {
+	r.ForceReply = true
+	return r
+}
+
 // WithText adds text parameter
 func (k KeyboardButton) WithText(text string) KeyboardButton {
 	k.Text = text
+	return k
+}
+
+// WithIconCustomEmojiID adds icon custom emoji ID parameter
+func (k KeyboardButton) WithIconCustomEmojiID(iconCustomEmojiID string) KeyboardButton {
+	k.IconCustomEmojiID = iconCustomEmojiID
+	return k
+}
+
+// WithStyle adds style parameter
+func (k KeyboardButton) WithStyle(style string) KeyboardButton {
+	k.Style = style
 	return k
 }
 
@@ -111,6 +237,12 @@ func (k KeyboardButton) WithRequestUsers(requestUsers *KeyboardButtonRequestUser
 // WithRequestChat adds request chat parameter
 func (k KeyboardButton) WithRequestChat(requestChat *KeyboardButtonRequestChat) KeyboardButton {
 	k.RequestChat = requestChat
+	return k
+}
+
+// WithRequestManagedBot adds request managed bot parameter
+func (k KeyboardButton) WithRequestManagedBot(requestManagedBot *KeyboardButtonRequestManagedBot) KeyboardButton {
+	k.RequestManagedBot = requestManagedBot
 	return k
 }
 
@@ -138,15 +270,21 @@ func (k KeyboardButton) WithWebApp(webApp *WebAppInfo) KeyboardButton {
 	return k
 }
 
+// WithRequestID adds request ID parameter
+func (k *KeyboardButtonRequestUsers) WithRequestID(requestID int32) *KeyboardButtonRequestUsers {
+	k.RequestID = requestID
+	return k
+}
+
 // WithUserIsBot adds user is bot parameter
 func (k *KeyboardButtonRequestUsers) WithUserIsBot(userIsBot bool) *KeyboardButtonRequestUsers {
-	k.UserIsBot = ToPtr(userIsBot)
+	k.UserIsBot = &userIsBot
 	return k
 }
 
 // WithUserIsPremium adds user is premium parameter
 func (k *KeyboardButtonRequestUsers) WithUserIsPremium(userIsPremium bool) *KeyboardButtonRequestUsers {
-	k.UserIsPremium = ToPtr(userIsPremium)
+	k.UserIsPremium = &userIsPremium
 	return k
 }
 
@@ -158,19 +296,25 @@ func (k *KeyboardButtonRequestUsers) WithMaxQuantity(maxQuantity int) *KeyboardB
 
 // WithRequestName adds request name parameter
 func (k *KeyboardButtonRequestUsers) WithRequestName(requestName bool) *KeyboardButtonRequestUsers {
-	k.RequestName = ToPtr(requestName)
+	k.RequestName = &requestName
 	return k
 }
 
 // WithRequestUsername adds request username parameter
 func (k *KeyboardButtonRequestUsers) WithRequestUsername(requestUsername bool) *KeyboardButtonRequestUsers {
-	k.RequestUsername = ToPtr(requestUsername)
+	k.RequestUsername = &requestUsername
 	return k
 }
 
 // WithRequestPhoto adds request photo parameter
 func (k *KeyboardButtonRequestUsers) WithRequestPhoto(requestPhoto bool) *KeyboardButtonRequestUsers {
-	k.RequestPhoto = ToPtr(requestPhoto)
+	k.RequestPhoto = &requestPhoto
+	return k
+}
+
+// WithRequestID adds request ID parameter
+func (k *KeyboardButtonRequestChat) WithRequestID(requestID int32) *KeyboardButtonRequestChat {
+	k.RequestID = requestID
 	return k
 }
 
@@ -182,31 +326,33 @@ func (k *KeyboardButtonRequestChat) WithChatIsChannel() *KeyboardButtonRequestCh
 
 // WithChatIsForum adds chat is forum parameter
 func (k *KeyboardButtonRequestChat) WithChatIsForum(chatIsForum bool) *KeyboardButtonRequestChat {
-	k.ChatIsForum = ToPtr(chatIsForum)
+	k.ChatIsForum = &chatIsForum
 	return k
 }
 
 // WithChatHasUsername adds chat has username parameter
 func (k *KeyboardButtonRequestChat) WithChatHasUsername(chatHasUsername bool) *KeyboardButtonRequestChat {
-	k.ChatHasUsername = ToPtr(chatHasUsername)
+	k.ChatHasUsername = &chatHasUsername
 	return k
 }
 
 // WithChatIsCreated adds chat is created parameter
 func (k *KeyboardButtonRequestChat) WithChatIsCreated(chatIsCreated bool) *KeyboardButtonRequestChat {
-	k.ChatIsCreated = ToPtr(chatIsCreated)
+	k.ChatIsCreated = &chatIsCreated
 	return k
 }
 
 // WithUserAdministratorRights adds user administrator rights parameter
-func (k *KeyboardButtonRequestChat) WithUserAdministratorRights(userAdministratorRights *ChatAdministratorRights,
+func (k *KeyboardButtonRequestChat) WithUserAdministratorRights(
+	userAdministratorRights *ChatAdministratorRights,
 ) *KeyboardButtonRequestChat {
 	k.UserAdministratorRights = userAdministratorRights
 	return k
 }
 
 // WithBotAdministratorRights adds bot administrator rights parameter
-func (k *KeyboardButtonRequestChat) WithBotAdministratorRights(botAdministratorRights *ChatAdministratorRights,
+func (k *KeyboardButtonRequestChat) WithBotAdministratorRights(
+	botAdministratorRights *ChatAdministratorRights,
 ) *KeyboardButtonRequestChat {
 	k.BotAdministratorRights = botAdministratorRights
 	return k
@@ -214,25 +360,45 @@ func (k *KeyboardButtonRequestChat) WithBotAdministratorRights(botAdministratorR
 
 // WithBotIsMember adds bot is member parameter
 func (k *KeyboardButtonRequestChat) WithBotIsMember(botIsMember bool) *KeyboardButtonRequestChat {
-	k.BotIsMember = ToPtr(botIsMember)
+	k.BotIsMember = &botIsMember
 	return k
 }
 
 // WithRequestTitle adds request title parameter
 func (k *KeyboardButtonRequestChat) WithRequestTitle(requestTitle bool) *KeyboardButtonRequestChat {
-	k.RequestTitle = ToPtr(requestTitle)
+	k.RequestTitle = &requestTitle
 	return k
 }
 
 // WithRequestUsername adds request username parameter
 func (k *KeyboardButtonRequestChat) WithRequestUsername(requestUsername bool) *KeyboardButtonRequestChat {
-	k.RequestUsername = ToPtr(requestUsername)
+	k.RequestUsername = &requestUsername
 	return k
 }
 
 // WithRequestPhoto adds request photo parameter
 func (k *KeyboardButtonRequestChat) WithRequestPhoto(requestPhoto bool) *KeyboardButtonRequestChat {
-	k.RequestPhoto = ToPtr(requestPhoto)
+	k.RequestPhoto = &requestPhoto
+	return k
+}
+
+// WithRequestID adds request ID parameter
+func (k *KeyboardButtonRequestManagedBot) WithRequestID(requestID int32) *KeyboardButtonRequestManagedBot {
+	k.RequestID = requestID
+	return k
+}
+
+// WithSuggestedName adds suggested name parameter
+func (k *KeyboardButtonRequestManagedBot) WithSuggestedName(suggestedName string) *KeyboardButtonRequestManagedBot {
+	k.SuggestedName = suggestedName
+	return k
+}
+
+// WithSuggestedUsername adds suggested username parameter
+func (k *KeyboardButtonRequestManagedBot) WithSuggestedUsername(
+	suggestedUsername string,
+) *KeyboardButtonRequestManagedBot {
+	k.SuggestedUsername = suggestedUsername
 	return k
 }
 
@@ -254,9 +420,27 @@ func (i *InlineKeyboardMarkup) WithInlineKeyboard(inlineKeyboard ...[]InlineKeyb
 	return i
 }
 
+// WithForceReply adds force reply parameter
+func (i *InlineKeyboardMarkup) WithForceReply() *InlineKeyboardMarkup {
+	i.ForceReply = true
+	return i
+}
+
 // WithText adds text parameter
 func (i InlineKeyboardButton) WithText(text string) InlineKeyboardButton {
 	i.Text = text
+	return i
+}
+
+// WithIconCustomEmojiID adds icon custom emoji ID parameter
+func (i InlineKeyboardButton) WithIconCustomEmojiID(iconCustomEmojiID string) InlineKeyboardButton {
+	i.IconCustomEmojiID = iconCustomEmojiID
+	return i
+}
+
+// WithStyle adds style parameter
+func (i InlineKeyboardButton) WithStyle(style string) InlineKeyboardButton {
+	i.Style = style
 	return i
 }
 
@@ -286,7 +470,7 @@ func (i InlineKeyboardButton) WithLoginURL(loginURL *LoginURL) InlineKeyboardBut
 
 // WithSwitchInlineQuery adds switch inline query parameter
 func (i InlineKeyboardButton) WithSwitchInlineQuery(switchInlineQuery string) InlineKeyboardButton {
-	i.SwitchInlineQuery = ToPtr(switchInlineQuery)
+	i.SwitchInlineQuery = &switchInlineQuery
 	return i
 }
 
@@ -294,7 +478,7 @@ func (i InlineKeyboardButton) WithSwitchInlineQuery(switchInlineQuery string) In
 func (i InlineKeyboardButton) WithSwitchInlineQueryCurrentChat(
 	switchInlineQueryCurrentChat string,
 ) InlineKeyboardButton {
-	i.SwitchInlineQueryCurrentChat = ToPtr(switchInlineQueryCurrentChat)
+	i.SwitchInlineQueryCurrentChat = &switchInlineQueryCurrentChat
 	return i
 }
 
@@ -321,6 +505,12 @@ func (i InlineKeyboardButton) WithCallbackGame(callbackGame *CallbackGame) Inlin
 // WithPay adds pay parameter
 func (i InlineKeyboardButton) WithPay() InlineKeyboardButton {
 	i.Pay = true
+	return i
+}
+
+// WithDisabled adds disabled parameter
+func (i InlineKeyboardButton) WithDisabled(disabled *DisabledButton) InlineKeyboardButton {
+	i.Disabled = disabled
 	return i
 }
 
@@ -352,108 +542,6 @@ func (m *MenuButtonWebApp) WithText(text string) *MenuButtonWebApp {
 func (m *MenuButtonWebApp) WithWebApp(webApp WebAppInfo) *MenuButtonWebApp {
 	m.WebApp = webApp
 	return m
-}
-
-// WithMedia adds media parameter
-func (i *InputMediaPhoto) WithMedia(media InputFile) *InputMediaPhoto {
-	i.Media = media
-	return i
-}
-
-// WithCaption adds caption parameter
-func (i *InputMediaPhoto) WithCaption(caption string) *InputMediaPhoto {
-	i.Caption = caption
-	return i
-}
-
-// WithParseMode adds parse mode parameter
-func (i *InputMediaPhoto) WithParseMode(parseMode string) *InputMediaPhoto {
-	i.ParseMode = parseMode
-	return i
-}
-
-// WithCaptionEntities adds caption entities parameter
-func (i *InputMediaPhoto) WithCaptionEntities(captionEntities ...MessageEntity) *InputMediaPhoto {
-	i.CaptionEntities = captionEntities
-	return i
-}
-
-// WithShowCaptionAboveMedia adds show caption above media parameter
-func (i *InputMediaPhoto) WithShowCaptionAboveMedia() *InputMediaPhoto {
-	i.ShowCaptionAboveMedia = true
-	return i
-}
-
-// WithHasSpoiler adds has spoiler parameter
-func (i *InputMediaPhoto) WithHasSpoiler() *InputMediaPhoto {
-	i.HasSpoiler = true
-	return i
-}
-
-// WithMedia adds media parameter
-func (i *InputMediaVideo) WithMedia(media InputFile) *InputMediaVideo {
-	i.Media = media
-	return i
-}
-
-// WithThumbnail adds thumbnail parameter
-func (i *InputMediaVideo) WithThumbnail(thumbnail *InputFile) *InputMediaVideo {
-	i.Thumbnail = thumbnail
-	return i
-}
-
-// WithCaption adds caption parameter
-func (i *InputMediaVideo) WithCaption(caption string) *InputMediaVideo {
-	i.Caption = caption
-	return i
-}
-
-// WithParseMode adds parse mode parameter
-func (i *InputMediaVideo) WithParseMode(parseMode string) *InputMediaVideo {
-	i.ParseMode = parseMode
-	return i
-}
-
-// WithCaptionEntities adds caption entities parameter
-func (i *InputMediaVideo) WithCaptionEntities(captionEntities ...MessageEntity) *InputMediaVideo {
-	i.CaptionEntities = captionEntities
-	return i
-}
-
-// WithShowCaptionAboveMedia adds show caption above media parameter
-func (i *InputMediaVideo) WithShowCaptionAboveMedia() *InputMediaVideo {
-	i.ShowCaptionAboveMedia = true
-	return i
-}
-
-// WithWidth adds width parameter
-func (i *InputMediaVideo) WithWidth(width int) *InputMediaVideo {
-	i.Width = width
-	return i
-}
-
-// WithHeight adds height parameter
-func (i *InputMediaVideo) WithHeight(height int) *InputMediaVideo {
-	i.Height = height
-	return i
-}
-
-// WithDuration adds duration parameter
-func (i *InputMediaVideo) WithDuration(duration int) *InputMediaVideo {
-	i.Duration = duration
-	return i
-}
-
-// WithSupportsStreaming adds supports streaming parameter
-func (i *InputMediaVideo) WithSupportsStreaming() *InputMediaVideo {
-	i.SupportsStreaming = true
-	return i
-}
-
-// WithHasSpoiler adds has spoiler parameter
-func (i *InputMediaVideo) WithHasSpoiler() *InputMediaVideo {
-	i.HasSpoiler = true
-	return i
 }
 
 // WithMedia adds media parameter
@@ -600,6 +688,354 @@ func (i *InputMediaDocument) WithDisableContentTypeDetection() *InputMediaDocume
 	return i
 }
 
+// WithMedia adds media parameter
+func (i *InputMediaLivePhoto) WithMedia(media InputFile) *InputMediaLivePhoto {
+	i.Media = media
+	return i
+}
+
+// WithPhoto adds photo parameter
+func (i *InputMediaLivePhoto) WithPhoto(photo InputFile) *InputMediaLivePhoto {
+	i.Photo = photo
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputMediaLivePhoto) WithCaption(caption string) *InputMediaLivePhoto {
+	i.Caption = caption
+	return i
+}
+
+// WithParseMode adds parse mode parameter
+func (i *InputMediaLivePhoto) WithParseMode(parseMode string) *InputMediaLivePhoto {
+	i.ParseMode = parseMode
+	return i
+}
+
+// WithCaptionEntities adds caption entities parameter
+func (i *InputMediaLivePhoto) WithCaptionEntities(captionEntities ...MessageEntity) *InputMediaLivePhoto {
+	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InputMediaLivePhoto) WithShowCaptionAboveMedia() *InputMediaLivePhoto {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
+// WithHasSpoiler adds has spoiler parameter
+func (i *InputMediaLivePhoto) WithHasSpoiler() *InputMediaLivePhoto {
+	i.HasSpoiler = true
+	return i
+}
+
+// WithLatitude adds latitude parameter
+func (i *InputMediaLocation) WithLatitude(latitude float64) *InputMediaLocation {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InputMediaLocation) WithLongitude(longitude float64) *InputMediaLocation {
+	i.Longitude = longitude
+	return i
+}
+
+// WithHorizontalAccuracy adds horizontal accuracy parameter
+func (i *InputMediaLocation) WithHorizontalAccuracy(horizontalAccuracy float64) *InputMediaLocation {
+	i.HorizontalAccuracy = horizontalAccuracy
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputMediaPhoto) WithMedia(media InputFile) *InputMediaPhoto {
+	i.Media = media
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputMediaPhoto) WithCaption(caption string) *InputMediaPhoto {
+	i.Caption = caption
+	return i
+}
+
+// WithParseMode adds parse mode parameter
+func (i *InputMediaPhoto) WithParseMode(parseMode string) *InputMediaPhoto {
+	i.ParseMode = parseMode
+	return i
+}
+
+// WithCaptionEntities adds caption entities parameter
+func (i *InputMediaPhoto) WithCaptionEntities(captionEntities ...MessageEntity) *InputMediaPhoto {
+	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InputMediaPhoto) WithShowCaptionAboveMedia() *InputMediaPhoto {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
+// WithHasSpoiler adds has spoiler parameter
+func (i *InputMediaPhoto) WithHasSpoiler() *InputMediaPhoto {
+	i.HasSpoiler = true
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputMediaSticker) WithMedia(media InputFile) *InputMediaSticker {
+	i.Media = media
+	return i
+}
+
+// WithEmoji adds emoji parameter
+func (i *InputMediaSticker) WithEmoji(emoji string) *InputMediaSticker {
+	i.Emoji = emoji
+	return i
+}
+
+// WithLatitude adds latitude parameter
+func (i *InputMediaVenue) WithLatitude(latitude float64) *InputMediaVenue {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InputMediaVenue) WithLongitude(longitude float64) *InputMediaVenue {
+	i.Longitude = longitude
+	return i
+}
+
+// WithTitle adds title parameter
+func (i *InputMediaVenue) WithTitle(title string) *InputMediaVenue {
+	i.Title = title
+	return i
+}
+
+// WithAddress adds address parameter
+func (i *InputMediaVenue) WithAddress(address string) *InputMediaVenue {
+	i.Address = address
+	return i
+}
+
+// WithFoursquareID adds foursquare ID parameter
+func (i *InputMediaVenue) WithFoursquareID(foursquareID string) *InputMediaVenue {
+	i.FoursquareID = foursquareID
+	return i
+}
+
+// WithFoursquareType adds foursquare type parameter
+func (i *InputMediaVenue) WithFoursquareType(foursquareType string) *InputMediaVenue {
+	i.FoursquareType = foursquareType
+	return i
+}
+
+// WithGooglePlaceID adds google place ID parameter
+func (i *InputMediaVenue) WithGooglePlaceID(googlePlaceID string) *InputMediaVenue {
+	i.GooglePlaceID = googlePlaceID
+	return i
+}
+
+// WithGooglePlaceType adds google place type parameter
+func (i *InputMediaVenue) WithGooglePlaceType(googlePlaceType string) *InputMediaVenue {
+	i.GooglePlaceType = googlePlaceType
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputMediaVideo) WithMedia(media InputFile) *InputMediaVideo {
+	i.Media = media
+	return i
+}
+
+// WithThumbnail adds thumbnail parameter
+func (i *InputMediaVideo) WithThumbnail(thumbnail *InputFile) *InputMediaVideo {
+	i.Thumbnail = thumbnail
+	return i
+}
+
+// WithCover adds cover parameter
+func (i *InputMediaVideo) WithCover(cover *InputFile) *InputMediaVideo {
+	i.Cover = cover
+	return i
+}
+
+// WithStartTimestamp adds start timestamp parameter
+func (i *InputMediaVideo) WithStartTimestamp(startTimestamp int) *InputMediaVideo {
+	i.StartTimestamp = startTimestamp
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputMediaVideo) WithCaption(caption string) *InputMediaVideo {
+	i.Caption = caption
+	return i
+}
+
+// WithParseMode adds parse mode parameter
+func (i *InputMediaVideo) WithParseMode(parseMode string) *InputMediaVideo {
+	i.ParseMode = parseMode
+	return i
+}
+
+// WithCaptionEntities adds caption entities parameter
+func (i *InputMediaVideo) WithCaptionEntities(captionEntities ...MessageEntity) *InputMediaVideo {
+	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InputMediaVideo) WithShowCaptionAboveMedia() *InputMediaVideo {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
+// WithWidth adds width parameter
+func (i *InputMediaVideo) WithWidth(width int) *InputMediaVideo {
+	i.Width = width
+	return i
+}
+
+// WithHeight adds height parameter
+func (i *InputMediaVideo) WithHeight(height int) *InputMediaVideo {
+	i.Height = height
+	return i
+}
+
+// WithDuration adds duration parameter
+func (i *InputMediaVideo) WithDuration(duration int) *InputMediaVideo {
+	i.Duration = duration
+	return i
+}
+
+// WithSupportsStreaming adds supports streaming parameter
+func (i *InputMediaVideo) WithSupportsStreaming() *InputMediaVideo {
+	i.SupportsStreaming = true
+	return i
+}
+
+// WithHasSpoiler adds has spoiler parameter
+func (i *InputMediaVideo) WithHasSpoiler() *InputMediaVideo {
+	i.HasSpoiler = true
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputPaidMediaLivePhoto) WithMedia(media InputFile) *InputPaidMediaLivePhoto {
+	i.Media = media
+	return i
+}
+
+// WithPhoto adds photo parameter
+func (i *InputPaidMediaLivePhoto) WithPhoto(photo InputFile) *InputPaidMediaLivePhoto {
+	i.Photo = photo
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputPaidMediaPhoto) WithMedia(media InputFile) *InputPaidMediaPhoto {
+	i.Media = media
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputPaidMediaVideo) WithMedia(media InputFile) *InputPaidMediaVideo {
+	i.Media = media
+	return i
+}
+
+// WithThumbnail adds thumbnail parameter
+func (i *InputPaidMediaVideo) WithThumbnail(thumbnail *InputFile) *InputPaidMediaVideo {
+	i.Thumbnail = thumbnail
+	return i
+}
+
+// WithCover adds cover parameter
+func (i *InputPaidMediaVideo) WithCover(cover *InputFile) *InputPaidMediaVideo {
+	i.Cover = cover
+	return i
+}
+
+// WithStartTimestamp adds start timestamp parameter
+func (i *InputPaidMediaVideo) WithStartTimestamp(startTimestamp int) *InputPaidMediaVideo {
+	i.StartTimestamp = startTimestamp
+	return i
+}
+
+// WithWidth adds width parameter
+func (i *InputPaidMediaVideo) WithWidth(width int) *InputPaidMediaVideo {
+	i.Width = width
+	return i
+}
+
+// WithHeight adds height parameter
+func (i *InputPaidMediaVideo) WithHeight(height int) *InputPaidMediaVideo {
+	i.Height = height
+	return i
+}
+
+// WithDuration adds duration parameter
+func (i *InputPaidMediaVideo) WithDuration(duration int) *InputPaidMediaVideo {
+	i.Duration = duration
+	return i
+}
+
+// WithSupportsStreaming adds supports streaming parameter
+func (i *InputPaidMediaVideo) WithSupportsStreaming() *InputPaidMediaVideo {
+	i.SupportsStreaming = true
+	return i
+}
+
+// WithPhoto adds photo parameter
+func (i *InputProfilePhotoStatic) WithPhoto(photo InputFile) *InputProfilePhotoStatic {
+	i.Photo = photo
+	return i
+}
+
+// WithAnimation adds animation parameter
+func (i *InputProfilePhotoAnimated) WithAnimation(animation InputFile) *InputProfilePhotoAnimated {
+	i.Animation = animation
+	return i
+}
+
+// WithMainFrameTimestamp adds main frame timestamp parameter
+func (i *InputProfilePhotoAnimated) WithMainFrameTimestamp(mainFrameTimestamp float64) *InputProfilePhotoAnimated {
+	i.MainFrameTimestamp = mainFrameTimestamp
+	return i
+}
+
+// WithPhoto adds photo parameter
+func (i *InputStoryContentPhoto) WithPhoto(photo InputFile) *InputStoryContentPhoto {
+	i.Photo = photo
+	return i
+}
+
+// WithVideo adds video parameter
+func (i *InputStoryContentVideo) WithVideo(video InputFile) *InputStoryContentVideo {
+	i.Video = video
+	return i
+}
+
+// WithDuration adds duration parameter
+func (i *InputStoryContentVideo) WithDuration(duration float64) *InputStoryContentVideo {
+	i.Duration = duration
+	return i
+}
+
+// WithCoverFrameTimestamp adds cover frame timestamp parameter
+func (i *InputStoryContentVideo) WithCoverFrameTimestamp(coverFrameTimestamp float64) *InputStoryContentVideo {
+	i.CoverFrameTimestamp = coverFrameTimestamp
+	return i
+}
+
+// WithIsAnimation adds is animation parameter
+func (i *InputStoryContentVideo) WithIsAnimation() *InputStoryContentVideo {
+	i.IsAnimation = true
+	return i
+}
+
 // WithSticker adds sticker parameter
 func (i *InputSticker) WithSticker(sticker InputFile) *InputSticker {
 	i.Sticker = sticker
@@ -630,6 +1066,728 @@ func (i *InputSticker) WithKeywords(keywords ...string) *InputSticker {
 	return i
 }
 
+// WithBlocks adds blocks parameter
+func (i *InputRichMessage) WithBlocks(blocks ...InputRichBlock) *InputRichMessage {
+	i.Blocks = blocks
+	return i
+}
+
+// WithHTML adds html parameter
+func (i *InputRichMessage) WithHTML(html string) *InputRichMessage {
+	i.HTML = html
+	return i
+}
+
+// WithMarkdown adds markdown parameter
+func (i *InputRichMessage) WithMarkdown(markdown string) *InputRichMessage {
+	i.Markdown = markdown
+	return i
+}
+
+// WithMedia adds media parameter
+func (i *InputRichMessage) WithMedia(media ...InputRichMessageMedia) *InputRichMessage {
+	i.Media = media
+	return i
+}
+
+// WithIsRtl adds is rtl parameter
+func (i *InputRichMessage) WithIsRtl() *InputRichMessage {
+	i.IsRtl = true
+	return i
+}
+
+// WithSkipEntityDetection adds skip entity detection parameter
+func (i *InputRichMessage) WithSkipEntityDetection() *InputRichMessage {
+	i.SkipEntityDetection = true
+	return i
+}
+
+// WithText adds text parameter
+func (r RichMessageButton) WithText(text RichText) RichMessageButton {
+	r.Text = text
+	return r
+}
+
+// WithStyle adds style parameter
+func (r RichMessageButton) WithStyle(style string) RichMessageButton {
+	r.Style = style
+	return r
+}
+
+// WithURL adds URL parameter
+func (r RichMessageButton) WithURL(url string) RichMessageButton {
+	r.URL = url
+	return r
+}
+
+// WithCallbackData adds callback data parameter
+func (r RichMessageButton) WithCallbackData(callbackData string) RichMessageButton {
+	r.CallbackData = callbackData
+	return r
+}
+
+// WithWebApp adds web app parameter
+func (r RichMessageButton) WithWebApp(webApp *WebAppInfo) RichMessageButton {
+	r.WebApp = webApp
+	return r
+}
+
+// WithLoginURL adds login URL parameter
+func (r RichMessageButton) WithLoginURL(loginURL *LoginURL) RichMessageButton {
+	r.LoginURL = loginURL
+	return r
+}
+
+// WithSwitchInlineQuery adds switch inline query parameter
+func (r RichMessageButton) WithSwitchInlineQuery(switchInlineQuery string) RichMessageButton {
+	r.SwitchInlineQuery = switchInlineQuery
+	return r
+}
+
+// WithSwitchInlineQueryCurrentChat adds switch inline query current chat parameter
+func (r RichMessageButton) WithSwitchInlineQueryCurrentChat(switchInlineQueryCurrentChat string) RichMessageButton {
+	r.SwitchInlineQueryCurrentChat = switchInlineQueryCurrentChat
+	return r
+}
+
+// WithSwitchInlineQueryChosenChat adds switch inline query chosen chat parameter
+func (r RichMessageButton) WithSwitchInlineQueryChosenChat(
+	switchInlineQueryChosenChat *SwitchInlineQueryChosenChat,
+) RichMessageButton {
+	r.SwitchInlineQueryChosenChat = switchInlineQueryChosenChat
+	return r
+}
+
+// WithCopyText adds copy text parameter
+func (r RichMessageButton) WithCopyText(copyText *CopyTextButton) RichMessageButton {
+	r.CopyText = copyText
+	return r
+}
+
+// WithDisabled adds disabled parameter
+func (r RichMessageButton) WithDisabled(disabled *DisabledButton) RichMessageButton {
+	r.Disabled = disabled
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextBold) WithText(text RichText) *RichTextBold {
+	r.Text = text
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextItalic) WithText(text RichText) *RichTextItalic {
+	r.Text = text
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextUnderline) WithText(text RichText) *RichTextUnderline {
+	r.Text = text
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextStrikethrough) WithText(text RichText) *RichTextStrikethrough {
+	r.Text = text
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextSpoiler) WithText(text RichText) *RichTextSpoiler {
+	r.Text = text
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextDateTime) WithText(text RichText) *RichTextDateTime {
+	r.Text = text
+	return r
+}
+
+// WithUnixTime adds unix time parameter
+func (r *RichTextDateTime) WithUnixTime(unixTime int64) *RichTextDateTime {
+	r.UnixTime = unixTime
+	return r
+}
+
+// WithDateTimeFormat adds date time format parameter
+func (r *RichTextDateTime) WithDateTimeFormat(dateTimeFormat string) *RichTextDateTime {
+	r.DateTimeFormat = dateTimeFormat
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextTextMention) WithText(text RichText) *RichTextTextMention {
+	r.Text = text
+	return r
+}
+
+// WithUser adds user parameter
+func (r *RichTextTextMention) WithUser(user User) *RichTextTextMention {
+	r.User = user
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextSubscript) WithText(text RichText) *RichTextSubscript {
+	r.Text = text
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextSuperscript) WithText(text RichText) *RichTextSuperscript {
+	r.Text = text
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextMarked) WithText(text RichText) *RichTextMarked {
+	r.Text = text
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextCode) WithText(text RichText) *RichTextCode {
+	r.Text = text
+	return r
+}
+
+// WithCustomEmojiID adds custom emoji ID parameter
+func (r *RichTextCustomEmoji) WithCustomEmojiID(customEmojiID string) *RichTextCustomEmoji {
+	r.CustomEmojiID = customEmojiID
+	return r
+}
+
+// WithAlternativeText adds alternative text parameter
+func (r *RichTextCustomEmoji) WithAlternativeText(alternativeText string) *RichTextCustomEmoji {
+	r.AlternativeText = alternativeText
+	return r
+}
+
+// WithExpression adds expression parameter
+func (r *RichTextMathematicalExpression) WithExpression(expression string) *RichTextMathematicalExpression {
+	r.Expression = expression
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextURL) WithText(text RichText) *RichTextURL {
+	r.Text = text
+	return r
+}
+
+// WithURL adds URL parameter
+func (r *RichTextURL) WithURL(url string) *RichTextURL {
+	r.URL = url
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextEmailAddress) WithText(text RichText) *RichTextEmailAddress {
+	r.Text = text
+	return r
+}
+
+// WithEmailAddress adds email address parameter
+func (r *RichTextEmailAddress) WithEmailAddress(emailAddress string) *RichTextEmailAddress {
+	r.EmailAddress = emailAddress
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextPhoneNumber) WithText(text RichText) *RichTextPhoneNumber {
+	r.Text = text
+	return r
+}
+
+// WithPhoneNumber adds phone number parameter
+func (r *RichTextPhoneNumber) WithPhoneNumber(phoneNumber string) *RichTextPhoneNumber {
+	r.PhoneNumber = phoneNumber
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextBankCardNumber) WithText(text RichText) *RichTextBankCardNumber {
+	r.Text = text
+	return r
+}
+
+// WithBankCardNumber adds bank card number parameter
+func (r *RichTextBankCardNumber) WithBankCardNumber(bankCardNumber string) *RichTextBankCardNumber {
+	r.BankCardNumber = bankCardNumber
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextTonAddress) WithText(text RichText) *RichTextTonAddress {
+	r.Text = text
+	return r
+}
+
+// WithAddress adds address parameter
+func (r *RichTextTonAddress) WithAddress(address string) *RichTextTonAddress {
+	r.Address = address
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextMention) WithText(text RichText) *RichTextMention {
+	r.Text = text
+	return r
+}
+
+// WithUsername adds username parameter
+func (r *RichTextMention) WithUsername(username string) *RichTextMention {
+	r.Username = username
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextHashtag) WithText(text RichText) *RichTextHashtag {
+	r.Text = text
+	return r
+}
+
+// WithHashtag adds hashtag parameter
+func (r *RichTextHashtag) WithHashtag(hashtag string) *RichTextHashtag {
+	r.Hashtag = hashtag
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextCashtag) WithText(text RichText) *RichTextCashtag {
+	r.Text = text
+	return r
+}
+
+// WithCashtag adds cashtag parameter
+func (r *RichTextCashtag) WithCashtag(cashtag string) *RichTextCashtag {
+	r.Cashtag = cashtag
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextBotCommand) WithText(text RichText) *RichTextBotCommand {
+	r.Text = text
+	return r
+}
+
+// WithBotCommand adds bot command parameter
+func (r *RichTextBotCommand) WithBotCommand(botCommand string) *RichTextBotCommand {
+	r.BotCommand = botCommand
+	return r
+}
+
+// WithButton adds button parameter
+func (r *RichTextButton) WithButton(button RichMessageButton) *RichTextButton {
+	r.Button = button
+	return r
+}
+
+// WithName adds name parameter
+func (r *RichTextAnchor) WithName(name string) *RichTextAnchor {
+	r.Name = name
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextAnchorLink) WithText(text RichText) *RichTextAnchorLink {
+	r.Text = text
+	return r
+}
+
+// WithAnchorName adds anchor name parameter
+func (r *RichTextAnchorLink) WithAnchorName(anchorName string) *RichTextAnchorLink {
+	r.AnchorName = anchorName
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextReference) WithText(text RichText) *RichTextReference {
+	r.Text = text
+	return r
+}
+
+// WithName adds name parameter
+func (r *RichTextReference) WithName(name string) *RichTextReference {
+	r.Name = name
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichTextReferenceLink) WithText(text RichText) *RichTextReferenceLink {
+	r.Text = text
+	return r
+}
+
+// WithReferenceName adds reference name parameter
+func (r *RichTextReferenceLink) WithReferenceName(referenceName string) *RichTextReferenceLink {
+	r.ReferenceName = referenceName
+	return r
+}
+
+// WithText adds text parameter
+func (r *RichBlockCaption) WithText(text RichText) *RichBlockCaption {
+	r.Text = text
+	return r
+}
+
+// WithCredit adds credit parameter
+func (r *RichBlockCaption) WithCredit(credit RichText) *RichBlockCaption {
+	r.Credit = credit
+	return r
+}
+
+// WithText adds text parameter
+func (r RichBlockTableCell) WithText(text RichText) RichBlockTableCell {
+	r.Text = text
+	return r
+}
+
+// WithIsHeader adds is header parameter
+func (r RichBlockTableCell) WithIsHeader() RichBlockTableCell {
+	r.IsHeader = true
+	return r
+}
+
+// WithColspan adds colspan parameter
+func (r RichBlockTableCell) WithColspan(colspan int) RichBlockTableCell {
+	r.Colspan = colspan
+	return r
+}
+
+// WithRowspan adds rowspan parameter
+func (r RichBlockTableCell) WithRowspan(rowspan int) RichBlockTableCell {
+	r.Rowspan = rowspan
+	return r
+}
+
+// WithAlign adds align parameter
+func (r RichBlockTableCell) WithAlign(align string) RichBlockTableCell {
+	r.Align = align
+	return r
+}
+
+// WithValign adds valign parameter
+func (r RichBlockTableCell) WithValign(valign string) RichBlockTableCell {
+	r.Valign = valign
+	return r
+}
+
+// WithBlocks adds blocks parameter
+func (i InputRichBlockListItem) WithBlocks(blocks ...InputRichBlock) InputRichBlockListItem {
+	i.Blocks = blocks
+	return i
+}
+
+// WithHasCheckbox adds has checkbox parameter
+func (i InputRichBlockListItem) WithHasCheckbox() InputRichBlockListItem {
+	i.HasCheckbox = true
+	return i
+}
+
+// WithIsChecked adds is checked parameter
+func (i InputRichBlockListItem) WithIsChecked() InputRichBlockListItem {
+	i.IsChecked = true
+	return i
+}
+
+// WithValue adds value parameter
+func (i InputRichBlockListItem) WithValue(value int) InputRichBlockListItem {
+	i.Value = value
+	return i
+}
+
+// WithType adds type parameter
+func (i InputRichBlockListItem) WithType(listType string) InputRichBlockListItem {
+	i.Type = listType
+	return i
+}
+
+// WithText adds text parameter
+func (i *InputRichBlockParagraph) WithText(text RichText) *InputRichBlockParagraph {
+	i.Text = text
+	return i
+}
+
+// WithText adds text parameter
+func (i *InputRichBlockSectionHeading) WithText(text RichText) *InputRichBlockSectionHeading {
+	i.Text = text
+	return i
+}
+
+// WithSize adds size parameter
+func (i *InputRichBlockSectionHeading) WithSize(size int) *InputRichBlockSectionHeading {
+	i.Size = size
+	return i
+}
+
+// WithText adds text parameter
+func (i *InputRichBlockPreformatted) WithText(text RichText) *InputRichBlockPreformatted {
+	i.Text = text
+	return i
+}
+
+// WithLanguage adds language parameter
+func (i *InputRichBlockPreformatted) WithLanguage(language string) *InputRichBlockPreformatted {
+	i.Language = language
+	return i
+}
+
+// WithText adds text parameter
+func (i *InputRichBlockFooter) WithText(text RichText) *InputRichBlockFooter {
+	i.Text = text
+	return i
+}
+
+// WithExpression adds expression parameter
+func (i *InputRichBlockMathematicalExpression) WithExpression(expression string) *InputRichBlockMathematicalExpression {
+	i.Expression = expression
+	return i
+}
+
+// WithName adds name parameter
+func (i *InputRichBlockAnchor) WithName(name string) *InputRichBlockAnchor {
+	i.Name = name
+	return i
+}
+
+// WithItems adds items parameter
+func (i *InputRichBlockList) WithItems(items ...InputRichBlockListItem) *InputRichBlockList {
+	i.Items = items
+	return i
+}
+
+// WithBlocks adds blocks parameter
+func (i *InputRichBlockBlockQuotation) WithBlocks(blocks ...InputRichBlock) *InputRichBlockBlockQuotation {
+	i.Blocks = blocks
+	return i
+}
+
+// WithCredit adds credit parameter
+func (i *InputRichBlockBlockQuotation) WithCredit(credit RichText) *InputRichBlockBlockQuotation {
+	i.Credit = credit
+	return i
+}
+
+// WithText adds text parameter
+func (i *InputRichBlockExpandableBlockQuotation) WithText(text RichText) *InputRichBlockExpandableBlockQuotation {
+	i.Text = text
+	return i
+}
+
+// WithCredit adds credit parameter
+func (i *InputRichBlockExpandableBlockQuotation) WithCredit(credit RichText) *InputRichBlockExpandableBlockQuotation {
+	i.Credit = credit
+	return i
+}
+
+// WithText adds text parameter
+func (i *InputRichBlockPullQuotation) WithText(text RichText) *InputRichBlockPullQuotation {
+	i.Text = text
+	return i
+}
+
+// WithCredit adds credit parameter
+func (i *InputRichBlockPullQuotation) WithCredit(credit RichText) *InputRichBlockPullQuotation {
+	i.Credit = credit
+	return i
+}
+
+// WithBlocks adds blocks parameter
+func (i *InputRichBlockCollage) WithBlocks(blocks ...InputRichBlock) *InputRichBlockCollage {
+	i.Blocks = blocks
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockCollage) WithCaption(caption *RichBlockCaption) *InputRichBlockCollage {
+	i.Caption = caption
+	return i
+}
+
+// WithBlocks adds blocks parameter
+func (i *InputRichBlockSlideshow) WithBlocks(blocks ...InputRichBlock) *InputRichBlockSlideshow {
+	i.Blocks = blocks
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockSlideshow) WithCaption(caption *RichBlockCaption) *InputRichBlockSlideshow {
+	i.Caption = caption
+	return i
+}
+
+// WithCells adds cells parameter
+func (i *InputRichBlockTable) WithCells(cells ...[]RichBlockTableCell) *InputRichBlockTable {
+	i.Cells = cells
+	return i
+}
+
+// WithIsBordered adds is bordered parameter
+func (i *InputRichBlockTable) WithIsBordered() *InputRichBlockTable {
+	i.IsBordered = true
+	return i
+}
+
+// WithIsStriped adds is striped parameter
+func (i *InputRichBlockTable) WithIsStriped() *InputRichBlockTable {
+	i.IsStriped = true
+	return i
+}
+
+// WithIsCompact adds is compact parameter
+func (i *InputRichBlockTable) WithIsCompact() *InputRichBlockTable {
+	i.IsCompact = true
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockTable) WithCaption(caption RichText) *InputRichBlockTable {
+	i.Caption = caption
+	return i
+}
+
+// WithSummary adds summary parameter
+func (i *InputRichBlockDetails) WithSummary(summary RichText) *InputRichBlockDetails {
+	i.Summary = summary
+	return i
+}
+
+// WithBlocks adds blocks parameter
+func (i *InputRichBlockDetails) WithBlocks(blocks ...InputRichBlock) *InputRichBlockDetails {
+	i.Blocks = blocks
+	return i
+}
+
+// WithIsOpen adds is open parameter
+func (i *InputRichBlockDetails) WithIsOpen() *InputRichBlockDetails {
+	i.IsOpen = true
+	return i
+}
+
+// WithLocation adds location parameter
+func (i *InputRichBlockMap) WithLocation(location Location) *InputRichBlockMap {
+	i.Location = location
+	return i
+}
+
+// WithZoom adds zoom parameter
+func (i *InputRichBlockMap) WithZoom(zoom int) *InputRichBlockMap {
+	i.Zoom = zoom
+	return i
+}
+
+// WithWidth adds width parameter
+func (i *InputRichBlockMap) WithWidth(width int) *InputRichBlockMap {
+	i.Width = width
+	return i
+}
+
+// WithHeight adds height parameter
+func (i *InputRichBlockMap) WithHeight(height int) *InputRichBlockMap {
+	i.Height = height
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockMap) WithCaption(caption *RichBlockCaption) *InputRichBlockMap {
+	i.Caption = caption
+	return i
+}
+
+// WithButtons adds buttons parameter
+func (i *InputRichBlockButtons) WithButtons(buttons ...RichMessageButton) *InputRichBlockButtons {
+	i.Buttons = buttons
+	return i
+}
+
+// WithAlign adds align parameter
+func (i *InputRichBlockButtons) WithAlign(align string) *InputRichBlockButtons {
+	i.Align = align
+	return i
+}
+
+// WithAnimation adds animation parameter
+func (i *InputRichBlockAnimation) WithAnimation(animation InputMediaAnimation) *InputRichBlockAnimation {
+	i.Animation = animation
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockAnimation) WithCaption(caption *RichBlockCaption) *InputRichBlockAnimation {
+	i.Caption = caption
+	return i
+}
+
+// WithAudio adds audio parameter
+func (i *InputRichBlockAudio) WithAudio(audio InputMediaAudio) *InputRichBlockAudio {
+	i.Audio = audio
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockAudio) WithCaption(caption *RichBlockCaption) *InputRichBlockAudio {
+	i.Caption = caption
+	return i
+}
+
+// WithDocument adds document parameter
+func (i *InputRichBlockDocument) WithDocument(document InputMediaDocument) *InputRichBlockDocument {
+	i.Document = document
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockDocument) WithCaption(caption *RichBlockCaption) *InputRichBlockDocument {
+	i.Caption = caption
+	return i
+}
+
+// WithPhoto adds photo parameter
+func (i *InputRichBlockPhoto) WithPhoto(photo InputMediaPhoto) *InputRichBlockPhoto {
+	i.Photo = photo
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockPhoto) WithCaption(caption *RichBlockCaption) *InputRichBlockPhoto {
+	i.Caption = caption
+	return i
+}
+
+// WithVideo adds video parameter
+func (i *InputRichBlockVideo) WithVideo(video InputMediaVideo) *InputRichBlockVideo {
+	i.Video = video
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockVideo) WithCaption(caption *RichBlockCaption) *InputRichBlockVideo {
+	i.Caption = caption
+	return i
+}
+
+// WithVoiceNote adds voice note parameter
+func (i *InputRichBlockVoiceNote) WithVoiceNote(voiceNote InputMediaVoiceNote) *InputRichBlockVoiceNote {
+	i.VoiceNote = voiceNote
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputRichBlockVoiceNote) WithCaption(caption *RichBlockCaption) *InputRichBlockVoiceNote {
+	i.Caption = caption
+	return i
+}
+
+// WithText adds text parameter
+func (i *InputRichBlockThinking) WithText(text RichText) *InputRichBlockThinking {
+	i.Text = text
+	return i
+}
+
 // WithID adds ID parameter
 func (i *InlineQueryResultArticle) WithID(iD string) *InlineQueryResultArticle {
 	i.ID = iD
@@ -643,7 +1801,8 @@ func (i *InlineQueryResultArticle) WithTitle(title string) *InlineQueryResultArt
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultArticle) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultArticle) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultArticle {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -758,7 +1917,8 @@ func (i *InlineQueryResultPhoto) WithReplyMarkup(replyMarkup *InlineKeyboardMark
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultPhoto) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultPhoto) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultPhoto {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -927,7 +2087,8 @@ func (i *InlineQueryResultMpeg4Gif) WithReplyMarkup(replyMarkup *InlineKeyboardM
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultMpeg4Gif) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultMpeg4Gif) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultMpeg4Gif {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1018,7 +2179,8 @@ func (i *InlineQueryResultVideo) WithReplyMarkup(replyMarkup *InlineKeyboardMark
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultVideo) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultVideo) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultVideo {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1079,7 +2241,8 @@ func (i *InlineQueryResultAudio) WithReplyMarkup(replyMarkup *InlineKeyboardMark
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultAudio) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultAudio) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultAudio {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1134,7 +2297,8 @@ func (i *InlineQueryResultVoice) WithReplyMarkup(replyMarkup *InlineKeyboardMark
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultVoice) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultVoice) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultVoice {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1195,7 +2359,8 @@ func (i *InlineQueryResultDocument) WithReplyMarkup(replyMarkup *InlineKeyboardM
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultDocument) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultDocument) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultDocument {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1225,9 +2390,27 @@ func (i *InlineQueryResultLocation) WithID(iD string) *InlineQueryResultLocation
 	return i
 }
 
+// WithLatitude adds latitude parameter
+func (i *InlineQueryResultLocation) WithLatitude(latitude float64) *InlineQueryResultLocation {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InlineQueryResultLocation) WithLongitude(longitude float64) *InlineQueryResultLocation {
+	i.Longitude = longitude
+	return i
+}
+
 // WithTitle adds title parameter
 func (i *InlineQueryResultLocation) WithTitle(title string) *InlineQueryResultLocation {
 	i.Title = title
+	return i
+}
+
+// WithHorizontalAccuracy adds horizontal accuracy parameter
+func (i *InlineQueryResultLocation) WithHorizontalAccuracy(horizontalAccuracy float64) *InlineQueryResultLocation {
+	i.HorizontalAccuracy = horizontalAccuracy
 	return i
 }
 
@@ -1256,7 +2439,8 @@ func (i *InlineQueryResultLocation) WithReplyMarkup(replyMarkup *InlineKeyboardM
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultLocation) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultLocation) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultLocation {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1283,6 +2467,18 @@ func (i *InlineQueryResultLocation) WithThumbnailHeight(thumbnailHeight int) *In
 // WithID adds ID parameter
 func (i *InlineQueryResultVenue) WithID(iD string) *InlineQueryResultVenue {
 	i.ID = iD
+	return i
+}
+
+// WithLatitude adds latitude parameter
+func (i *InlineQueryResultVenue) WithLatitude(latitude float64) *InlineQueryResultVenue {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InlineQueryResultVenue) WithLongitude(longitude float64) *InlineQueryResultVenue {
+	i.Longitude = longitude
 	return i
 }
 
@@ -1329,7 +2525,8 @@ func (i *InlineQueryResultVenue) WithReplyMarkup(replyMarkup *InlineKeyboardMark
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultVenue) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultVenue) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultVenue {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1390,7 +2587,8 @@ func (i *InlineQueryResultContact) WithReplyMarkup(replyMarkup *InlineKeyboardMa
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultContact) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultContact) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultContact {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1469,7 +2667,8 @@ func (i *InlineQueryResultCachedPhoto) WithParseMode(parseMode string) *InlineQu
 }
 
 // WithCaptionEntities adds caption entities parameter
-func (i *InlineQueryResultCachedPhoto) WithCaptionEntities(captionEntities ...MessageEntity,
+func (i *InlineQueryResultCachedPhoto) WithCaptionEntities(
+	captionEntities ...MessageEntity,
 ) *InlineQueryResultCachedPhoto {
 	i.CaptionEntities = captionEntities
 	return i
@@ -1482,14 +2681,16 @@ func (i *InlineQueryResultCachedPhoto) WithShowCaptionAboveMedia() *InlineQueryR
 }
 
 // WithReplyMarkup adds reply markup parameter
-func (i *InlineQueryResultCachedPhoto) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup,
+func (i *InlineQueryResultCachedPhoto) WithReplyMarkup(
+	replyMarkup *InlineKeyboardMarkup,
 ) *InlineQueryResultCachedPhoto {
 	i.ReplyMarkup = replyMarkup
 	return i
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultCachedPhoto) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultCachedPhoto) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultCachedPhoto {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1544,7 +2745,8 @@ func (i *InlineQueryResultCachedGif) WithReplyMarkup(replyMarkup *InlineKeyboard
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultCachedGif) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultCachedGif) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultCachedGif {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1581,7 +2783,8 @@ func (i *InlineQueryResultCachedMpeg4Gif) WithParseMode(parseMode string) *Inlin
 }
 
 // WithCaptionEntities adds caption entities parameter
-func (i *InlineQueryResultCachedMpeg4Gif) WithCaptionEntities(captionEntities ...MessageEntity,
+func (i *InlineQueryResultCachedMpeg4Gif) WithCaptionEntities(
+	captionEntities ...MessageEntity,
 ) *InlineQueryResultCachedMpeg4Gif {
 	i.CaptionEntities = captionEntities
 	return i
@@ -1594,14 +2797,16 @@ func (i *InlineQueryResultCachedMpeg4Gif) WithShowCaptionAboveMedia() *InlineQue
 }
 
 // WithReplyMarkup adds reply markup parameter
-func (i *InlineQueryResultCachedMpeg4Gif) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup,
+func (i *InlineQueryResultCachedMpeg4Gif) WithReplyMarkup(
+	replyMarkup *InlineKeyboardMarkup,
 ) *InlineQueryResultCachedMpeg4Gif {
 	i.ReplyMarkup = replyMarkup
 	return i
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultCachedMpeg4Gif) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultCachedMpeg4Gif) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultCachedMpeg4Gif {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1620,14 +2825,16 @@ func (i *InlineQueryResultCachedSticker) WithStickerFileID(stickerFileID string)
 }
 
 // WithReplyMarkup adds reply markup parameter
-func (i *InlineQueryResultCachedSticker) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup,
+func (i *InlineQueryResultCachedSticker) WithReplyMarkup(
+	replyMarkup *InlineKeyboardMarkup,
 ) *InlineQueryResultCachedSticker {
 	i.ReplyMarkup = replyMarkup
 	return i
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultCachedSticker) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultCachedSticker) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultCachedSticker {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1670,21 +2877,24 @@ func (i *InlineQueryResultCachedDocument) WithParseMode(parseMode string) *Inlin
 }
 
 // WithCaptionEntities adds caption entities parameter
-func (i *InlineQueryResultCachedDocument) WithCaptionEntities(captionEntities ...MessageEntity,
+func (i *InlineQueryResultCachedDocument) WithCaptionEntities(
+	captionEntities ...MessageEntity,
 ) *InlineQueryResultCachedDocument {
 	i.CaptionEntities = captionEntities
 	return i
 }
 
 // WithReplyMarkup adds reply markup parameter
-func (i *InlineQueryResultCachedDocument) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup,
+func (i *InlineQueryResultCachedDocument) WithReplyMarkup(
+	replyMarkup *InlineKeyboardMarkup,
 ) *InlineQueryResultCachedDocument {
 	i.ReplyMarkup = replyMarkup
 	return i
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultCachedDocument) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultCachedDocument) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultCachedDocument {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1727,7 +2937,8 @@ func (i *InlineQueryResultCachedVideo) WithParseMode(parseMode string) *InlineQu
 }
 
 // WithCaptionEntities adds caption entities parameter
-func (i *InlineQueryResultCachedVideo) WithCaptionEntities(captionEntities ...MessageEntity,
+func (i *InlineQueryResultCachedVideo) WithCaptionEntities(
+	captionEntities ...MessageEntity,
 ) *InlineQueryResultCachedVideo {
 	i.CaptionEntities = captionEntities
 	return i
@@ -1740,14 +2951,16 @@ func (i *InlineQueryResultCachedVideo) WithShowCaptionAboveMedia() *InlineQueryR
 }
 
 // WithReplyMarkup adds reply markup parameter
-func (i *InlineQueryResultCachedVideo) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup,
+func (i *InlineQueryResultCachedVideo) WithReplyMarkup(
+	replyMarkup *InlineKeyboardMarkup,
 ) *InlineQueryResultCachedVideo {
 	i.ReplyMarkup = replyMarkup
 	return i
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultCachedVideo) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultCachedVideo) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultCachedVideo {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1784,21 +2997,24 @@ func (i *InlineQueryResultCachedVoice) WithParseMode(parseMode string) *InlineQu
 }
 
 // WithCaptionEntities adds caption entities parameter
-func (i *InlineQueryResultCachedVoice) WithCaptionEntities(captionEntities ...MessageEntity,
+func (i *InlineQueryResultCachedVoice) WithCaptionEntities(
+	captionEntities ...MessageEntity,
 ) *InlineQueryResultCachedVoice {
 	i.CaptionEntities = captionEntities
 	return i
 }
 
 // WithReplyMarkup adds reply markup parameter
-func (i *InlineQueryResultCachedVoice) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup,
+func (i *InlineQueryResultCachedVoice) WithReplyMarkup(
+	replyMarkup *InlineKeyboardMarkup,
 ) *InlineQueryResultCachedVoice {
 	i.ReplyMarkup = replyMarkup
 	return i
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultCachedVoice) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultCachedVoice) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultCachedVoice {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1829,21 +3045,24 @@ func (i *InlineQueryResultCachedAudio) WithParseMode(parseMode string) *InlineQu
 }
 
 // WithCaptionEntities adds caption entities parameter
-func (i *InlineQueryResultCachedAudio) WithCaptionEntities(captionEntities ...MessageEntity,
+func (i *InlineQueryResultCachedAudio) WithCaptionEntities(
+	captionEntities ...MessageEntity,
 ) *InlineQueryResultCachedAudio {
 	i.CaptionEntities = captionEntities
 	return i
 }
 
 // WithReplyMarkup adds reply markup parameter
-func (i *InlineQueryResultCachedAudio) WithReplyMarkup(replyMarkup *InlineKeyboardMarkup,
+func (i *InlineQueryResultCachedAudio) WithReplyMarkup(
+	replyMarkup *InlineKeyboardMarkup,
 ) *InlineQueryResultCachedAudio {
 	i.ReplyMarkup = replyMarkup
 	return i
 }
 
 // WithInputMessageContent adds input message content parameter
-func (i *InlineQueryResultCachedAudio) WithInputMessageContent(inputMessageContent InputMessageContent,
+func (i *InlineQueryResultCachedAudio) WithInputMessageContent(
+	inputMessageContent InputMessageContent,
 ) *InlineQueryResultCachedAudio {
 	i.InputMessageContent = inputMessageContent
 	return i
@@ -1875,6 +3094,30 @@ func (i *InputTextMessageContent) WithLinkPreviewOptions(
 	return i
 }
 
+// WithRichMessage adds rich message parameter
+func (i *InputRichMessageContent) WithRichMessage(richMessage InputRichMessage) *InputRichMessageContent {
+	i.RichMessage = richMessage
+	return i
+}
+
+// WithLatitude adds latitude parameter
+func (i *InputLocationMessageContent) WithLatitude(latitude float64) *InputLocationMessageContent {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InputLocationMessageContent) WithLongitude(longitude float64) *InputLocationMessageContent {
+	i.Longitude = longitude
+	return i
+}
+
+// WithHorizontalAccuracy adds horizontal accuracy parameter
+func (i *InputLocationMessageContent) WithHorizontalAccuracy(horizontalAccuracy float64) *InputLocationMessageContent {
+	i.HorizontalAccuracy = horizontalAccuracy
+	return i
+}
+
 // WithLivePeriod adds live period parameter
 func (i *InputLocationMessageContent) WithLivePeriod(livePeriod int) *InputLocationMessageContent {
 	i.LivePeriod = livePeriod
@@ -1890,6 +3133,18 @@ func (i *InputLocationMessageContent) WithHeading(heading int) *InputLocationMes
 // WithProximityAlertRadius adds proximity alert radius parameter
 func (i *InputLocationMessageContent) WithProximityAlertRadius(proximityAlertRadius int) *InputLocationMessageContent {
 	i.ProximityAlertRadius = proximityAlertRadius
+	return i
+}
+
+// WithLatitude adds latitude parameter
+func (i *InputVenueMessageContent) WithLatitude(latitude float64) *InputVenueMessageContent {
+	i.Latitude = latitude
+	return i
+}
+
+// WithLongitude adds longitude parameter
+func (i *InputVenueMessageContent) WithLongitude(longitude float64) *InputVenueMessageContent {
+	i.Longitude = longitude
 	return i
 }
 
@@ -2070,5 +3325,109 @@ func (i *InputInvoiceMessageContent) WithSendEmailToProvider() *InputInvoiceMess
 // WithIsFlexible adds is flexible parameter
 func (i *InputInvoiceMessageContent) WithIsFlexible() *InputInvoiceMessageContent {
 	i.IsFlexible = true
+	return i
+}
+
+// WithHTML adds html parameter
+func (i *InputWidgetMessageContent) WithHTML(html string) *InputWidgetMessageContent {
+	i.HTML = html
+	return i
+}
+
+// WithWidth adds width parameter
+func (i *InputWidgetMessageContent) WithWidth(width int) *InputWidgetMessageContent {
+	i.Width = width
+	return i
+}
+
+// WithHeight adds height parameter
+func (i *InputWidgetMessageContent) WithHeight(height int) *InputWidgetMessageContent {
+	i.Height = height
+	return i
+}
+
+// WithPublicData adds public data parameter
+func (i *InputWidgetMessageContent) WithPublicData(publicData string) *InputWidgetMessageContent {
+	i.PublicData = publicData
+	return i
+}
+
+// WithChatData adds chat data parameter
+func (i *InputWidgetMessageContent) WithChatData(chatData string) *InputWidgetMessageContent {
+	i.ChatData = chatData
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputWidgetMessageContent) WithCaption(caption string) *InputWidgetMessageContent {
+	i.Caption = caption
+	return i
+}
+
+// WithParseMode adds parse mode parameter
+func (i *InputWidgetMessageContent) WithParseMode(parseMode string) *InputWidgetMessageContent {
+	i.ParseMode = parseMode
+	return i
+}
+
+// WithCaptionEntities adds caption entities parameter
+func (i *InputWidgetMessageContent) WithCaptionEntities(captionEntities ...MessageEntity) *InputWidgetMessageContent {
+	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InputWidgetMessageContent) WithShowCaptionAboveMedia() *InputWidgetMessageContent {
+	i.ShowCaptionAboveMedia = true
+	return i
+}
+
+// WithAllowQueries adds allow queries parameter
+func (i *InputWidgetMessageContent) WithAllowQueries() *InputWidgetMessageContent {
+	i.AllowQueries = true
+	return i
+}
+
+// WithIsShared adds is shared parameter
+func (i *InputWidgetMessageContent) WithIsShared() *InputWidgetMessageContent {
+	i.IsShared = true
+	return i
+}
+
+// WithWidgetID adds widget ID parameter
+func (i *InputSharedWidgetMessageContent) WithWidgetID(widgetID string) *InputSharedWidgetMessageContent {
+	i.WidgetID = widgetID
+	return i
+}
+
+// WithChatData adds chat data parameter
+func (i *InputSharedWidgetMessageContent) WithChatData(chatData string) *InputSharedWidgetMessageContent {
+	i.ChatData = chatData
+	return i
+}
+
+// WithCaption adds caption parameter
+func (i *InputSharedWidgetMessageContent) WithCaption(caption string) *InputSharedWidgetMessageContent {
+	i.Caption = caption
+	return i
+}
+
+// WithParseMode adds parse mode parameter
+func (i *InputSharedWidgetMessageContent) WithParseMode(parseMode string) *InputSharedWidgetMessageContent {
+	i.ParseMode = parseMode
+	return i
+}
+
+// WithCaptionEntities adds caption entities parameter
+func (i *InputSharedWidgetMessageContent) WithCaptionEntities(
+	captionEntities ...MessageEntity,
+) *InputSharedWidgetMessageContent {
+	i.CaptionEntities = captionEntities
+	return i
+}
+
+// WithShowCaptionAboveMedia adds show caption above media parameter
+func (i *InputSharedWidgetMessageContent) WithShowCaptionAboveMedia() *InputSharedWidgetMessageContent {
+	i.ShowCaptionAboveMedia = true
 	return i
 }

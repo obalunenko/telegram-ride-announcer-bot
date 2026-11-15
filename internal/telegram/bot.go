@@ -63,6 +63,7 @@ type Bot struct {
 
 	id          int64
 	username    string
+	name        string
 	description string
 	commands    Commands
 }
@@ -87,15 +88,21 @@ func (b *Bot) Username() string {
 	return b.username
 }
 
+// Name returns bot name shown in chats.
+func (b *Bot) Name() string {
+	return b.name
+}
+
 // Commands returns bot commands.
 func (b *Bot) Commands() Commands {
 	return b.commands
 }
 
 type botOptions struct {
-	commands    Commands
-	description string
-	username    string
+	commands      Commands
+	description   string
+	name          string
+	clientOptions []tgbotapi.BotOption
 }
 
 // BotOption is a bot option.
@@ -115,33 +122,46 @@ func WithDescription(description string) BotOption {
 	}
 }
 
-// WithUsername sets bot username.
-func WithUsername(username string) BotOption {
+// WithName sets bot name shown in chats. The username of a bot can't be changed via the Bot API.
+func WithName(name string) BotOption {
 	return func(o *botOptions) {
-		o.username = username
+		o.name = name
+	}
+}
+
+// WithClientOptions sets options of the underlying telego client, e.g. a custom Bot API server.
+func WithClientOptions(opts ...tgbotapi.BotOption) BotOption {
+	return func(o *botOptions) {
+		o.clientOptions = append(o.clientOptions, opts...)
 	}
 }
 
 // NewBot creates new bot instance.
 func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) {
-	client, err := tgbotapi.NewBot(token)
+	var params botOptions
+
+	for _, opt := range opts {
+		opt(&params)
+	}
+
+	client, err := tgbotapi.NewBot(token, params.clientOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
 
-	self, err := client.GetMe()
+	self, err := client.GetMe(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot info: %w", err)
 	}
 
-	description, err := client.GetMyDescription(&tgbotapi.GetMyDescriptionParams{
+	description, err := client.GetMyDescription(ctx, &tgbotapi.GetMyDescriptionParams{
 		LanguageCode: "",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot description: %w", err)
 	}
 
-	registedCmds, err := client.GetMyCommands(&tgbotapi.GetMyCommandsParams{})
+	registedCmds, err := client.GetMyCommands(ctx, &tgbotapi.GetMyCommandsParams{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bot commands: %w", err)
 	}
@@ -150,30 +170,23 @@ func NewBot(ctx context.Context, token string, opts ...BotOption) (*Bot, error) 
 		id:          self.ID,
 		client:      client,
 		username:    self.Username,
+		name:        self.FirstName,
 		description: description.Description,
 		commands:    toCommands(registedCmds),
 	}
 
-	if len(opts) > 0 {
-		bot.updateOnStart(ctx, opts...)
-	}
+	bot.updateOnStart(ctx, params)
 
 	return bot, nil
 }
 
-func (b *Bot) updateOnStart(ctx context.Context, opts ...BotOption) {
-	var params botOptions
-
-	for _, opt := range opts {
-		opt(&params)
-	}
-
+func (b *Bot) updateOnStart(ctx context.Context, params botOptions) {
 	if params.description != "" {
 		b.maybeUpdateDescriptionBot(ctx, params.description)
 	}
 
-	if params.username != "" {
-		b.maybeUpdateBotName(ctx, params.username)
+	if params.name != "" {
+		b.maybeUpdateBotName(ctx, params.name)
 	}
 
 	if len(params.commands) > 0 {
@@ -182,7 +195,7 @@ func (b *Bot) updateOnStart(ctx context.Context, opts ...BotOption) {
 }
 
 func (b *Bot) maybeUpdateBotName(ctx context.Context, botName string) {
-	isUpToDate := b.Username() != botName
+	isUpToDate := b.Name() == botName
 
 	if isUpToDate {
 		log.Info(ctx, "Bot name is up to date")
@@ -192,7 +205,7 @@ func (b *Bot) maybeUpdateBotName(ctx context.Context, botName string) {
 
 	log.Info(ctx, "Updating bot name")
 
-	err := b.Client().SetMyName(&tgbotapi.SetMyNameParams{
+	err := b.Client().SetMyName(ctx, &tgbotapi.SetMyNameParams{
 		Name: botName,
 	})
 	if err != nil {
@@ -201,11 +214,13 @@ func (b *Bot) maybeUpdateBotName(ctx context.Context, botName string) {
 		return
 	}
 
+	b.name = botName
+
 	log.Info(ctx, "Bot name is up to date")
 }
 
 func (b *Bot) maybeUpdateDescriptionBot(ctx context.Context, botDescription string) {
-	isUpToDate := b.Description() != botDescription
+	isUpToDate := b.Description() == botDescription
 
 	if isUpToDate {
 		log.Info(ctx, "Bot description is up to date")
@@ -215,7 +230,7 @@ func (b *Bot) maybeUpdateDescriptionBot(ctx context.Context, botDescription stri
 
 	log.Info(ctx, "Updating bot description")
 
-	err := b.Client().SetMyDescription(&tgbotapi.SetMyDescriptionParams{
+	err := b.Client().SetMyDescription(ctx, &tgbotapi.SetMyDescriptionParams{
 		Description: botDescription,
 	})
 	if err != nil {
@@ -223,6 +238,8 @@ func (b *Bot) maybeUpdateDescriptionBot(ctx context.Context, botDescription stri
 
 		return
 	}
+
+	b.description = botDescription
 
 	log.Info(ctx, "Bot description is up to date")
 }
@@ -234,9 +251,10 @@ func (b *Bot) maybeUpdateCommands(ctx context.Context, botCommands Commands) {
 		registeredCommands[cmd.Command] = cmd.Description
 	}
 
-	var equal bool
-
 	enabled := botCommands.EnabledCommands()
+
+	// Equal when the bot has exactly the enabled commands with the same descriptions.
+	equal := len(enabled) == len(registeredCommands)
 
 	for _, cmd := range enabled {
 		desc, ok := registeredCommands[cmd.Command]
@@ -255,12 +273,16 @@ func (b *Bot) maybeUpdateCommands(ctx context.Context, botCommands Commands) {
 
 	log.Info(ctx, "Updating bot commands")
 
-	err := b.Client().SetMyCommands(&tgbotapi.SetMyCommandsParams{
+	err := b.Client().SetMyCommands(ctx, &tgbotapi.SetMyCommandsParams{
 		Commands: enabled,
 	})
 	if err != nil {
 		log.WithError(ctx, err).Error("failed to set bot commands")
+
+		return
 	}
+
+	b.commands = toCommands(enabled)
 
 	log.Info(ctx, "Bot commands set")
 }

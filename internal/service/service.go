@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	tgbotapi "github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	log "github.com/obalunenko/logger"
 
@@ -91,9 +90,6 @@ func (s *Service) Shutdown(ctx context.Context) {
 		}
 	}
 
-	log.Info(ctx, "Stop receiving updates")
-	s.bot.Client().StopLongPolling()
-
 	for _, fn := range s.stopFns {
 		fn(ctx)
 	}
@@ -102,8 +98,12 @@ func (s *Service) Shutdown(ctx context.Context) {
 type stopFunc func(ctx context.Context)
 
 func (s *Service) initHandlers(ctx context.Context) stopFunc {
-	pollChan, err := s.bot.Client().UpdatesViaLongPolling(&tgbotapi.GetUpdatesParams{},
-		tgbotapi.WithLongPollingContext(ctx))
+	// Canceling pollCtx stops long polling and closes pollChan.
+	// stopPolling can't be deferred here: the returned stop function calls it on Shutdown.
+	pollCtx, stopPolling := context.WithCancel(ctx) // NOSONAR
+
+	// nil params use the default long polling timeout.
+	pollChan, err := s.bot.Client().UpdatesViaLongPolling(pollCtx, nil)
 	if err != nil {
 		log.WithError(ctx, err).Fatal("Failed to get updates via long polling")
 	}
@@ -129,12 +129,23 @@ func (s *Service) initHandlers(ctx context.Context) stopFunc {
 	handler.Handle(s.notFoundHandler(ctx), th.AnyCommand())
 	handler.Handle(s.textHandler(), th.AnyMessageWithText())
 
-	go handler.Start()
+	go func() {
+		if err := handler.Start(); err != nil {
+			log.WithError(ctx, err).Error("Bot handler stopped with error")
+		}
+	}()
 
 	return func(ctx context.Context) {
+		log.Info(ctx, "Stop receiving updates")
+
+		stopPolling()
+
 		log.Info(ctx, "Stopping bot handler")
 
-		handler.Stop()
+		// Waits for the updates that are still being handled.
+		if err := handler.StopWithContext(ctx); err != nil {
+			log.WithError(ctx, err).Error("Failed to stop bot handler")
+		}
 
 		log.Info(ctx, "Bot handler stopped")
 	}

@@ -22,14 +22,13 @@ jobs:
       matrix:
         dockerfile:
           [
-            "./build/docker/go-tools/Dockerfile",
             "./build/docker/rideannouncer/Dockerfile",
           ]
     runs-on: "ubuntu-24.04"
     name: Lint ${{ matrix.dockerfile }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -47,14 +46,13 @@ jobs:
       matrix:
         target:
           [
-            "go-tools",
             "rideannouncer",
           ]
     runs-on: "ubuntu-24.04"
     name: Build ${{ matrix.target }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

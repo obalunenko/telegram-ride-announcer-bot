@@ -1,15 +1,9 @@
-# This file contains configuration options for golangci-lint.
-# https://github.com/golangci/golangci-lint/blob/master/.golangci.reference.yml
-
-run:
-  # Timeout for analysis.
-  timeout: 5m
-
+version: "2"
 linters:
-  enable-all: true
+  default: all
   disable:
-    - cyclop
     - copyloopvar
+    - cyclop
     - depguard
     - dupl
     - err113
@@ -17,15 +11,17 @@ linters:
     - errorlint
     - exhaustive
     - exhaustruct
-    - forcetypeassert
+    - exhaustruct_v5
+    - forbidigo
+    - funcorder
     - funlen
     - gochecknoglobals
     - gocognit
     - goconst
     - gocyclo
-    - goerr113
-    - gomnd
-    - gosec
+    - godox
+    - gomodguard
+    - gosmopolitan
     - inamedparam
     - intrange
     - ireturn
@@ -35,6 +31,7 @@ linters:
     - nestif
     - nlreturn
     - noctx
+    - noinlineerr
     - nonamedreturns
     - paralleltest
     - testableexamples
@@ -46,65 +43,83 @@ linters:
     - varnamelen
     - wrapcheck
     - wsl
-
-    # Deprecated linters
-    - deadcode
-    - exhaustivestruct
-    - exportloopref
-    - execinquery
-    - golint
-    - ifshort
-    - interfacer
-    - maligned
-    - nosnakecase
-    - scopelint
-    - structcheck
-    - varcheck
-
-linters-settings:
-  revive:
-    # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md
+    - wsl_v5
+  settings:
+    gocritic:
+      disabled-checks:
+        - importShadow
+        - sloppyReassign
+        - unnamedResult
+        - whyNoLint
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gosec:
+      # Preserve the exclusions from the former standalone security workflow.
+      excludes:
+        - G103
+        - G104
+        - G304
+        - G402
+    govet:
+      disable:
+        - fieldalignment
+        - shadow
+      enable-all: true
+    lll:
+      line-length: 130
+    revive:
+      rules:
+        - name: indent-error-flow
+        - name: use-any
+    staticcheck:
+      checks:
+        - -ST1000
+        - all
+  exclusions:
+    generated: lax
+    presets:
+      - std-error-handling
     rules:
-      - name: indent-error-flow
-      - name: use-any
-  lll:
-    line-length: 130
-  stylecheck:
-    checks: [
-      "all",
-      "-ST1000", # at least one file in a package should have a package comment
-    ]
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - deferInLoop
-      - importShadow
-      - sloppyReassign
-      - unnamedResult
-      - whyNoLint
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-      - shadow
-
+      # Preserve the non-security legacy exclusions without hiding gosec findings.
+      - linters:
+          - govet
+        text: '(possible misuse of unsafe.Pointer|should have signature)'
+      - linters:
+          - staticcheck
+        text: 'SA4011'
+      # The standalone gosec scan did not include test files.
+      - linters:
+          - gosec
+        path: _test\.go
+      - linters:
+          - lll
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  # Show all issues from a linter.
   max-issues-per-linter: 0
-
-  # Show all issues with the same text.
   max-same-issues: 0
-
-  include:
-    - EXC0011 # include issues about comments from `stylecheck`
-
-  exclude-rules:
-    # Exclude some linters from running on tests files.
-    - path: _test\.go
-      linters:
-        - lll
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/molecule-man/go-brrr)
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
