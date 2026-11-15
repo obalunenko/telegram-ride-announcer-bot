@@ -31,3 +31,5 @@ dist/
 coverage/
 
 tests-report.json
+
+report.xml
