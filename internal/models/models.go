@@ -26,6 +26,8 @@ type Trip struct {
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 	CreatedBy   *User     `json:"created_by,omitempty"`
+	// Completed is true once the trip is published; a trip that is not completed is a draft.
+	Completed bool `json:"completed,omitempty"`
 }
 
 func (t Trip) String() string {

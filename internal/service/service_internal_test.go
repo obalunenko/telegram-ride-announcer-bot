@@ -344,6 +344,11 @@ func TestService_PublishTrip(t *testing.T) {
 	assert.EqualValues(t, testChatID, pin.Params["chat_id"])
 	assertState(t, repos, models.StateStart)
 
+	published, err := ops.ListTripsByUser(ctx, repos, &models.User{ID: testUserID})
+	require.NoError(t, err)
+	require.Len(t, published, 1)
+	assert.True(t, published[0].Completed, "a published trip is completed")
+
 	myTrips := replyTo(t, api, "/mytrips")
 	assert.True(t, strings.HasPrefix(myTrips, "Your trips:"), myTrips)
 	assert.Contains(t, myTrips, "Title: Morning ride")

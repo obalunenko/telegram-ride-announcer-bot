@@ -58,6 +58,7 @@ func GetTrip(ctx context.Context, b backends, id uuid.UUID) (*models.Trip, error
 			Firstname: user.Firstname,
 			Lastname:  user.Lastname,
 		},
+		Completed: t.Completed,
 	}, nil
 }
 
@@ -75,6 +76,7 @@ func UpdateTrip(ctx context.Context, b backends, id uuid.UUID, p UpdateTripParam
 		Name:        p.Name,
 		Date:        p.Date,
 		Description: p.Description,
+		Completed:   p.Completed,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("update trip: %w", err)
@@ -119,6 +121,7 @@ func ListTripsByUser(ctx context.Context, b backends, user *models.User) ([]*mod
 			CreatedAt:   t.CreatedAt,
 			UpdatedAt:   t.UpdatedAt,
 			CreatedBy:   user,
+			Completed:   t.Completed,
 		})
 	}
 

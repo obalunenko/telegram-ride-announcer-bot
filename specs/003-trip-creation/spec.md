@@ -10,6 +10,8 @@
 
 **Input**: Reverse-engineered by `/speckit-brownfield-migrate` from `internal/service/trips.go` (`newTripHandler`), `internal/service/handlers.go` (`createTrip` through `publishTrip`, `textHandler`), `internal/service/helper.go` (`renderTrip`), `internal/ops/trips.go`, `internal/repository/trips/`, and `internal/service/renderer/templates/trip.gotmpl`.
 
+**Bugfix**: 2026-11-15 — BUG-001 Publishing marks the trip completed.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `internal/service/` (dialog steps and routing),
@@ -85,6 +87,9 @@ announcement, the `pinChatMessage` call, and the state
    card to the session's chat and pins that message.
 2. **Given** the trip was published, **When** the user sends another message,
    **Then** their state is `StateStart` and they can start a new trip.
+3. **Given** the trip was published, **When** it is loaded from storage,
+   **Then** it is completed; a trip that is not completed is a draft
+   (BUG-001).
 
 ---
 
@@ -160,8 +165,9 @@ reply, the state, and that `/mytrips` shows no trips
   dialog; free text from a user in `StateStart` MUST get the "Command not
   found" reply.
 - **FR-011**: A deleted trip MUST NOT be returned by trip lookups or lists.
-- **FR-012**: Publishing SHOULD mark the trip as completed; the current code
-  requests it but does not store it. (Gap 1.)
+- **FR-012**: Publishing ~~SHOULD mark the trip as completed; the current code
+  requests it but does not store it. (Gap 1.)~~ MUST mark the trip as
+  completed in storage (BUG-001).
 - **FR-013**: A failed step MUST log the error.
 
 ### Key Entities *(include if feature involves data)*
@@ -198,9 +204,9 @@ reply, the state, and that `/mytrips` shows no trips
 
 Found during migration; none of them is fixed by this spec.
 
-1. Published trips are never marked completed: `ops.UpdateTrip` does not pass
+1. ~~Published trips are never marked completed: `ops.UpdateTrip` does not pass
    `Completed` to the repository, and `models.Trip` has no completed field,
-   so drafts and published trips cannot be told apart.
+   so drafts and published trips cannot be told apart.~~ Fixed by BUG-001.
 2. Any confirmation answer except exactly `no` publishes the trip.
 3. `/newtrip` during the dialog is taken as the answer to the current step.
 4. The date is free text: no parsing, no validation, and no time step,

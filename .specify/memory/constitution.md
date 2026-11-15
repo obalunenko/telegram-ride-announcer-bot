@@ -1,16 +1,18 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.2 → 1.1.3 (PATCH: resolved a known deviation)
-- Modified: Known Deviations (`README.md` lists the bot commands since
-  specs/002-start-help-menu BUG-001)
+- Version change: 1.1.3 → 1.1.4 (PATCH: resolved a known deviation)
+- Modified: Known Deviations (the trips repository and `internal/ops/trips.go`
+  have tests since specs/003-trip-creation BUG-001; every `internal/`
+  package with behavior now has tests of its own)
 - Added sections: none; Removed sections: none
 - Templates: spec-template.md, plan-template.md, tasks-template.md, AGENTS.md —
   no change needed
 - Follow-up: none
-- Previous: 1.1.1 → 1.1.2 README documents the configuration; 1.1.0 → 1.1.1
-  only the trip packages remain untested; 1.0.2 → 1.1.0 one session per user
-  and chat; 1.0.1 → 1.0.2 resolved tooling known deviations; 1.0.0 → 1.0.1
-  factual corrections; template → 1.0.0 initial ratification
+- Previous: 1.1.2 → 1.1.3 README lists the commands; 1.1.1 → 1.1.2 README
+  documents the configuration; 1.1.0 → 1.1.1 only the trip packages remain
+  untested; 1.0.2 → 1.1.0 one session per user and chat; 1.0.1 → 1.0.2
+  resolved tooling known deviations; 1.0.0 → 1.0.1 factual corrections;
+  template → 1.0.0 initial ratification
 -->
 
 # Telegram Ride Announcer Bot Constitution
@@ -182,8 +184,6 @@ Evidence: `//go:generate` in `internal/models/models.go`,
 These are current exceptions. They are not rules, and new features MUST NOT
 extend them:
 
-- `internal/ops/trips.go` and `internal/repository/trips` have no tests of
-  their own; they are exercised only through `internal/service` tests.
 - `StateNewTripTime` and `StateNewTripPublish` are declared and routed by
   `textHandler`, but no step sets them and `createTrip` has no branch for
   them.
@@ -199,4 +199,4 @@ extend them:
   sections, PATCH for clarifications.
 - Resolving a known deviation removes it from the list in a PATCH amendment.
 
-**Version**: 1.1.3 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
+**Version**: 1.1.4 | **Ratified**: 2026-11-15 | **Last Amended**: 2026-11-15
