@@ -23,6 +23,8 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 
 **Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-007 Updated from bugfix patch
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -99,6 +101,10 @@ description: "Migrated task list for Sessions, Users, and Bot Lifecycle"
 - [x] T041 [P] Tests for session creation, lookup, update, per-chat dialogs, listing, and deletion in `internal/ops/sessions_test.go` (BUG-006)
 - [x] T042 [P] Tests for `State.Valid`, `State.IsAny`, `State.String`, `NewSession` in `internal/models/models_test.go` (BUG-006)
 
+- [x] T043 [P] Remove `states.ListStates`, `users.List`, and the `Command` field from `internal/repository/states/states.go`, `internal/repository/users/users.go`, `internal/ops/sessions.go` (BUG-007)
+- [x] T044 Read `RIDE_ANNOUNCER_LOG_LEVEL` and `RIDE_ANNOUNCER_LOG_FORMAT` in `cmd/rideannouncer/main.go`; pass them in `deployments/docker-compose/bot-compose.yaml` (BUG-007)
+- [x] T045 [P] Document the environment variables and running locally in `README.md` (BUG-007)
+
 ## Gaps (not tasks)
 
 Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with `/speckit-bugfix-report` or a new `/speckit-specify` feature.
@@ -109,4 +115,4 @@ Follow-ups found during migration; see [spec.md](spec.md#gaps). Track them with 
 - ~~`Service.Shutdown` skips stopping polling when listing sessions fails.~~ Fixed by BUG-004.
 - ~~Panics give the user no reply and print the stack with `fmt.Println`.~~ Fixed by BUG-005.
 - ~~No tests for `internal/ops/{sessions,users}.go` and the `users`, `sessions`, `states` repositories.~~ Fixed by BUG-006.
-- Unused API: `states.ListStates`, `states.GetStateByID`, `users.List`, `states.State.Command`.
+- ~~Unused API: `states.ListStates`, `states.GetStateByID`, `users.List`, `states.State.Command`.~~ Fixed by BUG-007.

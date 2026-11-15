@@ -22,6 +22,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-006 Users, sessions, states, and their operations have tests of their own.
 
+**Bugfix**: 2026-11-15 — BUG-007 Configurable log level and format; unused storage API removed; README documents the configuration.
+
 ## Project Scope and Compatibility
 
 - **Affected boundaries**: `cmd/rideannouncer/` (startup, signals, shutdown
@@ -40,7 +42,9 @@
 - **Chats**: Private and group chats. ~~The session keeps the chat of the
   user's first message.~~ Each chat of a user has its own session and dialog
   (BUG-001).
-- **Configuration**: `RIDE_ANNOUNCER_TELEGRAM_TOKEN` (required).
+- **Configuration**: `RIDE_ANNOUNCER_TELEGRAM_TOKEN` (required);
+  `RIDE_ANNOUNCER_LOG_LEVEL` (default `DEBUG`) and `RIDE_ANNOUNCER_LOG_FORMAT`
+  (default `text`) (BUG-007).
 - **Release impact**: N/A (existing behavior).
 
 ## User Scenarios & Testing *(mandatory)*
@@ -218,6 +222,12 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
   (BUG-004).
 - **FR-012**: Shutdown MUST use a context that is not canceled but keeps the
   logger, so Bot API calls made during shutdown succeed.
+- **FR-013**: The bot MUST read the log level from `RIDE_ANNOUNCER_LOG_LEVEL`
+  (default `DEBUG`; an unknown value falls back to `INFO`) and the log format
+  from `RIDE_ANNOUNCER_LOG_FORMAT` (`text` or `json`, default `text`)
+  (BUG-007).
+- **FR-014**: `README.md` MUST document every environment variable
+  (BUG-007).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -249,7 +259,8 @@ failures), `TestPanicRecovery`, `TestLoggerMiddleware`,
 
 - The bot runs as a single instance with long polling and keeps all data in
   memory.
-- Log level `DEBUG` and text format are fixed in `cmd/rideannouncer/main.go`.
+- ~~Log level `DEBUG` and text format are fixed in `cmd/rideannouncer/main.go`.~~
+  The log level and format come from the environment (BUG-007).
 - The farewell message is sent to the session's chat, which may be a group.
 - Depends on the Telegram Bot API.
 
@@ -271,6 +282,7 @@ Found during migration; none of them is fixed by this spec.
 6. ~~`internal/ops/sessions.go`, `internal/ops/users.go`, and the
    `users`, `sessions`, and `states` repositories have no tests of their own
    (constitution Known Deviation).~~ Fixed by BUG-006.
-7. Unused repository API: `states.ListStates`, `states.GetStateByID`,
+7. ~~Unused repository API: `states.ListStates`, `states.GetStateByID`,
    `users.List`, and `states.State.Command` (always empty). The log level
-   cannot be configured.
+   cannot be configured.~~ Fixed by BUG-007 (`states.GetStateByID` is used
+   since BUG-001).

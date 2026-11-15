@@ -65,11 +65,10 @@ type CreateSessionParams struct {
 func CreateSession(ctx context.Context, b backends, p CreateSessionParams) (*models.Session, error) {
 	// The user keeps the state of the chat when the session is created again.
 	state, err := b.StatesRepository().CreateState(ctx, states.CreateParams{
-		UserID:  p.User.ID,
-		ChatID:  p.ChatID,
-		Command: "",
-		TripID:  nil,
-		Step:    uint(models.StateStart),
+		UserID: p.User.ID,
+		ChatID: p.ChatID,
+		TripID: nil,
+		Step:   uint(models.StateStart),
 	})
 	if err != nil && !errors.Is(err, states.ErrAlreadyExists) {
 		return nil, fmt.Errorf("failed to create state: %w", err)
@@ -101,12 +100,11 @@ func UpdateSession(ctx context.Context, b backends, sess *models.Session) error 
 
 	// update state
 	err := b.StatesRepository().UpdateState(ctx, &states.State{
-		ID:      sess.UserState.ID,
-		UserID:  uid,
-		ChatID:  sess.ChatID,
-		TripID:  tid,
-		Command: "",
-		Step:    uint(sess.UserState.State),
+		ID:     sess.UserState.ID,
+		UserID: uid,
+		ChatID: sess.ChatID,
+		TripID: tid,
+		Step:   uint(sess.UserState.State),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update state: %w", err)

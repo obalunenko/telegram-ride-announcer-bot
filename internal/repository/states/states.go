@@ -25,8 +25,6 @@ type Repository interface {
 	// CreateState creates a new state. If the user already has a state in the chat,
 	// it returns that state with ErrAlreadyExists.
 	CreateState(ctx context.Context, params CreateParams) (*State, error)
-	// ListStates returns all states.
-	ListStates(ctx context.Context) ([]*State, error)
 	// GetStateByID returns a state by ID.
 	GetStateByID(ctx context.Context, id uuid.UUID) (*State, error)
 	// UpdateState updates a state.
@@ -35,21 +33,19 @@ type Repository interface {
 
 // State represents a state.
 type State struct {
-	ID      uuid.UUID  `db:"id"`
-	UserID  int64      `db:"user_id"`
-	ChatID  int64      `db:"chat_id"`
-	TripID  *uuid.UUID `db:"trip_id"`
-	Command string     `db:"command"`
-	Step    uint       `db:"step"`
+	ID     uuid.UUID  `db:"id"`
+	UserID int64      `db:"user_id"`
+	ChatID int64      `db:"chat_id"`
+	TripID *uuid.UUID `db:"trip_id"`
+	Step   uint       `db:"step"`
 }
 
 // CreateParams contains the parameters for CreateState.
 type CreateParams struct {
-	UserID  int64
-	ChatID  int64
-	Command string
-	TripID  *uuid.UUID
-	Step    uint
+	UserID int64
+	ChatID int64
+	TripID *uuid.UUID
+	Step   uint
 }
 
 // NewInMemory creates a new in-memory repository.
@@ -76,12 +72,11 @@ func (i *inMemoryRepository) CreateState(_ context.Context, params CreateParams)
 	}
 
 	newState := &State{
-		ID:      id,
-		UserID:  params.UserID,
-		ChatID:  params.ChatID,
-		TripID:  params.TripID,
-		Command: params.Command,
-		Step:    params.Step,
+		ID:     id,
+		UserID: params.UserID,
+		ChatID: params.ChatID,
+		TripID: params.TripID,
+		Step:   params.Step,
 	}
 
 	// Each user can only have one state per chat.
@@ -94,19 +89,6 @@ func (i *inMemoryRepository) CreateState(_ context.Context, params CreateParams)
 	i.states[newState.ID] = newState
 
 	return newState, nil
-}
-
-func (i *inMemoryRepository) ListStates(_ context.Context) ([]*State, error) {
-	i.RLock()
-	defer i.RUnlock()
-
-	states := make([]*State, 0, len(i.states))
-
-	for _, state := range i.states {
-		states = append(states, state)
-	}
-
-	return states, nil
 }
 
 func (i *inMemoryRepository) GetStateByID(_ context.Context, id uuid.UUID) (*State, error) {

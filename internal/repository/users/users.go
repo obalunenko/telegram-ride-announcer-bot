@@ -22,8 +22,6 @@ type Repository interface {
 	GetBuID(ctx context.Context, id int64) (*User, error)
 	// Update replaces the stored user with the same ID.
 	Update(ctx context.Context, user *User) error
-	// List returns all users.
-	List(ctx context.Context) ([]*User, error)
 }
 
 // User represents a user.
@@ -85,17 +83,4 @@ func (i *inMemoryRepository) Update(_ context.Context, user *User) error {
 	i.users[user.ID] = user
 
 	return nil
-}
-
-func (i *inMemoryRepository) List(_ context.Context) ([]*User, error) {
-	i.RLock()
-	defer i.RUnlock()
-
-	users := make([]*User, 0, len(i.users))
-
-	for _, u := range i.users {
-		users = append(users, u)
-	}
-
-	return users, nil
 }

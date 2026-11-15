@@ -8,3 +8,24 @@
 
 # telegram-ride-announcer-bot
 Telegram bot for scheduling and announcing planned bicycle trips in chat groups
+
+## Configuration
+
+The bot reads its settings from environment variables:
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `RIDE_ANNOUNCER_TELEGRAM_TOKEN` | yes | — | Telegram Bot API token from [@BotFather](https://t.me/BotFather). |
+| `RIDE_ANNOUNCER_LOG_LEVEL` | no | `DEBUG` | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR`, or `FATAL`. An unknown value falls back to `INFO`. |
+| `RIDE_ANNOUNCER_LOG_FORMAT` | no | `text` | Log format: `text` or `json`. |
+
+The bot keeps all data in memory, so users, sessions, and trips are lost when it restarts.
+
+## Running locally
+
+```shell
+export RIDE_ANNOUNCER_TELEGRAM_TOKEN=<token>
+make run-local
+```
+
+`make run-local` builds the Docker image and starts it with Docker Compose; the variables above are passed to the container.

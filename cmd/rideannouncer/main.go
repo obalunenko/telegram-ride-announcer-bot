@@ -24,6 +24,13 @@ import (
 
 const (
 	envTGAPIToken = "RIDE_ANNOUNCER_TELEGRAM_TOKEN"
+	envLogLevel   = "RIDE_ANNOUNCER_LOG_LEVEL"
+	envLogFormat  = "RIDE_ANNOUNCER_LOG_FORMAT"
+)
+
+const (
+	defaultLogLevel  = "DEBUG"
+	defaultLogFormat = "text"
 )
 
 // shutdownTimeout limits the time the bot has to say bye and finish the updates in flight.
@@ -68,8 +75,8 @@ func main() {
 
 	log.Init(ctx, log.Params{
 		Writer: os.Stdout,
-		Level:  "DEBUG",
-		Format: "text",
+		Level:  getenv.EnvOrDefault(envLogLevel, defaultLogLevel),
+		Format: getenv.EnvOrDefault(envLogFormat, defaultLogFormat),
 	})
 
 	ctx = log.ContextWithLogger(ctx, log.FromContext(ctx))

@@ -20,6 +20,8 @@
 
 **Bugfix**: 2026-11-15 — BUG-006 Updated from bugfix patch
 
+**Bugfix**: 2026-11-15 — BUG-007 Updated from bugfix patch
+
 ## Summary
 
 Every update passes through a telego middleware chain that recovers panics,
@@ -81,8 +83,9 @@ run concurrently, so repositories must be safe for concurrent use.
       tests of their own (Known Deviation; spec Gap 6).~~ the repositories,
       operations, and models have their own tests (BUG-006).
 - [x] VI. No generated code involved.
-- [ ] `README.md` does not document `RIDE_ANNOUNCER_TELEGRAM_TOKEN` (Known
-      Deviation).
+- [x] ~~`README.md` does not document `RIDE_ANNOUNCER_TELEGRAM_TOKEN` (Known
+      Deviation).~~ `README.md` documents the environment variables
+      (BUG-007).
 - [x] Known deviations are not extended.
 
 ## Project Structure
@@ -100,7 +103,7 @@ specs/001-sessions-lifecycle/
 
 ```text
 cmd/rideannouncer/
-└── main.go             # Token, logger, repositories, signals, shutdown context
+└── main.go             # Token, log level and format (BUG-007), repositories, signals, shutdown context
 internal/
 ├── service/
 │   ├── service.go      # New, Start, Shutdown, initHandlers (middleware order)
